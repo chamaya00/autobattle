@@ -2341,8 +2341,8 @@ const TAN={
   wheelDmg:75, wheelCd:gs(9), wheelTravel:gs(.72), wheelAir:gs(.85), wheelRecover:gs(.5), wheelSpd:520,
   fluxHit:[18,22,26,30,34], fluxCd:gs(14), fluxGap:gs(.24), fluxStun:gs(1.1), fluxKb:170,
   sunHit:[35,35,35], sunCd:gs(13), sunGap:gs(.32), sunStun:gs(.9), sunKb:170, sunSpd:560,
-  markHp:.40, markT:gs(.8), markMove:1.25, markAtk:1.20, markCast:1.20,
-  markCcRes:.25, markKbRes:.20,
+  markHp:.40, markT:gs(.8), markMove:1.25, markAtk:1.25, markCast:1.25,
+  markCcRes:.25, markKbRes:.20, markRhythmHits:3, markRhythmDmg:18, markRhythmCdCut:gs(.75),
   ultDmg:[17,17,17,17,17,17,17,17,17,17,17,23],
   ultCd:gs(28), ultFocus:gs(.6), ultT:gs(3.5), ultRange:112, ultChase:610,
   ultTake:.50, ultCcRes:.70, ultDown:gs(1.4),
@@ -2684,14 +2684,14 @@ const CHARS={
       `<b>1 · Water Breathing, Second Form: Water Wheel</b> ${TAN.wheelDmg} damage · ${rts(TAN.wheelCd)}s cooldown. A straight-line jumping slash that lightly launches for ${rts(TAN.wheelAir)}s. It can miss; a miss leaves ${rts(TAN.wheelRecover)}s recovery. No teleport.`,
       `<b>2 · Water Breathing, Tenth Form: Constant Flux</b> ${TAN.fluxHit.join(' / ')} = ${TAN.fluxHit.reduce((a,b)=>a+b,0)} damage · ${rts(TAN.fluxCd)}s cooldown. Five accelerating sword rotations; the final water-dragon-shaped trail knocks back and stuns for ${rts(TAN.fluxStun)}s. Interrupted casts only deal hits that already landed.`,
       `<b>3 · Hinokami Kagura: Dragon Sun Halo Head Dance</b> ${TAN.sunHit.length} × ${TAN.sunHit[0]} = ${TAN.sunHit.reduce((a,b)=>a+b,0)} damage · ${rts(TAN.sunCd)}s cooldown. Three rapid angles around the nearest enemy; a passing hit may switch to another nearby fighter, but each hit damages exactly one target. No burn and no fire left on the arena.`,
-      `<b>Awakening · Demon Slayer Mark</b> The first time current HP falls below ${Math.round(TAN.markHp*100)}% of <b>Maximum HP</b>: ${rts(TAN.markT)}s awakening, +${Math.round((TAN.markMove-1)*100)}% move speed, +${Math.round((TAN.markAtk-1)*100)}% attack speed, +${Math.round((TAN.markCast-1)*100)}% cast speed, +${Math.round(TAN.markCcRes*100)}% status resistance and +${Math.round(TAN.markKbRes*100)}% knockback resistance. No damage bonus and no healing.`,
+      `<b>Awakening · Demon Slayer Mark</b> The first time current HP falls below ${Math.round(TAN.markHp*100)}% of <b>Maximum HP</b>: ${rts(TAN.markT)}s awakening, +${Math.round((TAN.markMove-1)*100)}% move speed, +${Math.round((TAN.markAtk-1)*100)}% attack speed, +${Math.round((TAN.markCast-1)*100)}% cast speed, +${Math.round(TAN.markCcRes*100)}% status resistance and +${Math.round(TAN.markKbRes*100)}% knockback resistance. While marked, every ${TAN.markRhythmHits} landed non-Ultimate sword hits trigger <b>Hinokami Rhythm</b>: +${TAN.markRhythmDmg} damage and −${rts(TAN.markRhythmCdCut)}s from the remaining cooldown of all three Breathing Forms. No healing.`,
       `<b>Ultimate · Sun Breathing: Thirteenth Form</b> <b>Locked – Awaken Demon Slayer Mark</b>. Once unlocked, auto-casts on the nearest valid enemy for up to ${TAN.ultDmg.reduce((a,b)=>a+b,0)} damage over about ${rts(TAN.ultT)}s. Tanjiro takes ${Math.round((1-TAN.ultTake)*100)}% less damage and gains ${Math.round(TAN.ultCcRes*100)}% status resistance, but is never invulnerable and never teleports. The final hit knocks down for ${rts(TAN.ultDown)}s.`,
       `<b>Bright Red Nichirin Blade</b> After the Ultimate, the blade stays red for ${rts(TAN.redT)}s. Sword hits apply <b>Regeneration Suppression</b>: −${Math.round(TAN.suppressHeal*100)}% HP recovery for ${rts(TAN.suppressT)}s, refreshed but never stacked; no bonus damage.`
     ],
     init(f){
       f.cds={s1:TAN.wheelCd*.35,s2:TAN.fluxCd*.55,s3:TAN.sunCd*.45,s4:0,basic:0};
       f.tanEntry=null; f.tanHide=false; f.tanAct=null; f.tanCombo=0;
-      f.tanThreadCd=TAN.threadCd; f.tanMarked=false; f.tanMarkStarted=false; f.tanMarkAnim=0;
+      f.tanThreadCd=TAN.threadCd; f.tanMarked=false; f.tanMarkStarted=false; f.tanMarkAnim=0; f.tanMarkHits=0;
       f.tanUlt=false; f.tanRed=0; f.tanTrails=[];
       f.tanThink=rnd(TAN.aiThinkMin,TAN.aiThinkMax); f.tanReset=0;
       f.tanWheelWait=rnd(TAN.wheelAiMin,TAN.wheelAiMax);
@@ -3034,7 +3034,7 @@ const DEX={
     ]},
   tanjiro:{ role:{vi:'Swordsman · Melee – Pursuit – Finisher',en:'Swordsman · Melee – Pursuit – Finisher'},
     st:{pow:4,spd:4,rng:1,def:3},
-    pw:{dmg:72,dur:56,mob:72,as:84,rng:18,cc:64,uti:62,con:68,cmb:74},
+    pw:{dmg:78,dur:58,mob:76,as:88,rng:18,cc:64,uti:68,con:73,cmb:84},
     bio:{vi:'He relies on his three-hit Nichirin Sword Combo and regular melee footwork. Breathing Forms are occasional commitments, while his low-HP Mark unlocks a finisher without healing him.',
          en:'He relies on his three-hit Nichirin Sword Combo and regular melee footwork. Breathing Forms are occasional commitments, while his low-HP Mark unlocks a finisher without healing him.'},
     skills:[
@@ -3043,7 +3043,7 @@ const DEX={
       {tag:'2',name:'Water Wheel',vi:`A straight-line jumping slash for ${TAN.wheelDmg} damage and ${rts(TAN.wheelAir)}s airborne. A miss has ${rts(TAN.wheelRecover)}s recovery.`,en:`A straight-line jumping slash for ${TAN.wheelDmg} damage and ${rts(TAN.wheelAir)}s airborne. A miss has ${rts(TAN.wheelRecover)}s recovery.`},
       {tag:'3',name:'Constant Flux',vi:`Five accelerating hits for ${TAN.fluxHit.reduce((a,b)=>a+b,0)} total damage; the final water-dragon trail knocks back and stuns.`,en:`Five accelerating hits for ${TAN.fluxHit.reduce((a,b)=>a+b,0)} total damage; the final water-dragon trail knocks back and stuns.`},
       {tag:'3',name:'Dragon Sun Halo Head Dance',vi:`Three directional sword hits for ${TAN.sunHit.reduce((a,b)=>a+b,0)} total damage. The red-orange dragon exists only along the sword path; no burn.`,en:`Three directional sword hits for ${TAN.sunHit.reduce((a,b)=>a+b,0)} total damage. The red-orange dragon exists only along the sword path; no burn.`},
-      {tag:'P',name:'Demon Slayer Mark',vi:`Below ${Math.round(TAN.markHp*100)}% Maximum HP, permanently gains move, attack, cast, status and knockback resistance bonuses. Unlocks the Ultimate; grants no healing or direct damage.`,en:`Below ${Math.round(TAN.markHp*100)}% Maximum HP, permanently gains move, attack, cast, status and knockback resistance bonuses. Unlocks the Ultimate; grants no healing or direct damage.`},
+      {tag:'P',name:'Demon Slayer Mark',vi:`Below ${Math.round(TAN.markHp*100)}% Maximum HP, permanently gains move, attack, cast, status and knockback resistance bonuses and unlocks the Ultimate. Every ${TAN.markRhythmHits} landed non-Ultimate sword hits trigger Hinokami Rhythm for +${TAN.markRhythmDmg} damage and shave ${rts(TAN.markRhythmCdCut)}s from all three Breathing Form cooldowns. No healing.`,en:`Below ${Math.round(TAN.markHp*100)}% Maximum HP, permanently gains move, attack, cast, status and knockback resistance bonuses and unlocks the Ultimate. Every ${TAN.markRhythmHits} landed non-Ultimate sword hits trigger Hinokami Rhythm for +${TAN.markRhythmDmg} damage and shave ${rts(TAN.markRhythmCdCut)}s from all three Breathing Form cooldowns. No healing.`},
       {tag:'U',name:'Sun Breathing: Thirteenth Form',vi:`After Transparent World focus, links twelve forms for up to ${TAN.ultDmg.reduce((a,b)=>a+b,0)} damage. Finishes with Flame Dance and ${rts(TAN.ultDown)}s knockdown.`,en:`After Transparent World focus, links twelve forms for up to ${TAN.ultDmg.reduce((a,b)=>a+b,0)} damage. Finishes with Flame Dance and ${rts(TAN.ultDown)}s knockdown.`},
       {tag:'P',name:'Bright Red Nichirin Blade',vi:`For ${rts(TAN.redT)}s after the Ultimate, sword hits apply Regeneration Suppression: −${Math.round(TAN.suppressHeal*100)}% HP recovery for ${rts(TAN.suppressT)}s, no stacking and no extra damage.`,en:`For ${rts(TAN.redT)}s after the Ultimate, sword hits apply Regeneration Suppression: −${Math.round(TAN.suppressHeal*100)}% HP recovery for ${rts(TAN.suppressT)}s, no stacking and no extra damage.`}
     ]}
@@ -9836,6 +9836,16 @@ function tanMarkOpening(f){
   tanBanner(f,'OPENING THREAD','#FFFFFF');
   say(`Opening Thread marks ${e.name} for ${rts(TAN.threadT)}s.`,'g');
 }
+function tanMarkRhythm(f,e){
+  if(!f||!e||!f.tanMarked||f.tanUlt||f.swapAs)return;
+  f.tanMarkHits=(f.tanMarkHits||0)+1;
+  if(f.tanMarkHits<TAN.markRhythmHits)return;
+  f.tanMarkHits=0;
+  for(const k of ['s1','s2','s3']) f.cds[k]=Math.max(0,(f.cds[k]||0)-TAN.markRhythmCdCut);
+  if(e.alive&&e.hp>0) hurt(e,TAN.markRhythmDmg,f,'HINOKAMI RHYTHM','big');
+  ring(e.x,e.y,92,'#FF7A3D',.35);
+  tanBanner(f,'HINOKAMI RHYTHM','#FF7A3D');
+}
 function tanBasic(f,e){
   if(!e||!e.alive)return;
   const i=f.tanCombo%3, pose=['slash1','slash2','surface'][i];
@@ -9844,6 +9854,7 @@ function tanBasic(f,e){
   setPose(f,pose,gs(.34)); aim(f,e,1.05); tanTrail(f,i===2?'water':'steel',e,i===2);
   const landed=hurt(e,TAN.basic[i],f,false);
   if(landed){
+    tanMarkRhythm(f,e);
     sfx(i===2?'drive':'hit');
     if(i===2){
       stunFx(e,TAN.surfaceStun,'spin'); knock(e,e.x-f.x,e.y-f.y,TAN.surfaceKb);
@@ -9885,7 +9896,7 @@ function tanAwaken(f){
   f.tanAct=null; f.tanUlt=false; f.pose='mark'; f.poseT=TAN.markT;
   f.lock=Math.max(f.lock,TAN.markT);
   tanBanner(f,'DEMON SLAYER MARK','#FF7A3D'); sfx('wings');
-  say('Demon Slayer Mark awakens — movement, attack, cast and resistance rise. No HP is restored.','g');
+  say('Demon Slayer Mark awakens — speed and resistance rise; every three landed sword hits can ignite Hinokami Rhythm. No HP is restored.','g');
 }
 function tanResetRhythm(f){
   f.tanReset=rnd(TAN.resetMin,TAN.resetMax);
@@ -9926,7 +9937,7 @@ function tanjiroTick(f,dt){
   if(f.tanMarkAnim>0){
     f.lock=Math.max(f.lock,.08); f.pose='mark'; f.tanMarkAnim=Math.max(0,f.tanMarkAnim-dt);
     if(f.tanMarkAnim<=0){
-      f.tanMarked=true; f.cds.s4=0; f.pose='idle';
+      f.tanMarked=true; f.tanMarkHits=0; f.cds.s4=0; f.pose='idle';
       ring(f.x,f.y,138,'#FF7A3D',.55);
       tanBanner(f,'SUN BREATHING: THIRTEENTH FORM UNLOCKED','#FFB14A');
     }
@@ -9959,6 +9970,7 @@ function tanjiroTick(f,dt){
       if(!A.hit&&e&&e.alive&&!offField(e)&&dist(f,e)<f.r+e.r+18){
         A.hit=true; tanTrail(f,'water',e,true);
         if(hurt(e,TAN.wheelDmg,f,'WATER WHEEL','big')){
+          tanMarkRhythm(f,e);
           stunFx(e,TAN.wheelAir,'spin');
           f.x=clamp(e.x-Math.cos(A.ang)*(f.r+e.r+8),PAD,W-PAD);
           f.y=clamp(e.y-Math.sin(A.ang)*(f.r+e.r+8),PAD+50,H-PAD-10);
@@ -9976,8 +9988,10 @@ function tanjiroTick(f,dt){
       const last=A.i===TAN.fluxHit.length-1, tg=tanNearbyTarget(f,105,A.target);
       if(tg){
         tanTrail(f,'water',tg,last);
-        if(hurt(tg,TAN.fluxHit[A.i],f,last?'CONSTANT FLUX':'', 'big')&&last){
-          knock(tg,tg.x-f.x,tg.y-f.y,TAN.fluxKb); stunFx(tg,TAN.fluxStun,'spin');
+        const landed=hurt(tg,TAN.fluxHit[A.i],f,last?'CONSTANT FLUX':'', 'big');
+        if(landed){
+          tanMarkRhythm(f,tg);
+          if(last){ knock(tg,tg.x-f.x,tg.y-f.y,TAN.fluxKb); stunFx(tg,TAN.fluxStun,'spin'); }
         }
       }
       A.i++; A.next+=TAN.fluxGap;
@@ -9997,8 +10011,10 @@ function tanjiroTick(f,dt){
       const last=A.i===TAN.sunHit.length-1,tg=tanNearbyTarget(f,112,A.i===0?A.target:null);
       if(tg){
         A.target=tg; tanTrail(f,'sun',tg,true);
-        if(hurt(tg,TAN.sunHit[A.i],f,last?'DRAGON SUN HALO HEAD DANCE':'','big')&&last){
-          knock(tg,tg.x-f.x,tg.y-f.y,TAN.sunKb); stunFx(tg,TAN.sunStun,'spin');
+        const landed=hurt(tg,TAN.sunHit[A.i],f,last?'DRAGON SUN HALO HEAD DANCE':'','big');
+        if(landed){
+          tanMarkRhythm(f,tg);
+          if(last){ knock(tg,tg.x-f.x,tg.y-f.y,TAN.sunKb); stunFx(tg,TAN.sunStun,'spin'); }
         }
       }
       A.i++; A.next+=TAN.sunGap;
