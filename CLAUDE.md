@@ -1891,8 +1891,11 @@ riêng trong `TAN`, `CHARS.tanjiro` hay logic Demon Slayer Mark.**
   khi xét Breathing Form. Constant Flux chỉ mở ở gần, Dragon Sun Halo ở tầm gần-vừa. Hết
   một form hoặc đủ ba basic thì `tanResetRhythm()` tạo khoảng nghỉ quyết định 0.55–1.05 giây.
 - Demon Slayer Mark nổ **lần đầu khi `hp < maxHp * .40`**, animation 0.8 giây, không hồi
-  HP/không cộng damage: +25% chạy, +20% nhịp basic, +20% hồi chiêu, 25% kháng hiệu ứng,
-  20% kháng lực đẩy. Sau đó mới mở `Sun Breathing: Thirteenth Form`.
+  HP: +25% chạy, +25% nhịp basic, +25% hồi chiêu, 25% kháng hiệu ứng và 20% kháng lực
+  đẩy. Sau đó mới mở `Sun Breathing: Thirteenth Form`. Khi Mark đang bật, mỗi 3 đòn kiếm
+  **không phải Ultimate** trúng đích kích hoạt `Hinokami Rhythm`: thêm 18 damage và bớt
+  0.75 giây khỏi cooldown còn lại của Water Wheel / Constant Flux / Dragon Sun Halo.
+  Ultimate không tích nhịp này để chuỗi 12 hit không tự snowball.
 - Ultimate tập trung 0.6 giây, chạy tổng 3.5 giây, 12 hit có tổng đúng 210, mục tiêu ra
   khỏi tầm thì hit trượt; không teleport. Đang tung chiêu chỉ giảm 50% damage và có 70%
   kháng hiệu ứng, không bất tử. Hit cuối knockdown 1.4 giây.

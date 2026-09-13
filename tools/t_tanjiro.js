@@ -26,14 +26,14 @@ const near = (a, b, eps = .02) => Math.abs(a - b) <= eps;
       flux: T.fluxHit.slice(), fluxCd: T.fluxCd * RT,
       sun: T.sunHit.slice(), sunCd: T.sunCd * RT,
       control: [T.surfaceStun,T.wheelAir,T.fluxStun,T.sunStun,T.ultDown].map(x=>x*RT),
-      mark: [T.markHp, T.markT * RT, T.markMove, T.markAtk, T.markCast, T.markCcRes, T.markKbRes],
+      mark: [T.markHp, T.markT * RT, T.markMove, T.markAtk, T.markCast, T.markCcRes, T.markKbRes, T.markRhythmHits, T.markRhythmDmg, T.markRhythmCdCut * RT],
       ult: T.ultDmg.slice(), ultCd: T.ultCd * RT, ultT: T.ultT * RT,
       ultFocus: T.ultFocus * RT, ultTake: T.ultTake, ultCcRes: T.ultCcRes,
       redT: T.redT * RT, suppT: T.suppressT * RT, suppHeal: T.suppressHeal,
       hasVietnamese: /[À-ỹ]/.test(text), locked: text.includes('Locked – Awaken Demon Slayer Mark'),
       names: ['Opening Thread','Nichirin Sword Combo','Water Surface Slash','Water Wheel',
         'Constant Flux','Dragon Sun Halo Head Dance','Demon Slayer Mark','Transparent World',
-        'Sun Breathing: Thirteenth Form','Bright Red Nichirin Blade','Regeneration Suppression']
+        'Sun Breathing: Thirteenth Form','Bright Red Nichirin Blade','Regeneration Suppression','Hinokami Rhythm']
         .every(x => text.includes(x))
     };
   });
@@ -112,7 +112,7 @@ const near = (a, b, eps = .02) => Math.abs(a - b) <= eps;
   ok(forms.flux.dmg===130 && forms.flux.n<600, 'Constant Flux deals exactly 130 across five hits');
   ok(forms.sun.dmg===105 && forms.sun.n<600 && forms.sunDots===0, 'Sun dance deals exactly 105 with no burn or damage over time');
 
-  console.log('\n=== 5. Mark uses current maxHp, is permanent and grants no heal/damage ===');
+  console.log('\n=== 5. Mark uses current maxHp and powers Hinokami Rhythm ===');
   const mark = await page.evaluate(() => {
     const G=window.__G(), T=window.__TAN, f=G.fighters.find(x=>x.key==='tanjiro'), e=G.fighters.find(x=>x.key==='chichi');
     f.tanAct=null;f.tanMarked=false;f.tanMarkStarted=false;f.tanMarkAnim=0;f.maxHp=1333;f.hp=f.maxHp*.40;
@@ -122,15 +122,23 @@ const near = (a, b, eps = .02) => Math.abs(a - b) <= eps;
     for(let i=0;i<200&&!f.tanMarked;i++)window.__step(1/120);
     window.__statusTick(f,0);
     f.stun=0; const cc=window.__stunFx(f,1,'spark');
+    e.hp=1000;e.maxHp=1000;e.alive=true;e.evade=0;e.dodge=0;e.dmgRes=0;e.dmgTake=1;e.invuln=0;e.openingThreads=[];
+    f.tanRed=0;f.tanCombo=0;f.tanMarkHits=0;f.x=300;f.y=350;e.x=355;e.y=350;
+    f.cds.s1=T.wheelCd;f.cds.s2=T.fluxCd;f.cds.s3=T.sunCd;
+    const h0=e.hp;window.__tanBasic(f,e);window.__tanBasic(f,e);window.__tanBasic(f,e);
+    const rhythmDamage=h0-e.hp,rhythmCds=[f.cds.s1*window.__RT,f.cds.s2*window.__RT,f.cds.s3*window.__RT];
     return {exact,started,active:f.tanMarked,hpBefore:before,hpAfter:f.hp,maxHp:f.maxHp,
       move:f.moveMul,cast:f.castMul,cc,stun:f.stun,ultReady:f.cds.s4===0,
-      directDamageBonus:T.markMove!==undefined && !('markDmg' in T)};
+      rhythm:[T.markRhythmHits,T.markRhythmDmg,T.markRhythmCdCut*window.__RT],rhythmDamage,rhythmCds,rhythmStacks:f.tanMarkHits};
   });
   ok(!mark.exact && mark.started && mark.active && mark.maxHp===1333,
     'Mark triggers strictly below 40% of a runtime maxHp value', mark.maxHp);
   ok(near(mark.hpAfter,mark.hpBefore,.01), 'Mark restores no HP', `${mark.hpBefore}/${mark.hpAfter}`);
-  ok(near(mark.move,1.25) && near(mark.cast,1.2) && mark.cc && near(mark.stun,.75),
-    'Mark grants move/cast and 25% status resistance without a damage stat');
+  ok(near(mark.move,1.25) && near(mark.cast,1.25) && mark.cc && near(mark.stun,.75),
+    'Mark grants +25% move/cast and 25% status resistance');
+  ok(mark.rhythm.join('/')==='3/18/0.75','Hinokami Rhythm constants are exact',mark.rhythm.join('/'));
+  ok(mark.rhythmDamage===98 && mark.rhythmStacks===0 && mark.rhythmCds.every((x,i)=>near(x,[8.25,13.25,12.25][i],.02)),
+    'three marked basic hits trigger +18 damage and shave 0.75s from all Breathing Form cooldowns',`${mark.rhythmDamage} / ${mark.rhythmCds.map(x=>x.toFixed(2)).join('/')}`);
   ok(mark.ultReady, 'Thirteenth Form unlocks only after the Mark animation');
 
   console.log('\n=== 6. Ultimate mitigation, 210 cap and Bright Red suppression ===');
