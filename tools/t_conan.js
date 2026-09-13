@@ -7,7 +7,7 @@ function lacks(x,msg){assert(!s.includes(x),msg||('unexpected: '+x))}
 has("conan:{},ayanokouji",'sprite registration');
 has("conan:'#4B8BFF'",'color registration');
 has('conan:HP_STD','shared HP registration');
-has('clueMax:8','eight total clues');
+has('clueMax:6','six total clues');
 has('basicDmg:6, basicCd:gs(1.6), basicWind:gs(.55), basicRange:360','slow basic');
 has('kickDmg:85, kickCd:gs(15), kickWind:gs(.6), kickSpeed:540, kickStun:gs(3), kickKb:1300','15s football / 3s stun / 35% knockback tuning');
 has('needleDmg:2, needleCd:gs(12)','lower wristwatch damage');
