@@ -1,0 +1,90 @@
+name: One-shot Gojo damage tune
+
+on:
+  push:
+    branches: [balance/gojo-damage-trim]
+    paths:
+      - '.github/workflows/gojo-damage-tune.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  tune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reduce Gojo damage while keeping chart
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def patch(path,pairs):
+              p=Path(path); s=p.read_text(encoding='utf-8')
+              for old,new in pairs:
+                  n=s.count(old)
+                  if n < 1: raise SystemExit(f'{path}: missing {old[:140]!r}')
+                  s=s.replace(old,new)
+              p.write_text(s,encoding='utf-8')
+
+          patch('index.html',[
+            ('basic:[18,18,28], basicCd:gs(.75), basicRange:92, basicStun:gs(.25), basicPull:48,',
+             'basic:[16,16,24], basicCd:gs(.75), basicRange:92, basicStun:gs(.25), basicPull:48,'),
+            ('blueDmg:55, blueSplash:30, blueCd:gs(8.5), blueWind:gs(.55), blueRange:370,',
+             'blueDmg:50, blueSplash:26, blueCd:gs(8.5), blueWind:gs(.55), blueRange:370,'),
+            ('redDmg:80, redCd:gs(11), redWind:gs(.7), redBreak:gs(.45), redSpeed:420,',
+             'redDmg:72, redCd:gs(11), redWind:gs(.7), redBreak:gs(.45), redSpeed:420,'),
+            ('purpleDmg:150, purpleSecond:.60, purpleCd:gs(22), purpleWind:gs(1.6),',
+             'purpleDmg:135, purpleSecond:.60, purpleCd:gs(22), purpleWind:gs(1.6),'),
+          ])
+
+          patch('tools/t_gojo.js',[
+            ("ok(near(cfg.entrance,1.5)&&cfg.basic.join('/')==='18/18/28'&&cfg.basicCd===.75&&cfg.basicStun===.25,",
+             "ok(near(cfg.entrance,1.5)&&cfg.basic.join('/')==='16/16/24'&&cfg.basicCd===.75&&cfg.basicStun===.25,"),
+            ("ok(cfg.blue.join('/')==='55/30/8.5/0.55/0.6'&&cfg.red.join('/')==='80/11/0.7/0.45/0.75',",
+             "ok(cfg.blue.join('/')==='50/26/8.5/0.55/0.6'&&cfg.red.join('/')==='72/11/0.7/0.45/0.75',"),
+            ("ok(cfg.purple.join('/')==='150/0.6/22/1.6/4'&&cfg.domain.join('/')==='32/1.2/0.8/2.5/4',",
+             "ok(cfg.purple.join('/')==='135/0.6/22/1.6/4'&&cfg.domain.join('/')==='32/1.2/0.8/2.5/4',"),
+            ("ok(skills.blue===55&&skills.restored===2,'Blue deals 55 and restores exactly one shared Infinity charge');",
+             "ok(skills.blue===50&&skills.restored===2,'Blue deals 50 and restores exactly one shared Infinity charge');"),
+            ("ok(near(skills.purple,97.5,.01),'Purple ignores 30% of a target\\'s 50% damage reduction',skills.purple);",
+             "ok(near(skills.purple,87.75,.01),'Purple ignores 30% of a target\\'s 50% damage reduction',skills.purple);"),
+          ])
+
+          patch('CLAUDE.md',[
+            ('`Limitless Combat` là basic 18/18/28 ở nhịp 0.75 giây.',
+             '`Limitless Combat` là basic 16/16/24 ở nhịp 0.75 giây.'),
+            ('sau 0.55 giây kéo tối đa 2 địch; main 55, secondary 30,',
+             'sau 0.55 giây kéo tối đa 2 địch; main 50, secondary 26,'),
+            ('fighter (150 / 90)', 'fighter (135 / 81)'),
+          ])
+          PY
+
+          python3 tools/mk_play.py
+
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          checks=[
+            'basic:[16,16,24]', 'blueDmg:50, blueSplash:26', 'redDmg:72', 'purpleDmg:135',
+            'pw:{dmg:88,dur:78,mob:56,as:64,rng:92,cc:74,uti:82,con:88,cmb:20}'
+          ]
+          missing=[x for x in checks if x not in s]
+          if missing: raise SystemExit('verification failed: '+repr(missing))
+          print('Gojo damage tune verification OK; chart unchanged')
+          PY
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html play.html tools/t_gojo.js CLAUDE.md
+          git commit -m 'balance: trim Gojo damage without changing chart'
+          git push origin HEAD:balance/gojo-damage-trim
