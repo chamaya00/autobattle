@@ -26,11 +26,11 @@ const near=(a,b,e=.03)=>Math.abs(a-b)<=e;
         .every(x=>text.includes(x)), vietnamese:/[À-ỹ]/.test(text), chart:D.pw};
   });
   ok(cfg.hp===cfg.std,'Maximum HP comes from the shared stat system',`${cfg.hp}/${cfg.std}`);
-  ok(near(cfg.entrance,1.5)&&cfg.basic.join('/')==='18/18/28'&&cfg.basicCd===.75&&cfg.basicStun===.25,
+  ok(near(cfg.entrance,1.5)&&cfg.basic.join('/')==='16/16/24'&&cfg.basicCd===.75&&cfg.basicStun===.25,
     'entrance and Limitless Combat values are exact');
-  ok(cfg.blue.join('/')==='55/30/8.5/0.55/0.6'&&cfg.red.join('/')==='80/11/0.7/0.45/0.75',
+  ok(cfg.blue.join('/')==='50/26/8.5/0.55/0.6'&&cfg.red.join('/')==='72/11/0.7/0.45/0.75',
     'Blue and Red values are exact');
-  ok(cfg.purple.join('/')==='150/0.6/22/1.6/4'&&cfg.domain.join('/')==='32/1.2/0.8/2.5/4',
+  ok(cfg.purple.join('/')==='135/0.6/22/1.6/4'&&cfg.domain.join('/')==='32/1.2/0.8/2.5/4',
     'Purple and Unlimited Void values are exact');
   ok(cfg.inf.join('/')==='2/3/5.5','Infinity is two charges with 3s delay and 5.5s recharge');
   ok(cfg.names&&!cfg.vietnamese,'all Gojo names, statuses and display copy are English');
@@ -79,9 +79,9 @@ const near=(a,b,e=.03)=>Math.abs(a-b)<=e;
     prep();f.infinity=2;e.dmgRes=.5;h=e.hp;window.__gojoPurple(f,e);for(let i=0;i<500&&(f.gojoAct||f.gojoShots.length);i++)window.__gojoTick(f,1/120);
     return {blue,restored,spent,lock,missed,fixed,purple:h-e.hp};
   });
-  ok(skills.blue===55&&skills.restored===2,'Blue deals 55 and restores exactly one shared Infinity charge');
+  ok(skills.blue===50&&skills.restored===2,'Blue deals 50 and restores exactly one shared Infinity charge');
   ok(skills.spent===0&&near(skills.lock,4,.04)&&skills.missed===0,'Purple consumes all charges immediately and can miss its fixed line');
-  ok(near(skills.purple,97.5,.01),'Purple ignores 30% of a target\'s 50% damage reduction',skills.purple);
+  ok(near(skills.purple,87.75,.01),'Purple ignores 30% of a target\'s 50% damage reduction',skills.purple);
 
   console.log('\n=== 5. Unlimited Void deals zero and transitions into Overwhelmed ===');
   const domain=await page.evaluate(()=>{
