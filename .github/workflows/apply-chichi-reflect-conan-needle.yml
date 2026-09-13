@@ -27,8 +27,8 @@ jobs:
           p=Path('index.html')
           s=p.read_text()
 
-          old="'Scolding — 5 shockwaves, reflects shuriken / kunai / ball / Air Cannon / Ginyu&apos;s Beam'"
-          new="'Scolding — 5 shockwaves, reflects shuriken / kunai / ball / Air Cannon / Ginyu&apos;s Beam / Conan&apos;s tranquilizer needle'"
+          old="<b>2</b> Scolding — 5 shockwaves, reflects shuriken / kunai / ball / Air Cannon / Ginyu&apos;s Beam"
+          new="<b>2</b> Scolding — 5 shockwaves, reflects shuriken / kunai / ball / Air Cannon / Ginyu&apos;s Beam / Conan&apos;s tranquilizer needle"
           assert old in s, 'ChiChi compact Scolding copy not found'
           s=s.replace(old,new,1)
 
