@@ -1848,13 +1848,13 @@ Gojo là `Mage · Controller · Mid-range – Space Control – Burst`. Mọi co
 - `Six Eyes` dùng `gojoTarget()` để chỉ chọn đấu thủ thật gần nhất; summons, clone và
   afterimage không bao giờ thành mục tiêu. Blue/Red/Purple truyền accuracy multiplier vào
   `hurt()`, không biến nó thành auto-dodge, hồi máu hay giảm cooldown.
-- `Limitless Combat` là basic 18/18/28 ở nhịp 0.75 giây. Mỗi hit trúng gây 0.25 giây hit stun;
+- `Limitless Combat` là basic 16/16/24 ở nhịp 0.75 giây. Mỗi hit trúng gây 0.25 giây hit stun;
   hit thứ ba còn kéo nhẹ mục tiêu, nhưng basic không hồi Infinity.
-- `Blue` chốt một điểm không gian, sau 0.55 giây kéo tối đa 2 địch; main 55, secondary 30,
+- `Blue` chốt một điểm không gian, sau 0.55 giây kéo tối đa 2 địch; main 50, secondary 26,
   stun 0.6 giây. Cả cast chỉ hồi đúng một charge nếu có ít nhất một hit thật sự trúng.
 - `Red` và `Purple` bay thẳng theo góc đã chốt, không homing. Red dừng ở người đầu tiên.
   Purple tiêu sạch charge ngay lúc bắt đầu, khoá hồi tự nhiên 4 giây, xuyên tối đa hai
-  fighter (150 / 90) và bỏ qua 30% damage reduction.
+  fighter (135 / 81) và bỏ qua 30% damage reduction.
 - `Unlimited Void` gây đúng 0 damage. Chỉ người trong bán kính lúc Domain hình thành nhận
   `Information Overload` 2.5 giây; sau đó `Overwhelmed` 4 giây (−50% move, −40% attack/cast).
 - AI ưu tiên Domain → Purple → Red → Blue → basic, nhưng di chuyển bằng waypoint, strafe
