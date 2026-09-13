@@ -2490,7 +2490,7 @@ const CONAN={
   /* The ONLY football attack: exactly once every 15 player seconds when available. */
   kickDmg:85, kickCd:gs(15), kickWind:gs(.6), kickSpeed:540, kickStun:gs(3), kickKb:1300,
   needleDmg:2, needleCd:gs(12), needleWind:gs(.38), needleSpeed:610,
-  drowsyT:gs(.8), sleepT:gs(2.5), wakeDmg:60, groggyT:gs(2),
+  sleepT:gs(3), groggyT:gs(3),
   skateCd:gs(10), skateT:gs(1.8), skateMove:2.5, skateTake:.50, skateDmg:18, skatePush:390,
   /* Six total Clues solve a case. Basic hits are the main source; auxiliary Clues also count. */
   ultDmg:38, ultCd:gs(.5), ultWind:gs(.7), ultStun:gs(1.5),
@@ -2913,7 +2913,7 @@ const CHARS={
       `<b>Special Mechanic · Detective's Insight</b> Every landed basic deduction adds exactly <b>1 Clue</b> to that enemy. <b>Auxiliary Clues count toward the same total</b>: observing that enemy use an active skill in range, landing the Stun-Gun Wristwatch, or making that enemy miss Conan during one Skateboard ride can each add 1 Clue. At ${CONAN.clueMax} total Clues the target becomes <b>Case Solved</b>.`,
       `<b>Basic · Deduction</b> ${CONAN.basicDmg} damage every ${rts(CONAN.basicCd)}s after a ${rts(CONAN.basicWind)}s thinking beat. No football is created. Every landed deduction adds exactly <b>1 Clue</b>. Case Solved triggers at <b>${CONAN.clueMax} total Clues</b>, including auxiliary Clues.`,
       `<b>1 · Soccer Ball Shot · Power-Enhancing Kick Shoes</b> ${CONAN.kickDmg} damage · <b>${rts(CONAN.kickCd)}s cooldown</b>. This is Conan's only football attack. After ${rts(CONAN.kickWind)}s he kicks one large belt-made ball in a fixed straight line. The first fighter hit is knocked back about <b>35% of the arena</b> and stunned for <b>${rts(CONAN.kickStun)}s</b>. If Conan is stunned before the kick, the ball disappears and only 50% cooldown remains.`,
-      `<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter, adds <b>1 auxiliary Clue</b>, and applies <b>Drowsy</b> for ${rts(CONAN.drowsyT)}s (−50% move, −30% cast speed), then <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Sleep ends early after ${CONAN.wakeDmg} damage; an early wake applies <b>Groggy</b> for ${rts(CONAN.groggyT)}s.`,
+      `<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter, adds <b>1 auxiliary Clue</b>, and immediately applies <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Damage does not wake the target early. When Sleep ends, the target becomes <b>Groggy</b> for ${rts(CONAN.groggyT)}s.`,
       `<b>3 · Turbo Engine Skateboard</b> ${rts(CONAN.skateT)}s · ${rts(CONAN.skateCd)}s cooldown. +150% move speed, −50% damage taken and movement ignores slow/root, but Conan is not invulnerable and can still be stunned or knocked down. The first collision deals only ${CONAN.skateDmg} damage and pushes sideways without stun. Each enemy can grant at most <b>1 auxiliary Clue per ride</b> if their attack misses Conan during the ride.`,
       `<b>Case Solved · Decisive Evidence / One Truth Prevails</b> <b>Locked – Gather ${CONAN.clueMax} Clues</b>. When a target reaches Case Solved, Conan spends the case after a ${rts(CONAN.ultWind)}s proof-selection beat and presents the decisive evidence directly — <b>no football</b>. A landed conclusion deals ${CONAN.ultDmg} damage and stuns for ${rts(CONAN.ultStun)}s. A dodge, invulnerability or full barrier still consumes the solved case.`
     ],
@@ -5528,7 +5528,6 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
   if(cred&&!cred.summon) cred.dmgDealt=(cred.dmgDealt||0)+Math.min(amt,t.hp);
   t.hp=Math.max(0,t.hp-amt);
   if(t.key==='conan'&&!t.swapAs&&src&&src.team!==t.team) conanRecordIncoming(t,src,amt);
-  conanSleepDamage(t,amt);
   /* Man of Steel: đòn dưới 25 dmg không làm anh ngã người ra — vẫn mất máu, vẫn chớp
      sáng, nhưng không đổi sang dáng trúng đòn và gần như không giật lùi. */
   const light=t.key==='superman'&&!t.swapAs&&amt<SUP.steelStand;
@@ -10082,26 +10081,15 @@ function conanShot(f,type,t){
   const speed=type==='needle'?CONAN.needleSpeed:CONAN.kickSpeed, r=type==='needle'?3:13;
   f.conanShots.push({type,x:f.x+Math.cos(a)*23,y:f.y-22+Math.sin(a)*23,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r,life:gs(2),target:t});
 }
-function conanSleepDamage(t,amt){
-  if(!t||!(t.conanSleep>0)||amt<=0)return;
-  t.conanSleepDmg=(t.conanSleepDmg||0)+amt;
-  if(t.conanSleepDmg+1e-6>=CONAN.wakeDmg){
-    t.conanSleep=0; t.conanSleepDmg=0; t.conanGroggy=CONAN.groggyT;
-    G.floats.push({x:t.x,y:t.y-104,txt:'GROGGY',color:'#A9B7D0',life:.95,ml:.95,banner:true,sc:.52});
-  }
-}
 function conanStatus(f,dt){
-  if(f.conanDrowsy>0){
-    const before=f.conanDrowsy; f.conanDrowsy=Math.max(0,f.conanDrowsy-dt);
-    f.moveMul*=.50; f.castMul*=.70;
-    if(before>0&&f.conanDrowsy<=0){
-      f.conanSleep=CONAN.sleepT; f.conanSleepDmg=0;
-      G.floats.push({x:f.x,y:f.y-104,txt:'ASLEEP',color:'#91A6D8',life:1,ml:1,banner:true,sc:.55});
-    }
-  }
   if(f.conanSleep>0){
+    const before=f.conanSleep;
     f.conanSleep=Math.max(0,f.conanSleep-dt); f.moveMul=0; f.castMul=0;
     f.stun=Math.max(f.stun||0,Math.min(gs(.08),f.conanSleep));
+    if(before>0&&f.conanSleep<=0){
+      f.conanGroggy=CONAN.groggyT;
+      G.floats.push({x:f.x,y:f.y-104,txt:'GROGGY',color:'#A9B7D0',life:.95,ml:.95,banner:true,sc:.52});
+    }
   }
   if(f.conanGroggy>0){ f.conanGroggy=Math.max(0,f.conanGroggy-dt); f.moveMul*=.70; f.castMul*=.80; }
   if(f.key==='conan'&&!f.swapAs&&f.conanSkate){
@@ -10126,8 +10114,8 @@ function conanShotsTick(f,dt){
           const hit=hurt(o,CONAN.needleDmg,f,false,'conanNeedle');
           if(hit){
             conanAddClue(f,o,'STUN-GUN WRISTWATCH');
-            o.conanDrowsy=CONAN.drowsyT; o.conanSleep=0; o.conanGroggy=0;
-            G.floats.push({x:o.x,y:o.y-104,txt:'DROWSY',color:'#AFC3EE',life:.9,ml:.9,banner:true,sc:.52});
+            o.conanSleep=CONAN.sleepT; o.conanGroggy=0;
+            G.floats.push({x:o.x,y:o.y-104,txt:'ASLEEP',color:'#91A6D8',life:1,ml:1,banner:true,sc:.55});
           }
         }
         gone=true; break;
@@ -14805,7 +14793,6 @@ function drawConanFx(){
   }
   for(const o of G.fighters){
     if(!o||!o.alive)continue;
-    if(o.conanDrowsy>0){ctx.globalAlpha=.45;ctx.fillStyle='#B7C9EE';ctx.beginPath();ctx.arc(o.x+18,o.y-60,4,0,7);ctx.fill();}
     if(o.conanSleep>0){ctx.globalAlpha=.8;ctx.font='900 13px "Space Mono",monospace';ctx.fillStyle='#D9E4FF';ctx.fillText('Z',o.x+18,o.y-66);}
   }
   ctx.restore();
