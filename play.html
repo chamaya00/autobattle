@@ -2412,7 +2412,7 @@ const CHARS={
   chichi:{
     name:'ChiChi', short:'ChiChi', tag:'Housewife · Melee', emoji:'🍳', color:'#FF4D6D', alt:'#FF93A8',
     role:'melee', speed:106, dodge:.55, male:false,
-    skills:[`<b>1</b> Punch &amp; Kick — ${Math.round(CHICHI_CRIT*100)}% base crit for ${CHICHI_CRIT_DMG}`,'<b>2</b> Scolding — 5 shockwaves, reflects shuriken / kunai / ball / Air Cannon / Ginyu&apos;s Beam',`<b>Every ${rts(CHICHI_DASH_CD)}s</b> Flying Kick — dash in for a guaranteed ${CHICHI_KICK_DMG} damage and a ${rts(CHICHI_KICK_STUN)}s stun, CC immune &amp; −30% dmg taken while dashing`,`<b>Passive</b> every 5 hits +${Math.round(CHICHI_CRIT_STEP*100)}% crit — <b>no cap</b>`,`<b>Below 20% HP</b> calls Goku / Gohan — Goku's Kamehameha ${KAME_DMG} dmg, stun ${rts(KAME_STUN)}s then −${Math.round((1-KAME_SLOW_MOVE)*100)}% move / −${Math.round((1-KAME_SLOW_CAST)*100)}% cast for ${rts(KAME_SLOW_T)}s · Gohan's Masenko ${MASENKO_DMG} dmg a wave, each wave stacking −${Math.round(MASENKO_STACK_MOVE*100)}% move / −${Math.round(MASENKO_STACK_CAST*100)}% cast for ${rts(MASENKO_STACK_T)}s`],
+    skills:[`<b>1</b> Punch &amp; Kick — ${Math.round(CHICHI_CRIT*100)}% base crit for ${CHICHI_CRIT_DMG}`,'<b>2</b> Scolding — 5 shockwaves, reflects shuriken / kunai / ball / Air Cannon / Ginyu&apos;s Beam / Conan&apos;s tranquilizer needle',`<b>Every ${rts(CHICHI_DASH_CD)}s</b> Flying Kick — dash in for a guaranteed ${CHICHI_KICK_DMG} damage and a ${rts(CHICHI_KICK_STUN)}s stun, CC immune &amp; −30% dmg taken while dashing`,`<b>Passive</b> every 5 hits +${Math.round(CHICHI_CRIT_STEP*100)}% crit — <b>no cap</b>`,`<b>Below 20% HP</b> calls Goku / Gohan — Goku's Kamehameha ${KAME_DMG} dmg, stun ${rts(KAME_STUN)}s then −${Math.round((1-KAME_SLOW_MOVE)*100)}% move / −${Math.round((1-KAME_SLOW_CAST)*100)}% cast for ${rts(KAME_SLOW_T)}s · Gohan's Masenko ${MASENKO_DMG} dmg a wave, each wave stacking −${Math.round(MASENKO_STACK_MOVE*100)}% move / −${Math.round(MASENKO_STACK_CAST*100)}% cast for ${rts(MASENKO_STACK_T)}s`],
     init(f){ f.cds={s1:0,s2:cm(3)}; f.dashCd=CHICHI_DASH_CD; f.hits=0; f.critBonus=0; },
     think(f,e,d,auto){
       if(f.cds.s1<=0&&d<f.r+e.r+meleeReach(f)&&(auto||keys['j'])){ f.cds.s1=cm(.25); melee(f,e); }
@@ -2810,7 +2810,7 @@ const CHARS={
       `<b>Special Mechanic · Detective's Insight</b> Every landed basic deduction adds exactly <b>1 Clue</b> to that enemy. <b>Auxiliary Clues count toward the same total</b>: observing that enemy use an active skill in range, landing the Stun-Gun Wristwatch, or making that enemy miss Conan during one Skateboard ride can each add 1 Clue. At ${CONAN.clueMax} total Clues the target becomes <b>Case Solved</b>.`,
       `<b>Basic · Deduction</b> ${CONAN.basicDmg} damage every ${rts(CONAN.basicCd)}s after a ${rts(CONAN.basicWind)}s thinking beat. No football is created. Every landed deduction adds exactly <b>1 Clue</b>. Case Solved triggers at <b>${CONAN.clueMax} total Clues</b>, including auxiliary Clues.`,
       `<b>1 · Soccer Ball Shot · Power-Enhancing Kick Shoes</b> ${CONAN.kickDmg} damage · <b>${rts(CONAN.kickCd)}s cooldown</b>. This is Conan's only football attack. After ${rts(CONAN.kickWind)}s he kicks one large belt-made ball in a fixed straight line. The first fighter hit is knocked back about <b>35% of the arena</b> and stunned for <b>${rts(CONAN.kickStun)}s</b>. If Conan is stunned before the kick, the ball disappears and only 50% cooldown remains.`,
-      `<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter, adds <b>1 auxiliary Clue</b>, and immediately applies <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Damage does not wake the target early. When Sleep ends, the target becomes <b>Groggy</b> for ${rts(CONAN.groggyT)}s.`,
+      `<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter, adds <b>1 auxiliary Clue</b>, and immediately applies <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Damage does not wake the target early. When Sleep ends, the target becomes <b>Groggy</b> for ${rts(CONAN.groggyT)}s. <b>ChiChi's Scolding can reflect this needle</b>; if the reflected needle hits Conan, he suffers the same Sleep → Groggy sequence.`,
       `<b>3 · Turbo Engine Skateboard</b> ${rts(CONAN.skateT)}s · ${rts(CONAN.skateCd)}s cooldown. +150% move speed, −50% damage taken and movement ignores slow/root, but Conan is not invulnerable and can still be stunned or knocked down. The first collision deals only ${CONAN.skateDmg} damage and pushes sideways without stun. Each enemy can grant at most <b>1 auxiliary Clue per ride</b> if their attack misses Conan during the ride.`,
       `<b>Case Solved · Decisive Evidence / One Truth Prevails</b> <b>Locked – Gather ${CONAN.clueMax} Clues</b>. When a target reaches Case Solved, Conan spends the case after a ${rts(CONAN.ultWind)}s proof-selection beat and presents the decisive evidence directly — <b>no football</b>. A landed conclusion deals ${CONAN.ultDmg} damage and stuns for ${rts(CONAN.ultStun)}s. A dodge, invulnerability or full barrier still consumes the solved case.`
     ],
@@ -2930,7 +2930,7 @@ const DEX={
       {tag:'1',name:'Punch & Kick',
        vi:`Đòn tay nhanh: ${Math.round(CHICHI_CRIT*100)}% chí mạng ${CHICHI_CRIT_DMG} dmg, cứ 5 đòn lại cộng thêm ${Math.round(CHICHI_CRIT_STEP*100)}% và KHÔNG có trần.`,
        en:`Fast hands: ${Math.round(CHICHI_CRIT*100)}% to crit for ${CHICHI_CRIT_DMG}, rising ${Math.round(CHICHI_CRIT_STEP*100)}% every 5 hits with no cap.`},
-      {tag:'2',name:'Scolding',vi:'Năm đợt sóng xung kích, phản ngược shuriken, kunai, bóng, vòng khí Air Cannon và luồng khí tím của Ginyu về phía địch.',
+      {tag:'2',name:'Scolding',vi:'Năm đợt sóng xung kích, phản ngược shuriken, kunai, bóng, vòng khí Air Cannon, luồng khí tím của Ginyu và kim gây mê của Conan về phía địch.',
        en:'Five shockwaves that reflect shuriken, kunai, footballs, the Air Cannon ring and Ginyu\'s Beam back at the sender.'},
       {tag:'3',name:'Flying Kick',
        vi:`Mỗi ${rts(CHICHI_DASH_CD)}s lao tới: ${CHICHI_KICK_DMG} dmg + choáng ${rts(CHICHI_KICK_STUN)}s, lúc lao miễn khống chế và chỉ nhận 70% sát thương.`,
@@ -10001,7 +10001,29 @@ function conanShotsTick(f,dt){
     const p=f.conanShots[i]; p.life-=dt;
     p.x+=p.vx*dt; p.y+=p.vy*dt;
     let gone=p.life<=0||p.y<PAD-20||p.y>H-PAD+20||p.x<PAD-35||p.x>W-PAD+35;
-    if(!gone){
+    /* Only ChiChi's live Scolding waves can reflect Conan's tranquilizer needle. */
+    if(!gone&&p.type==='needle'&&!p.reflected){
+      for(const w of G.waves){
+        if(!w||!w.owner||w.owner.key!=='chichi'||w.team===f.team)continue;
+        if(dist(p,w)>=w.r+p.r)continue;
+        const a=Math.atan2(p.y-w.y,p.x-w.x)+rnd(-.25,.25), sp=Math.hypot(p.vx,p.vy)||CONAN.needleSpeed;
+        p.vx=Math.cos(a)*sp*1.15; p.vy=Math.sin(a)*sp*1.15;
+        p.reflected=true; p.reflector=w.owner; p.life=Math.max(p.life,gs(2));
+        G.floats.push({x:p.x,y:p.y-16,txt:'NEEDLE REFLECTED',color:w.owner.color,life:.8,ml:.8,banner:true,sc:.46});
+        break;
+      }
+    }
+    /* A reflected needle can backfire only on the Conan who fired it; no Clue is granted. */
+    if(!gone&&p.type==='needle'&&p.reflected){
+      if(f.alive&&hitsBody(p,f)){
+        const hit=hurt(f,CONAN.needleDmg,p.reflector||f,false,'conanNeedleReflected');
+        if(hit){
+          f.conanSleep=CONAN.sleepT; f.conanGroggy=0;
+          G.floats.push({x:f.x,y:f.y-104,txt:'ASLEEP',color:'#91A6D8',life:1,ml:1,banner:true,sc:.55});
+        }
+        gone=true;
+      }
+    }else if(!gone){
       for(const o of G.fighters){
         if(!foeOk(f,o)||!hitsBody(p,o))continue;
         if(p.type==='kick'){
