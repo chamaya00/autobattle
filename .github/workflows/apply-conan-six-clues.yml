@@ -1,0 +1,78 @@
+name: Apply Conan six-clue balance
+
+on:
+  push:
+    branches: [balance/conan-six-clues]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Apply Conan six-clue balance'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: balance/conan-six-clues
+      - name: Patch Conan clue threshold
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def repl(path, pairs):
+              p=Path(path)
+              s=p.read_text()
+              before=s
+              for a,b in pairs:
+                  s=s.replace(a,b)
+              if s==before:
+                  print(f'warning: no changes in {path}')
+              p.write_text(s)
+
+          repl('index.html', [
+              ('clueMax:8,', 'clueMax:6,'),
+              ('Eight total Clues solve a case.', 'Six total Clues solve a case.'),
+          ])
+          repl('README.md', [
+              ('Clues are stored per enemy (0–8).', 'Clues are stored per enemy (0–6).'),
+              ('**8 total Clues = Case Solved**', '**6 total Clues = Case Solved**'),
+              ('Case Solved at 8 total Clues including auxiliary Clues', 'Case Solved at 6 total Clues including auxiliary Clues'),
+          ])
+          repl('tools/t_conan.js', [
+              ("has('clueMax:8','eight total clues');", "has('clueMax:6','six total clues');"),
+          ])
+          # Keep internal notes consistent if the current contract mentions the old threshold.
+          p=Path('CLAUDE.md')
+          if p.exists():
+              s=p.read_text()
+              s=s.replace('8 total Clues', '6 total Clues').replace('clueMax:8', 'clueMax:6')
+              p.write_text(s)
+          PY
+          python3 tools/mk_play.py
+      - name: Validate
+        run: |
+          node tools/t_conan.js
+          node tools/t_play.js
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile, os
+          for f in ['index.html','play.html']:
+              s=Path(f).read_text()
+              scripts=re.findall(r'<script[^>]*>(.*?)</script>', s, flags=re.S|re.I)
+              for i,js in enumerate(scripts):
+                  fd,path=tempfile.mkstemp(suffix='.js')
+                  os.close(fd)
+                  Path(path).write_text(js)
+                  subprocess.run(['node','--check',path],check=True,stdout=subprocess.DEVNULL)
+                  os.unlink(path)
+          PY
+      - name: Commit clean change
+        run: |
+          rm .github/workflows/apply-conan-six-clues.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html play.html README.md CLAUDE.md tools/t_conan.js .github/workflows/apply-conan-six-clues.yml
+          git commit -m "Set Conan Case Solved to six clues"
+          git push origin HEAD:balance/conan-six-clues
