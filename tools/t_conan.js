@@ -17,6 +17,11 @@ has("if(before>0&&f.conanSleep<=0){\n      f.conanGroggy=CONAN.groggyT;",'natura
 lacks('wakeDmg:','no damage wake threshold');
 lacks('conanSleepDamage(','damage cannot wake sleep early');
 lacks('conanDrowsy','no drowsy pre-phase');
+has("w.owner.key!=='chichi'",'only ChiChi Scolding can reflect the tranquilizer needle');
+has("p.type==='needle'&&!p.reflected",'unreflected needle checks ChiChi waves');
+has("hurt(f,CONAN.needleDmg,p.reflector||f,false,'conanNeedleReflected')",'reflected needle can hit Conan');
+has("f.conanSleep=CONAN.sleepT; f.conanGroggy=0;",'reflected needle gives Conan the same sleep');
+has('no Clue is granted','reflected needle cannot farm clues');
 has('skateCd:gs(10), skateT:gs(1.8), skateMove:2.5, skateTake:.50, skateDmg:18','lower skateboard damage');
 has('ultDmg:38, ultCd:gs(.5), ultWind:gs(.7), ultStun:gs(1.5)','decisive evidence values');
 has("name:'Conan Edogawa'",'roster entry');
