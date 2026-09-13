@@ -15,6 +15,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: balance/conan-six-clues
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
       - name: Patch Conan clue threshold
         run: |
           python3 - <<'PY'
@@ -42,7 +46,6 @@ jobs:
           repl('tools/t_conan.js', [
               ("has('clueMax:8','eight total clues');", "has('clueMax:6','six total clues');"),
           ])
-          # Keep internal notes consistent if the current contract mentions the old threshold.
           p=Path('CLAUDE.md')
           if p.exists():
               s=p.read_text()
@@ -61,7 +64,7 @@ jobs:
           for f in ['index.html','play.html']:
               s=Path(f).read_text()
               scripts=re.findall(r'<script[^>]*>(.*?)</script>', s, flags=re.S|re.I)
-              for i,js in enumerate(scripts):
+              for js in scripts:
                   fd,path=tempfile.mkstemp(suffix='.js')
                   os.close(fd)
                   Path(path).write_text(js)
