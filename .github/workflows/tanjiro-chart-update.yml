@@ -1,0 +1,44 @@
+name: One-shot Tanjiro chart update
+
+on:
+  push:
+    branches: [balance/tanjiro-mark-buff]
+    paths:
+      - '.github/workflows/tanjiro-chart-update.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Update Tanjiro power chart
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="pw:{dmg:72,dur:56,mob:72,as:84,rng:18,cc:64,uti:62,con:68,cmb:74},"
+          new="pw:{dmg:78,dur:58,mob:76,as:88,rng:18,cc:64,uti:68,con:73,cmb:84},"
+          if old not in s:
+              raise SystemExit('Tanjiro power chart source not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          python3 tools/mk_play.py
+          grep -q "pw:{dmg:78,dur:58,mob:76,as:88,rng:18,cc:64,uti:68,con:73,cmb:84}" index.html
+      - name: Commit changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html play.html
+          git commit -m 'balance: update Tanjiro power chart after Mark buff'
+          git push origin HEAD:balance/tanjiro-mark-buff
