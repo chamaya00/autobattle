@@ -1,14 +1,14 @@
 # Multiverse Battler
 
 Game đối kháng tự động vẽ bằng canvas 2D, **không cần cài gì, không có bước build**.
-Mười đấu thủ từ nhiều vũ trụ, mười hai màn đấu, ba chế độ (1v1 · hỗn chiến · đánh theo đội),
+Mười hai đấu thủ từ nhiều vũ trụ, mười hai màn đấu, ba chế độ (1v1 · hỗn chiến · đánh theo đội),
 giao diện **Việt / Anh** đổi được bằng một nút.
 
 ## Có gì trong game
 
 | | |
 |---|---|
-| **11 đấu thủ** | mỗi người một hồ sơ: vai trò, chín trục sức mạnh, bộ chiêu mô tả gọn, và phần "xem chi tiết số liệu" cho ai muốn soi từng con số. Tanjiro dùng basic combo và nhịp melee tự nhiên; Satoru Gojo giữ cự ly trung bình, quản lý hai Infinity Charge hữu hạn và dùng Unlimited Void để kiểm soát không gian mà không gây damage |
+| **12 đấu thủ** | mỗi người một hồ sơ: vai trò, chín trục sức mạnh, bộ chiêu mô tả gọn, và phần "xem chi tiết số liệu" cho ai muốn soi từng con số. Tanjiro dùng basic combo và nhịp melee tự nhiên; Satoru Gojo giữ cự ly trung bình, quản lý hai Infinity Charge hữu hạn và dùng Unlimited Void để kiểm soát không gian mà không gây damage |
 | **12 màn đấu** | Dojo · Night Street · Stadium · Forest · Deep Space · Sunset Roof · Volcano · Sky Temple · Frozen Peak · Desert Ruins · Crystal Cave · Sakura Garden — mỗi màn có một ô dán ảnh nền riêng |
 | **3 chế độ** | 1v1 · hỗn chiến 3–6 người · đánh đội 2–4 đội |
 | **Giao diện hiện đại** | hệ màu graphite/navy, điểm nhấn cyan–gold tiết chế, màn chọn toàn màn hình, bảng hồ sơ gọn và HUD trong trận dễ đọc trên cả desktop lẫn điện thoại |
@@ -150,6 +150,6 @@ Danh sách đầy đủ và mọi ghi chú về cơ chế nằm trong [`CLAUDE.m
 
 ## Conan Edogawa
 
-Conan is a **Strategist / Controller** built around **Detective's Insight**. Clues are stored per enemy (0–4), and four Clues create **Case Solved**, which is the only state that unlocks **One Truth Prevails**. The implementation intentionally has no low-HP awakening, healing, resurrection, lethal weapon, homing football, or hard-coded maximum HP.
+Conan is a **Strategist / Controller** built around a deliberately slow clue loop. Clues are stored per enemy (0–8). Every landed basic Deduction gives one Clue; auxiliary Clues from reading an enemy active skill, landing the Wristwatch, or making that enemy miss during one Skateboard ride count toward the same total. **8 total Clues = Case Solved**. Case Solved is spent on **Decisive Evidence / One Truth Prevails**, a low-damage stun with no football involved.
 
-Core values: Soccer Ball Shot 18 / 0.9s; Power-Enhancing Kick Shoes 85 / 7s / 0.8s stun; Stun-Gun Wristwatch 5 / 10s with Drowsy → 2.5s Sleep and 60-damage early wake; Turbo Engine Skateboard 1.8s / 9s; One Truth Prevails 140 / 12s, conditional on four Clues.
+Core values: Deduction 6 damage / 1.6s and +1 Clue on hit; Case Solved at 8 total Clues including auxiliary Clues; Soccer Ball Shot is the **only football attack**, 85 damage / 15s / 3s stun / about 35% arena knockback; Stun-Gun Wristwatch 2 / 12s and +1 auxiliary Clue on hit with Drowsy → 2.5s Sleep and 60-damage early wake; Turbo Engine Skateboard collision 18 / 10s with one miss-read Clue per enemy/ride; Decisive Evidence 38 damage + 1.5s stun. No low-HP awakening, healing, resurrection, lethal weapon, or hard-coded maximum HP.

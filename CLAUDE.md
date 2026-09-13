@@ -3890,8 +3890,9 @@ lớp để anh vào sân), `#testSuz3` (ép anh rời sàn → form 3), `#testS
 
 - All Conan-facing game text is English; Japanese character audio may be supplied later.
 - Never hard-code Conan's Maximum HP inside `CONAN`; use the shared `HP.conan` value.
-- Clues are per enemy and cap at four. They never directly increase damage or apply a debuff.
+- Clues are per enemy and cap at eight. A landed basic Deduction always adds exactly one Clue. Auxiliary Clues from an observed enemy active skill, a landed Wristwatch, and at most one Skateboard miss-read per enemy/ride count toward the same total.
+- Eight total Clues = Case Solved. Case Solved is consumed by Decisive Evidence / One Truth Prevails: 38 damage + 1.5s stun, and it uses evidence rather than a football.
+- The only football attack is Soccer Ball Shot through the Power-Enhancing Kick Shoes: 85 damage, 15s cooldown, 3s stun, about 35% arena knockback.
+- Conan's sustained damage and attack speed are intentionally low: Deduction is 6 damage every 1.6s; Wristwatch is 2 damage; Skateboard collision is 18 damage.
 - No low-HP awakening, comeback buff, healing, resurrection, Shinichi transformation, firearm or lethal weapon.
-- Soccer Ball Shot never stuns/knocks back. Wristwatch damage stays at 5. Sleep wakes early at 60 damage and then applies Groggy.
 - Skateboard is not invulnerability. Slow/root cannot pin its own movement, but stun/knockdown still can.
-- One Truth Prevails requires Case Solved and spends the four Clues even if the bank shot is blocked or misses.

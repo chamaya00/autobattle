@@ -1944,7 +1944,7 @@ const SETS=[
   {key:'beatrice', name:'Beatrice', poses:[['idle','Thủ thế (khoanh tay)'],['minya','Minya (bắn tinh thể)'],['shamac','Al Shamac (giơ tay)'],['murak','Murak (bay lên, vòng phép)'],['emt','E.M.T (kén kết giới)'],['elminya','El Minya (mở sách, vòng phép)'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)'],['win','Ăn mừng (đóng sách, khoanh tay)'],['down','Gục xuống (quỳ rồi ngã)']]},
   {key:'tanjiro', name:'Tanjiro Kamado', poses:[['idle','Thủ thế với Nichirin Sword'],['run','Chạy vào sân'],['draw','Rút Nichirin Sword'],['ready','Hạ thấp trọng tâm'],['slash1','First Slash'],['slash2','Second Slash'],['surface','Water Surface Slash'],['wheel','Water Wheel'],['flux','Constant Flux'],['sun','Dragon Sun Halo Head Dance'],['mark','Demon Slayer Mark'],['ultimate','Sun Breathing: Thirteenth Form'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)'],['win','Tra kiếm và cúi đầu'],['down','Quỳ rồi ngã xuống']]},
   {key:'gojo', name:'Satoru Gojo', poses:[['idle','Combat stance'],['entry','Space distortion entrance'],['adjust','Adjust blindfold'],['strike1','Limitless Combat · strike 1'],['strike2','Limitless Combat · strike 2'],['bluehit','Blue-Enhanced Strike'],['blue','Cursed Technique Lapse: Blue'],['red','Cursed Technique Reversal: Red'],['purple','Hollow Technique: Purple'],['domain','Domain Expansion: Unlimited Void'],['hurt','Hit reaction'],['injured','Injured'],['win','Victory'],['down','Defeat']]},
-  {key:'conan', name:'Conan Edogawa', poses:[['idle','Idle'],['board','Turbo Engine Skateboard entry'],['jump','Jump off skateboard'],['stop','Stop skateboard with foot'],['adjust','Adjust glasses'],['basic','Soccer Ball Shot'],['kick','Power-Enhancing Kick Shoes'],['watch','Stun-Gun Wristwatch'],['skate','Turbo Engine Skateboard'],['ultimate','One Truth Prevails'],['hurt','Hit reaction'],['win','Victory'],['down','Defeat']]},
+  {key:'conan', name:'Conan Edogawa', poses:[['idle','Idle'],['board','Turbo Engine Skateboard entry'],['jump','Jump off skateboard'],['stop','Stop skateboard with foot'],['adjust','Adjust glasses'],['basic','Deduction / Clue'],['kick','Soccer Ball Shot · Power-Enhancing Kick Shoes'],['watch','Stun-Gun Wristwatch'],['skate','Turbo Engine Skateboard'],['ultimate','Decisive Evidence · One Truth Prevails'],['hurt','Hit reaction'],['win','Victory'],['down','Defeat']]},
   {key:'ayanokouji', name:'Ayanokouji', poses:[['idle','Đứng'],['guard','Đỡ đòn thay Horikita'],['strike','Đòn đột kích'],['leave','Rời sàn đấu']]},
   {key:'nara', name:'Con nai nhà Nara', poses:[['idle','Đứng cạnh Shikamaru trong lãnh địa']]},
   {key:'garden', name:'Phong cảnh lãnh địa', poses:[['idle','Ảnh nền khu rừng nhà Nara']]},
@@ -2484,14 +2484,16 @@ const GOJO={
    shared HP.conan entry, exactly like the other modern fighters. */
 const CONAN={
   entranceT:gs(1.5), entrancePh:[gs(.6),gs(1),gs(1.3),gs(1.5)],
-  clueMax:4, observeRange:520,
-  basicDmg:18, basicCd:gs(.9), basicWind:gs(.16), basicSpeed:490, basicRange:430,
-  kickDmg:85, kickCd:gs(7), kickWind:gs(.6), kickSpeed:540, kickStun:gs(.8), kickKb:690,
-  needleDmg:5, needleCd:gs(10), needleWind:gs(.32), needleSpeed:610,
+  clueMax:8,
+  /* Basic is now the clue engine: slow, low-damage deduction checks instead of footballs. */
+  basicDmg:6, basicCd:gs(1.6), basicWind:gs(.55), basicRange:360,
+  /* The ONLY football attack: exactly once every 15 player seconds when available. */
+  kickDmg:85, kickCd:gs(15), kickWind:gs(.6), kickSpeed:540, kickStun:gs(3), kickKb:1300,
+  needleDmg:2, needleCd:gs(12), needleWind:gs(.38), needleSpeed:610,
   drowsyT:gs(.8), sleepT:gs(2.5), wakeDmg:60, groggyT:gs(2),
-  skateCd:gs(9), skateT:gs(1.8), skateMove:2.5, skateTake:.50, skateDmg:35, skatePush:470,
-  ultDmg:140, ultCd:gs(12), ultWind:gs(1.2), ultSpeed:560, ultDown:gs(1.5), ultKb:610,
-  weakT:gs(5), weakTake:1.20, weakAcc:.75,
+  skateCd:gs(10), skateT:gs(1.8), skateMove:2.5, skateTake:.50, skateDmg:18, skatePush:390,
+  /* Eight total Clues solve a case. Basic hits are the main source; auxiliary Clues also count. */
+  ultDmg:38, ultCd:gs(.5), ultWind:gs(.7), ultStun:gs(1.5),
   midMin:175, midMax:285
 };
 
@@ -2908,17 +2910,17 @@ const CHARS={
     role:'ranged', want:225, speed:106, dodge:.78, male:true, spriteH:88,
     skills:[
       `<b>Entrance · Turbo Engine Skateboard</b> Exactly ${rts(CONAN.entranceT)}s: skate in, jump off, stop the board with one foot, then adjust the glasses. Every opponent waits until the sequence ends.`,
-      `<b>Special Mechanic · Detective's Insight</b> Conan tracks up to ${CONAN.clueMax} <b>Clue</b> stacks separately on every enemy. A Clue is gained when that enemy uses an active skill inside observation range, when Conan lands three Soccer Ball Shots on that same enemy, when the Stun-Gun Wristwatch hits, or once per Skateboard use when that enemy misses Conan. Clues do not increase damage or apply a debuff. At four stacks: <b>Case Solved</b>.`,
-      `<b>Basic · Soccer Ball Shot</b> ${CONAN.basicDmg} damage every ${rts(CONAN.basicCd)}s. The Anywhere Ball Dispensing Belt creates and inflates the ball before Conan kicks it in a straight line. It stops on the first fighter and never stuns or knocks back. Every third landed basic on the same target adds one Clue.`,
-      `<b>1 · Power-Enhancing Kick Shoes</b> ${CONAN.kickDmg} damage · ${rts(CONAN.kickCd)}s cooldown. After ${rts(CONAN.kickWind)}s Conan kicks a larger belt-made ball in a fixed straight line. It hits the first fighter, knocks them back about 18% of the arena, stuns for ${rts(CONAN.kickStun)}s and interrupts stationary wind-ups. If Conan is stunned before the kick, the ball disappears and only 50% cooldown remains.`,
-      `<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter. A hit adds one Clue, applies <b>Drowsy</b> for ${rts(CONAN.drowsyT)}s (−50% move, −30% cast speed), then <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Sleep ends early after ${CONAN.wakeDmg} damage; an early wake applies <b>Groggy</b> for ${rts(CONAN.groggyT)}s (−30% move, −20% cast speed).`,
-      `<b>3 · Turbo Engine Skateboard</b> ${rts(CONAN.skateT)}s · ${rts(CONAN.skateCd)}s cooldown. +150% move speed, −50% damage taken and movement ignores slow/root, but Conan is not invulnerable and can still be stunned or knocked down. He cannot basic attack or use another gadget while riding. The first collision deals ${CONAN.skateDmg} damage and pushes sideways without stun.`,
-      `<b>Ultimate · One Truth Prevails</b> ${CONAN.ultDmg} damage · ${rts(CONAN.ultCd)}s cooldown. <b>Locked – Gather 4 Clues</b>. It can only target an enemy with <b>Case Solved</b>. Conan locks them with Criminal Tracking Glasses, distracts them with the Voice-Changing Bowtie, says “One Truth Prevails!”, then banks a large ball off the arena wall into their blind spot. A hit knocks down for ${rts(CONAN.ultDown)}s and applies <b>Weakness Exposed</b> for ${rts(CONAN.weakT)}s: +20% damage from Conan only and −25% accuracy. Teleport, invulnerability, Absolute Barrier or instant reposition can still avoid it; a block or miss still consumes all four Clues.`
+      `<b>Special Mechanic · Detective's Insight</b> Every landed basic deduction adds exactly <b>1 Clue</b> to that enemy. <b>Auxiliary Clues count toward the same total</b>: observing that enemy use an active skill in range, landing the Stun-Gun Wristwatch, or making that enemy miss Conan during one Skateboard ride can each add 1 Clue. At ${CONAN.clueMax} total Clues the target becomes <b>Case Solved</b>.`,
+      `<b>Basic · Deduction</b> ${CONAN.basicDmg} damage every ${rts(CONAN.basicCd)}s after a ${rts(CONAN.basicWind)}s thinking beat. No football is created. Every landed deduction adds exactly <b>1 Clue</b>. Case Solved triggers at <b>${CONAN.clueMax} total Clues</b>, including auxiliary Clues.`,
+      `<b>1 · Soccer Ball Shot · Power-Enhancing Kick Shoes</b> ${CONAN.kickDmg} damage · <b>${rts(CONAN.kickCd)}s cooldown</b>. This is Conan's only football attack. After ${rts(CONAN.kickWind)}s he kicks one large belt-made ball in a fixed straight line. The first fighter hit is knocked back about <b>35% of the arena</b> and stunned for <b>${rts(CONAN.kickStun)}s</b>. If Conan is stunned before the kick, the ball disappears and only 50% cooldown remains.`,
+      `<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter, adds <b>1 auxiliary Clue</b>, and applies <b>Drowsy</b> for ${rts(CONAN.drowsyT)}s (−50% move, −30% cast speed), then <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Sleep ends early after ${CONAN.wakeDmg} damage; an early wake applies <b>Groggy</b> for ${rts(CONAN.groggyT)}s.`,
+      `<b>3 · Turbo Engine Skateboard</b> ${rts(CONAN.skateT)}s · ${rts(CONAN.skateCd)}s cooldown. +150% move speed, −50% damage taken and movement ignores slow/root, but Conan is not invulnerable and can still be stunned or knocked down. The first collision deals only ${CONAN.skateDmg} damage and pushes sideways without stun. Each enemy can grant at most <b>1 auxiliary Clue per ride</b> if their attack misses Conan during the ride.`,
+      `<b>Case Solved · Decisive Evidence / One Truth Prevails</b> <b>Locked – Gather ${CONAN.clueMax} Clues</b>. When a target reaches Case Solved, Conan spends the case after a ${rts(CONAN.ultWind)}s proof-selection beat and presents the decisive evidence directly — <b>no football</b>. A landed conclusion deals ${CONAN.ultDmg} damage and stuns for ${rts(CONAN.ultStun)}s. A dodge, invulnerability or full barrier still consumes the solved case.`
     ],
     init(f){
-      f.cds={s1:0,s2:0,s3:0,s4:0,basic:0};
+      f.cds={s1:CONAN.kickCd*.65,s2:CONAN.needleCd*.55,s3:CONAN.skateCd*.45,s4:0,basic:0};
       f.conanEntry=null; f.conanAct=null; f.conanShots=[]; f.conanSkate=null;
-      f.conanClues=new Map(); f.conanBasicHits=new Map(); f.conanSeenCds=new Map(); f.conanDamageBy=new Map();
+      f.conanClues=new Map(); f.conanSeenCds=new Map(); f.conanDamageBy=new Map();
       f.conanWonSaid=false; conanEnter(f);
     },
     think(f,e,d,auto){
@@ -2926,18 +2928,18 @@ const CHARS={
       e=nearestFoe(f); if(!e)return; d=dist(f,e);
       const solved=conanSolvedTarget(f);
       if(f.cds.s4<=0&&solved&&(auto||keys['u'])){ f.cds.s4=CONAN.ultCd; conanUltimate(f,solved); return; }
-      if(f.cds.s2<=0&&d<=CONAN.basicRange&&(auto||keys['k'])){ f.cds.s2=CONAN.needleCd; conanNeedle(f,e); return; }
+      if(f.cds.basic<=0&&d<=CONAN.basicRange&&auto){ conanBasic(f,e); return; }
       if(f.cds.s1<=0&&d<=CONAN.basicRange&&(auto||keys['j'])){ f.cds.s1=CONAN.kickCd; conanKick(f,e); return; }
+      if(f.cds.s2<=0&&d<=CONAN.basicRange&&(auto||keys['k'])){ f.cds.s2=CONAN.needleCd; conanNeedle(f,e); return; }
       if(f.cds.s3<=0&&(auto?d<165:keys['l'])){ f.cds.s3=CONAN.skateCd; conanSkateboard(f,e); return; }
-      if(auto&&f.cds.basic<=0&&d<=CONAN.basicRange) conanBasic(f,e);
     },
     gauge:f=>{
       const solved=conanSolvedTarget(f), n=conanBestClueCount(f);
       if(solved){
         const w=Math.max(0,f.cds.s4||0);
-        return {pct:w<=0?1:clamp(1-w/CONAN.ultCd,0,1),fill:'#FF4A4A',txt:w<=0?'Case Solved – One Truth Prevails ready':`Case Solved – ${(w*RT).toFixed(1)}s`};
+        return {pct:w<=0?1:clamp(1-w/CONAN.ultCd,0,1),fill:'#FF4A4A',txt:w<=0?'Case Solved – Decisive Evidence ready':`Case Solved – ${(w*RT).toFixed(1)}s`};
       }
-      return {pct:n/CONAN.clueMax,fill:'#4B8BFF',txt:n?`Clue ×${n}`:'Locked – Gather 4 Clues'};
+      return {pct:n/CONAN.clueMax,fill:'#4B8BFF',txt:n?`Clue ×${n}`:`Locked – Gather ${CONAN.clueMax} Clues`};
     }
   }
 
@@ -3220,17 +3222,17 @@ const DEX={
       {tag:'3',name:'Hollow Technique: Purple',vi:`Consumes every Infinity charge immediately, then fires a fixed line for ${GOJO.purpleDmg}. It ignores 30% of damage reduction, pierces at most two targets and deals ${Math.round(GOJO.purpleSecond*100)}% damage to the second.`,en:`Consumes every Infinity charge immediately, then fires a fixed line for ${GOJO.purpleDmg}. It ignores 30% of damage reduction, pierces at most two targets and deals ${Math.round(GOJO.purpleSecond*100)}% damage to the second.`},
       {tag:'U',name:'Domain Expansion: Unlimited Void',vi:`Deals no damage. Enemies caught at formation lose all actions for ${rts(GOJO.overloadT)}s, then suffer −50% move and −40% attack/cast speed for ${rts(GOJO.overwhelmedT)}s.`,en:`Deals no damage. Enemies caught at formation lose all actions for ${rts(GOJO.overloadT)}s, then suffer −50% move and −40% attack/cast speed for ${rts(GOJO.overwhelmedT)}s.`}
     ]}
-  ,conan:{ role:{vi:'Strategist · Controller',en:'Strategist · Controller'}, st:{pow:3,spd:4,rng:4,def:2},
-    pw:{dmg:58,dur:46,mob:82,as:76,rng:78,cc:88,uti:94,con:72,cmb:20},
-    bio:{vi:'A ranged strategist who wins by reading opponents rather than overpowering them. Clues are tracked per enemy; four unlock Case Solved and the conditional One Truth Prevails finisher. No low-HP transformation, healing or resurrection.',
-         en:'A ranged strategist who wins by reading opponents rather than overpowering them. Clues are tracked per enemy; four unlock Case Solved and the conditional One Truth Prevails finisher. No low-HP transformation, healing or resurrection.'},
+  ,conan:{ role:{vi:'Strategist · Controller',en:'Strategist · Controller'}, st:{pow:2,spd:3,rng:4,def:2},
+    pw:{dmg:42,dur:46,mob:82,as:48,rng:74,cc:92,uti:90,con:72,cmb:20},
+    bio:{vi:'A slower controller built around deduction rather than damage. Every landed basic adds one Clue; auxiliary reads also count, and eight total Clues solve the case. His only football attack is the 15-second Soccer Ball Shot.',
+         en:'A slower controller built around deduction rather than damage. Every landed basic adds one Clue; auxiliary reads also count, and eight total Clues solve the case. His only football attack is the 15-second Soccer Ball Shot.'},
     skills:[
-      {tag:'P',name:"Detective's Insight",vi:'Tracks Clues separately on every enemy. Active-skill reads, three landed basic shots, a Wristwatch hit or one Skateboard miss-read can add a Clue. At four: Case Solved.',en:'Tracks Clues separately on every enemy. Active-skill reads, three landed basic shots, a Wristwatch hit or one Skateboard miss-read can add a Clue. At four: Case Solved.'},
-      {tag:'1',name:'Soccer Ball Shot',vi:`A straight ${CONAN.basicDmg}-damage projectile every ${rts(CONAN.basicCd)}s. No stun and no knockback; every third landed shot on the same enemy adds one Clue.`,en:`A straight ${CONAN.basicDmg}-damage projectile every ${rts(CONAN.basicCd)}s. No stun and no knockback; every third landed shot on the same enemy adds one Clue.`},
-      {tag:'1',name:'Power-Enhancing Kick Shoes',vi:`A ${CONAN.kickDmg}-damage straight shot after ${rts(CONAN.kickWind)}s, with knockback and ${rts(CONAN.kickStun)}s stun. A pre-release stun cancels it for half cooldown.`,en:`A ${CONAN.kickDmg}-damage straight shot after ${rts(CONAN.kickWind)}s, with knockback and ${rts(CONAN.kickStun)}s stun. A pre-release stun cancels it for half cooldown.`},
-      {tag:'2',name:'Stun-Gun Wristwatch',vi:`One needle for ${CONAN.needleDmg}; Drowsy → Asleep. Sleep breaks after ${CONAN.wakeDmg} damage and then becomes Groggy. A landed needle adds one Clue.`,en:`One needle for ${CONAN.needleDmg}; Drowsy → Asleep. Sleep breaks after ${CONAN.wakeDmg} damage and then becomes Groggy. A landed needle adds one Clue.`},
-      {tag:'3',name:'Turbo Engine Skateboard',vi:`For ${rts(CONAN.skateT)}s Conan moves at 2.5× base speed and takes half damage. Slow/root cannot stop the board, but stun and knockdown still can.`,en:`For ${rts(CONAN.skateT)}s Conan moves at 2.5× base speed and takes half damage. Slow/root cannot stop the board, but stun and knockdown still can.`},
-      {tag:'U',name:'One Truth Prevails',vi:`Locked until one enemy reaches ${CONAN.clueMax} Clues. A banked blind-spot shot deals ${CONAN.ultDmg}, knocks down and applies Weakness Exposed for ${rts(CONAN.weakT)}s. A miss still spends the case.`,en:`Locked until one enemy reaches ${CONAN.clueMax} Clues. A banked blind-spot shot deals ${CONAN.ultDmg}, knocks down and applies Weakness Exposed for ${rts(CONAN.weakT)}s. A miss still spends the case.`}
+      {tag:'P',name:"Detective's Insight",vi:`Every landed basic gives +1 Clue. Auxiliary Clues from active-skill reads, Wristwatch hits and one Skateboard miss-read per enemy/ride count toward the same ${CONAN.clueMax}-Clue Case Solved threshold.`,en:`Every landed basic gives +1 Clue. Auxiliary Clues from active-skill reads, Wristwatch hits and one Skateboard miss-read per enemy/ride count toward the same ${CONAN.clueMax}-Clue Case Solved threshold.`},
+      {tag:'1',name:'Deduction',vi:`A slow ${CONAN.basicDmg}-damage basic every ${rts(CONAN.basicCd)}s. No ball; every landed deduction adds exactly one Clue toward ${CONAN.clueMax}.`,en:`A slow ${CONAN.basicDmg}-damage basic every ${rts(CONAN.basicCd)}s. No ball; every landed deduction adds exactly one Clue toward ${CONAN.clueMax}.`},
+      {tag:'1',name:'Soccer Ball Shot',vi:`The only football attack: ${CONAN.kickDmg} damage every ${rts(CONAN.kickCd)}s, ${rts(CONAN.kickStun)}s stun and about 35% arena knockback.`,en:`The only football attack: ${CONAN.kickDmg} damage every ${rts(CONAN.kickCd)}s, ${rts(CONAN.kickStun)}s stun and about 35% arena knockback.`},
+      {tag:'2',name:'Stun-Gun Wristwatch',vi:`Only ${CONAN.needleDmg} damage; a landed needle adds 1 auxiliary Clue, then Drowsy → Asleep. Sleep breaks after ${CONAN.wakeDmg} damage and becomes Groggy.`,en:`Only ${CONAN.needleDmg} damage; a landed needle adds 1 auxiliary Clue, then Drowsy → Asleep. Sleep breaks after ${CONAN.wakeDmg} damage and becomes Groggy.`},
+      {tag:'3',name:'Turbo Engine Skateboard',vi:`For ${rts(CONAN.skateT)}s Conan moves at 2.5× base speed and takes half damage. First collision is only ${CONAN.skateDmg}; one miss-read per enemy/ride can add an auxiliary Clue.`,en:`For ${rts(CONAN.skateT)}s Conan moves at 2.5× base speed and takes half damage. First collision is only ${CONAN.skateDmg}; one miss-read per enemy/ride can add an auxiliary Clue.`},
+      {tag:'U',name:'Decisive Evidence · One Truth Prevails',vi:`At ${CONAN.clueMax} Clues Conan spends Case Solved on direct evidence: ${CONAN.ultDmg} damage and ${rts(CONAN.ultStun)}s stun. No football.`,en:`At ${CONAN.clueMax} Clues Conan spends Case Solved on direct evidence: ${CONAN.ultDmg} damage and ${rts(CONAN.ultStun)}s stun. No football.`}
     ]}
 
 };
@@ -5475,7 +5477,6 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
   }
   const opening=tanOpeningReady(t,src,kind);
   let acc=accuracyMul===undefined?1:accuracyMul;
-  if(src&&src.conanWeak>0) acc*=CONAN.weakAcc;
   if(tryEvade(t,kind,opening?Math.min(TAN.threadDodgeMul,acc):acc)){
     if(t.key==='conan'&&!t.swapAs&&t.conanSkate&&src&&src.team!==t.team) conanSkateMiss(t,src);
     return false;
@@ -5515,7 +5516,6 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
   if(t.dash&&t.dash.guard) amt*=dm(CHICHI_DASH_RES);   // đang lao tới: nhận ít sát thương hơn
   if(t.key==='tanjiro'&&t.tanUlt) amt*=dm(TAN.ultTake);
   if(t.key==='conan'&&!t.swapAs&&t.conanSkate) amt*=CONAN.skateTake;
-  if(t.conanWeak>0&&src&&t.conanWeakBy===src) amt*=CONAN.weakTake;
   /* Sổ sát thương gây ra — Small Light chọn mục tiêu theo nó, và giải đấu lấy nó làm
      hiệu số. Hai luật:
        · VIỆN BINH ghi công cho CHỦ (`src.master`). Goku / Gohan / Ayanokouji là người
@@ -10022,31 +10022,29 @@ function conanRecordIncoming(f,src,amt){
 function conanWatchSkills(f){
   const M=conanMap(f,'conanSeenCds');
   for(const o of G.fighters){
-    if(!foeOk(f,o)||dist(f,o)>CONAN.observeRange)continue;
+    if(!foeOk(f,o)||dist(f,o)>360)continue;
     const c=o.cds||{}, now=[c.s1||0,c.s2||0,c.s3||0,c.s4||0], prev=M.get(o);
     if(prev){
       let used=false;
-      for(let i=0;i<4;i++) if(now[i]>prev[i]+gs(.18)){ used=true; break; }
-      if(used) conanAddClue(f,o,'ACTIVE SKILL');
+      for(let i=0;i<4;i++) if(now[i]>prev[i]+gs(.18)){used=true;break;}
+      if(used) conanAddClue(f,o,'ACTIVE SKILL READ');
     }
     M.set(o,now);
   }
 }
 function conanOnBasicHit(f,t){
-  const M=conanMap(f,'conanBasicHits'), n=(M.get(t)||0)+1;
-  if(n>=3){ M.set(t,0); conanAddClue(f,t,'THREE BASIC HITS'); }
-  else M.set(t,n);
+  conanAddClue(f,t,'DEDUCTION');
 }
 function conanSkateMiss(f,src){
-  const S=f.conanSkate; if(!S)return;
+  const S=f.conanSkate;if(!S)return;
   if(!(S.missed instanceof Set))S.missed=new Set();
-  const who=src.summon?src.master:src;
-  if(!who||S.missed.has(who))return;
-  S.missed.add(who); conanAddClue(f,who,'SKATEBOARD MISS');
+  const who=src&&src.summon?src.master:src;
+  if(!who||who.team===f.team||S.missed.has(who))return;
+  S.missed.add(who);conanAddClue(f,who,'SKATEBOARD READ');
 }
 function conanBasic(f,e){
   if(!e||!e.alive)return; f.cds.basic=CONAN.basicCd;
-  f.conanAct={kind:'basic',t:0,target:e,fired:false}; setPose(f,'basic',CONAN.basicWind); aim(f,e,.25);
+  f.conanAct={kind:'basic',t:0,target:e,fired:false}; setPose(f,'adjust',CONAN.basicWind); aim(f,e,.15);
 }
 function conanKick(f,e){
   if(!e||!e.alive)return;
@@ -10068,9 +10066,9 @@ function conanSkateboard(f,e){
 function conanUltimate(f,t){
   if(!t||!foeOk(f,t)||(conanMap(f,'conanClues').get(t)||0)<CONAN.clueMax)return;
   conanSetClues(f,t,0);
-  const wallX=t.x>W/2?W-PAD-8:PAD+8;
-  f.conanAct={kind:'ultimate',t:0,target:t,wallX,voice:false,fired:false};
-  setPose(f,'ultimate',CONAN.ultWind); aim(f,t,.2);
+  f.conanAct={kind:'ultimate',t:0,target:t,voice:false,fired:false};
+  setPose(f,'ultimate',CONAN.ultWind); aim(f,t,.1);
+  G.floats.push({x:f.x,y:f.y-112,txt:'DECISIVE EVIDENCE',color:'#E9F1FF',life:1,ml:1,banner:true,gold:true,sc:.55});
 }
 function conanInterrupt(f){
   const A=f&&f.conanAct; if(!A||A.kind!=='kick'||A.fired)return false;
@@ -10080,14 +10078,9 @@ function conanInterrupt(f){
 }
 function conanShot(f,type,t){
   if(!t||!t.alive)return;
-  let a=Math.atan2(bodyCY(t)-(f.y-22),t.x-f.x), speed=CONAN.basicSpeed, r=8;
-  if(type==='kick'){speed=CONAN.kickSpeed;r=13;}
-  if(type==='needle'){speed=CONAN.needleSpeed;r=3;}
+  const a=Math.atan2(bodyCY(t)-(f.y-22),t.x-f.x);
+  const speed=type==='needle'?CONAN.needleSpeed:CONAN.kickSpeed, r=type==='needle'?3:13;
   f.conanShots.push({type,x:f.x+Math.cos(a)*23,y:f.y-22+Math.sin(a)*23,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r,life:gs(2),target:t});
-}
-function conanUltimateShot(f,A){
-  const dx=A.wallX-f.x,dy=(A.target&&A.target.alive?A.target.y:f.y)-f.y,m=Math.hypot(dx,dy*.25)||1;
-  f.conanShots.push({type:'ultimate',stage:0,x:f.x,y:f.y-20,vx:dx/m*CONAN.ultSpeed,vy:dy*.25/m*CONAN.ultSpeed,r:16,life:gs(3),target:A.target,wallX:A.wallX});
 }
 function conanSleepDamage(t,amt){
   if(!t||!(t.conanSleep>0)||amt<=0)return;
@@ -10098,7 +10091,6 @@ function conanSleepDamage(t,amt){
   }
 }
 function conanStatus(f,dt){
-  if(f.conanWeak>0) f.conanWeak=Math.max(0,f.conanWeak-dt);
   if(f.conanDrowsy>0){
     const before=f.conanDrowsy; f.conanDrowsy=Math.max(0,f.conanDrowsy-dt);
     f.moveMul*=.50; f.castMul*=.70;
@@ -10124,43 +10116,18 @@ function conanShotsTick(f,dt){
     const p=f.conanShots[i]; p.life-=dt;
     p.x+=p.vx*dt; p.y+=p.vy*dt;
     let gone=p.life<=0||p.y<PAD-20||p.y>H-PAD+20||p.x<PAD-35||p.x>W-PAD+35;
-    if(p.type==='ultimate'&&p.stage===0){
-      const reached=(p.wallX<W/2?p.x<=p.wallX:p.x>=p.wallX);
-      if(reached){
-        p.x=p.wallX; p.stage=1;
-        const t=p.target;
-        if(!t||!t.alive){gone=true;}
-        else{
-          const dx=t.x-p.x,dy=bodyCY(t)-p.y,m=Math.hypot(dx,dy)||1;
-          p.vx=dx/m*CONAN.ultSpeed;p.vy=dy/m*CONAN.ultSpeed;
-          ring(p.x,p.y,38,'#E9F1FF',.25);
-        }
-      }
-    }
     if(!gone){
       for(const o of G.fighters){
         if(!foeOk(f,o)||!hitsBody(p,o))continue;
-        if(p.type==='basic'){
-          if(hurt(o,CONAN.basicDmg,f,false,'conanBall')) conanOnBasicHit(f,o);
-        }else if(p.type==='kick'){
-          const hit=hurt(o,CONAN.kickDmg,f,'POWER KICK','conanKick');
+        if(p.type==='kick'){
+          const hit=hurt(o,CONAN.kickDmg,f,'SOCCER BALL SHOT','conanKick');
           if(hit){knock(o,p.vx,p.vy,CONAN.kickKb);stunFx(o,CONAN.kickStun,'spin');}
         }else if(p.type==='needle'){
           const hit=hurt(o,CONAN.needleDmg,f,false,'conanNeedle');
           if(hit){
-            conanAddClue(f,o,'STUN-GUN WRISTWATCH'); o.conanDrowsy=CONAN.drowsyT; o.conanSleep=0; o.conanGroggy=0;
+            conanAddClue(f,o,'STUN-GUN WRISTWATCH');
+            o.conanDrowsy=CONAN.drowsyT; o.conanSleep=0; o.conanGroggy=0;
             G.floats.push({x:o.x,y:o.y-104,txt:'DROWSY',color:'#AFC3EE',life:.9,ml:.9,banner:true,sc:.52});
-          }
-        }else if(p.type==='ultimate'){
-          if(o===p.target){
-            const hit=hurt(o,CONAN.ultDmg,f,'ONE TRUTH PREVAILS','conanUltimate',undefined,false,0);
-            if(hit){
-              knock(o,p.vx,p.vy,CONAN.ultKb); stunFx(o,CONAN.ultDown,'down');
-              o.conanWeak=CONAN.weakT; o.conanWeakBy=f;
-              G.floats.push({x:o.x,y:o.y-112,txt:'WEAKNESS EXPOSED',color:'#FF6464',life:1.15,ml:1.15,banner:true,gold:true,sc:.54});
-            }
-          }else{
-            G.floats.push({x:o.x,y:o.y-98,txt:'SHOT BLOCKED',color:'#D8D5E7',life:.8,ml:.8,banner:true,sc:.46});
           }
         }
         gone=true; break;
@@ -10203,12 +10170,23 @@ function conanTick(f,dt){
   const A=f.conanAct;if(!A)return;
   A.t+=dt; f.lock=Math.max(f.lock,.06);
   if(A.kind==='kick'&&f.stun>0&&!A.fired){conanInterrupt(f);return;}
-  if(A.kind==='basic'&&A.t>=CONAN.basicWind&&!A.fired){A.fired=true;conanShot(f,'basic',A.target);f.conanAct=null;f.pose='idle';f.lock=0;return;}
+  if(A.kind==='basic'&&A.t>=CONAN.basicWind&&!A.fired){
+    A.fired=true; const t=A.target;
+    if(t&&foeOk(f,t)&&hurt(t,CONAN.basicDmg,f,false,'conanDeduction')) conanOnBasicHit(f,t);
+    f.conanAct=null;f.pose='idle';f.lock=0;return;
+  }
   if(A.kind==='kick'&&A.t>=CONAN.kickWind&&!A.fired){A.fired=true;conanShot(f,'kick',A.target);f.conanAct=null;f.pose='idle';f.lock=0;return;}
   if(A.kind==='needle'&&A.t>=CONAN.needleWind&&!A.fired){A.fired=true;conanShot(f,'needle',A.target);f.conanAct=null;f.pose='idle';f.lock=0;return;}
   if(A.kind==='ultimate'){
     if(!A.voice&&A.t>=gs(.35)){A.voice=true;if(A.target&&A.target.alive)A.target.lock=Math.max(A.target.lock,gs(.18));}
-    if(A.t>=CONAN.ultWind&&!A.fired){A.fired=true;conanUltimateShot(f,A);f.conanAct=null;f.pose='idle';f.lock=0;return;}
+    if(A.t>=CONAN.ultWind&&!A.fired){
+      A.fired=true; const t=A.target;
+      if(t&&foeOk(f,t)){
+        const hit=hurt(t,CONAN.ultDmg,f,'DECISIVE EVIDENCE','conanEvidence');
+        if(hit){stunFx(t,CONAN.ultStun,'spin'); ring(t.x,t.y-22,72,'#E9F1FF',.32);}
+      }
+      f.conanAct=null;f.pose='idle';f.lock=0;return;
+    }
   }
 }
 
@@ -14797,17 +14775,21 @@ function drawConanFx(){
   for(const f of G.fighters){
     if(!f||f.key!=='conan'||f.swapAs)continue;
     const A=f.conanAct;
-    if(A&&['basic','kick','ultimate'].includes(A.kind)){
-      const wind=A.kind==='kick'?CONAN.kickWind:(A.kind==='ultimate'?CONAN.ultWind:CONAN.basicWind);
-      const q=clamp(A.t/wind,0,1), rr=(A.kind==='kick'||A.kind==='ultimate'?13:8)*(.25+.75*q);
+    if(A&&A.kind==='kick'){
+      const q=clamp(A.t/CONAN.kickWind,0,1), rr=13*(.25+.75*q);
       ctx.globalAlpha=.9;ctx.fillStyle='#EEF3FA';ctx.beginPath();ctx.arc(f.x+8,f.y-24,rr,0,7);ctx.fill();ctx.strokeStyle='#8794A5';ctx.stroke();
+    }else if(A&&A.kind==='ultimate'){
+      const q=clamp(A.t/CONAN.ultWind,0,1);
+      ctx.globalAlpha=.55+.35*q;ctx.fillStyle='#F7F4E8';ctx.strokeStyle='#4B8BFF';ctx.lineWidth=1.6;
+      ctx.fillRect(f.x+14,f.y-66,35,25);ctx.strokeRect(f.x+14,f.y-66,35,25);
+      ctx.strokeStyle='#68758A';ctx.lineWidth=1;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(f.x+20,f.y-60+i*6);ctx.lineTo(f.x+43,f.y-60+i*6);ctx.stroke();}
     }
     for(const p of f.conanShots||[]){
       if(p.type==='needle'){
         ctx.globalAlpha=.9;ctx.strokeStyle='#D9E8FF';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-p.vx*.025,p.y-p.vy*.025);ctx.lineTo(p.x,p.y);ctx.stroke();
       }else{
-        ctx.globalAlpha=.96;ctx.fillStyle=p.type==='ultimate'?'#F8FBFF':'#EEF2F6';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();
-        ctx.strokeStyle=p.type==='ultimate'?'#FF4A4A':'#657180';ctx.lineWidth=1.3;ctx.stroke();
+        ctx.globalAlpha=.96;ctx.fillStyle='#EEF2F6';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();
+        ctx.strokeStyle='#657180';ctx.lineWidth=1.3;ctx.stroke();
       }
     }
     const M=conanMap(f,'conanClues');
@@ -14825,7 +14807,6 @@ function drawConanFx(){
     if(!o||!o.alive)continue;
     if(o.conanDrowsy>0){ctx.globalAlpha=.45;ctx.fillStyle='#B7C9EE';ctx.beginPath();ctx.arc(o.x+18,o.y-60,4,0,7);ctx.fill();}
     if(o.conanSleep>0){ctx.globalAlpha=.8;ctx.font='900 13px "Space Mono",monospace';ctx.fillStyle='#D9E4FF';ctx.fillText('Z',o.x+18,o.y-66);}
-    if(o.conanWeak>0){ctx.globalAlpha=.35;ctx.strokeStyle='#FF6262';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(o.x,o.y-22,30,46,0,0,7);ctx.stroke();}
   }
   ctx.restore();
 }
