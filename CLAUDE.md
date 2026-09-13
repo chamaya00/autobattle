@@ -3884,3 +3884,14 @@ lớp để anh vào sân), `#testSuz3` (ép anh rời sàn → form 3), `#testS
 - Ô tiếng của Horikita/Ayanokouji mới chỉ có tiếng tự tạo trong `synth()`; sáu ô giọng của hai
   người (kể cả hai ô đọc nối tiếp `suz_decide` / `suz_wrong`) đã có **giọng máy dựng sẵn** đúng
   thứ tự `SUZ_DECISIONS` / `SUZ_WRONG`, vẫn chờ file thu thật đè lên.
+
+
+### Conan Edogawa contract
+
+- All Conan-facing game text is English; Japanese character audio may be supplied later.
+- Never hard-code Conan's Maximum HP inside `CONAN`; use the shared `HP.conan` value.
+- Clues are per enemy and cap at four. They never directly increase damage or apply a debuff.
+- No low-HP awakening, comeback buff, healing, resurrection, Shinichi transformation, firearm or lethal weapon.
+- Soccer Ball Shot never stuns/knocks back. Wristwatch damage stays at 5. Sleep wakes early at 60 damage and then applies Groggy.
+- Skateboard is not invulnerability. Slow/root cannot pin its own movement, but stun/knockdown still can.
+- One Truth Prevails requires Case Solved and spends the four Clues even if the bank shot is blocked or misses.

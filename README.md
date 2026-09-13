@@ -146,3 +146,10 @@ node tools/t_voice.js    # bộ giọng dựng sẵn
 ```
 
 Danh sách đầy đủ và mọi ghi chú về cơ chế nằm trong [`CLAUDE.md`](CLAUDE.md).
+
+
+## Conan Edogawa
+
+Conan is a **Strategist / Controller** built around **Detective's Insight**. Clues are stored per enemy (0–4), and four Clues create **Case Solved**, which is the only state that unlocks **One Truth Prevails**. The implementation intentionally has no low-HP awakening, healing, resurrection, lethal weapon, homing football, or hard-coded maximum HP.
+
+Core values: Soccer Ball Shot 18 / 0.9s; Power-Enhancing Kick Shoes 85 / 7s / 0.8s stun; Stun-Gun Wristwatch 5 / 10s with Drowsy → 2.5s Sleep and 60-damage early wake; Turbo Engine Skateboard 1.8s / 9s; One Truth Prevails 140 / 12s, conditional on four Clues.
