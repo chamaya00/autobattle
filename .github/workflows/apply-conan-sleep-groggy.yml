@@ -1,0 +1,134 @@
+name: Apply Conan sleep and groggy update
+
+on:
+  push:
+    branches: [balance/conan-sleep-groggy]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Apply Conan sleep and groggy update'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: balance/conan-sleep-groggy
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Patch Conan tranquilizer sleep
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('index.html')
+          s=p.read_text()
+
+          old="drowsyT:gs(.8), sleepT:gs(2.5), wakeDmg:60, groggyT:gs(2),"
+          new="sleepT:gs(3), groggyT:gs(3),"
+          assert old in s, 'old Conan sleep constants not found'
+          s=s.replace(old,new,1)
+
+          old_desc="`<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter, adds <b>1 auxiliary Clue</b>, and applies <b>Drowsy</b> for ${rts(CONAN.drowsyT)}s (−50% move, −30% cast speed), then <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Sleep ends early after ${CONAN.wakeDmg} damage; an early wake applies <b>Groggy</b> for ${rts(CONAN.groggyT)}s.`"
+          new_desc="`<b>2 · Stun-Gun Wristwatch</b> ${CONAN.needleDmg} damage · ${rts(CONAN.needleCd)}s cooldown. One straight tranquilizer needle stops on the first fighter, adds <b>1 auxiliary Clue</b>, and immediately applies <b>Asleep</b> for ${rts(CONAN.sleepT)}s. Damage does not wake the target early. When Sleep ends, the target becomes <b>Groggy</b> for ${rts(CONAN.groggyT)}s.`"
+          assert old_desc in s, 'old Wristwatch description not found'
+          s=s.replace(old_desc,new_desc,1)
+
+          old_hit="""            conanAddClue(f,o,'STUN-GUN WRISTWATCH');
+            o.conanDrowsy=CONAN.drowsyT; o.conanSleep=0; o.conanGroggy=0;
+            G.floats.push({x:o.x,y:o.y-104,txt:'DROWSY',color:'#AFC3EE',life:.9,ml:.9,banner:true,sc:.52});"""
+          new_hit="""            conanAddClue(f,o,'STUN-GUN WRISTWATCH');
+            o.conanSleep=CONAN.sleepT; o.conanGroggy=0;
+            G.floats.push({x:o.x,y:o.y-104,txt:'ASLEEP',color:'#91A6D8',life:1,ml:1,banner:true,sc:.55});"""
+          assert old_hit in s, 'old needle hit status block not found'
+          s=s.replace(old_hit,new_hit,1)
+
+          s, n = re.subn(r"\nfunction conanSleepDamage\(t,amt\)\{.*?\n\}\nfunction conanStatus\(f,dt\)\{", "\nfunction conanStatus(f,dt){", s, count=1, flags=re.S)
+          assert n==1, 'conanSleepDamage function not found'
+
+          assert "  conanSleepDamage(t,amt);\n" in s, 'conanSleepDamage call not found'
+          s=s.replace("  conanSleepDamage(t,amt);\n","",1)
+
+          old_status="""  if(f.conanDrowsy>0){
+    const before=f.conanDrowsy; f.conanDrowsy=Math.max(0,f.conanDrowsy-dt);
+    f.moveMul*=.50; f.castMul*=.70;
+    if(before>0&&f.conanDrowsy<=0){
+      f.conanSleep=CONAN.sleepT; f.conanSleepDmg=0;
+      G.floats.push({x:f.x,y:f.y-104,txt:'ASLEEP',color:'#91A6D8',life:1,ml:1,banner:true,sc:.55});
+    }
+  }
+  if(f.conanSleep>0){
+    f.conanSleep=Math.max(0,f.conanSleep-dt); f.moveMul=0; f.castMul=0;
+    f.stun=Math.max(f.stun||0,Math.min(gs(.08),f.conanSleep));
+  }"""
+          new_status="""  if(f.conanSleep>0){
+    const before=f.conanSleep;
+    f.conanSleep=Math.max(0,f.conanSleep-dt); f.moveMul=0; f.castMul=0;
+    f.stun=Math.max(f.stun||0,Math.min(gs(.08),f.conanSleep));
+    if(before>0&&f.conanSleep<=0){
+      f.conanGroggy=CONAN.groggyT;
+      G.floats.push({x:f.x,y:f.y-104,txt:'GROGGY',color:'#A9B7D0',life:.95,ml:.95,banner:true,sc:.52});
+    }
+  }"""
+          assert old_status in s, 'old Conan status block not found'
+          s=s.replace(old_status,new_status,1)
+
+          old_draw="    if(o.conanDrowsy>0){ctx.globalAlpha=.45;ctx.fillStyle='#B7C9EE';ctx.beginPath();ctx.arc(o.x+18,o.y-60,4,0,7);ctx.fill();}\n"
+          assert old_draw in s, 'old drowsy draw line not found'
+          s=s.replace(old_draw,"",1)
+
+          assert 'wakeDmg:' not in s, 'wake damage threshold still present'
+          assert 'conanSleepDamage(' not in s, 'early wake function/call still present'
+          assert 'conanDrowsy' not in s, 'drowsy mechanic still present'
+          p.write_text(s)
+
+          r=Path('README.md')
+          rs=r.read_text()
+          old_readme='Stun-Gun Wristwatch 2 / 12s and +1 auxiliary Clue on hit with Drowsy → 2.5s Sleep and 60-damage early wake;'
+          new_readme='Stun-Gun Wristwatch 2 / 12s and +1 auxiliary Clue on hit with immediate 3s Sleep, no damage-based early wake, then 3s Groggy;'
+          assert old_readme in rs, 'old README sleep summary not found'
+          r.write_text(rs.replace(old_readme,new_readme,1))
+
+          t=Path('tools/t_conan.js')
+          ts=t.read_text()
+          anchor="has('needleDmg:2, needleCd:gs(12)','lower wristwatch damage');\n"
+          assert anchor in ts, 'Conan test anchor not found'
+          extra="""has('sleepT:gs(3), groggyT:gs(3)','3s sleep then 3s groggy');
+has("o.conanSleep=CONAN.sleepT; o.conanGroggy=0;",'needle applies sleep immediately');
+has("if(before>0&&f.conanSleep<=0){\\n      f.conanGroggy=CONAN.groggyT;",'natural sleep expiry applies groggy');
+lacks('wakeDmg:','no damage wake threshold');
+lacks('conanSleepDamage(','damage cannot wake sleep early');
+lacks('conanDrowsy','no drowsy pre-phase');
+"""
+          t.write_text(ts.replace(anchor,anchor+extra,1))
+          PY
+          python3 tools/mk_play.py
+      - name: Validate
+        run: |
+          node tools/t_conan.js
+          node tools/t_play.js
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile, os
+          for f in ['index.html','play.html']:
+              s=Path(f).read_text()
+              scripts=re.findall(r'<script[^>]*>(.*?)</script>', s, flags=re.S|re.I)
+              for js in scripts:
+                  fd,path=tempfile.mkstemp(suffix='.js'); os.close(fd)
+                  Path(path).write_text(js)
+                  subprocess.run(['node','--check',path],check=True,stdout=subprocess.DEVNULL)
+                  os.unlink(path)
+          PY
+      - name: Commit clean change
+        run: |
+          rm .github/workflows/apply-conan-sleep-groggy.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html play.html README.md tools/t_conan.js .github/workflows/apply-conan-sleep-groggy.yml
+          git commit -m "Make Conan tranquilizer sleep for three seconds"
+          git push origin HEAD:balance/conan-sleep-groggy
