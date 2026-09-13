@@ -2362,7 +2362,7 @@ const GOJO={
   entranceT:gs(1.5), entrancePh:[gs(.4),gs(.8),gs(1.2),gs(1.5)],
   infinityMax:2, infinityDelay:gs(3), infinityStep:gs(5.5), purpleLock:gs(4),
   sixEyesAccuracy:.85,
-  basic:[18,18,28], basicCd:gs(.75), basicRange:92, basicStun:gs(.3), basicPull:48,
+  basic:[18,18,28], basicCd:gs(.75), basicRange:92, basicStun:gs(.25), basicPull:48,
   blueDmg:55, blueSplash:30, blueCd:gs(8.5), blueWind:gs(.55), blueRange:370,
   blueRadius:90, blueMax:2, blueStun:gs(.6), bluePull:180,
   redDmg:80, redCd:gs(11), redWind:gs(.7), redBreak:gs(.45), redSpeed:420,
@@ -2370,7 +2370,7 @@ const GOJO={
   purpleDmg:150, purpleSecond:.60, purpleCd:gs(22), purpleWind:gs(1.6),
   purpleSpeed:340, purplePierce:2, purpleKb:930,
   domainCd:gs(32), domainWind:gs(1.2), domainBreak:gs(.8), domainRange:240,
-  overloadT:gs(2), overwhelmedT:gs(3), overwhelmedMove:.65, overwhelmedAtk:.75, overwhelmedCast:.75,
+  overloadT:gs(2.5), overwhelmedT:gs(4), overwhelmedMove:.50, overwhelmedAtk:.60, overwhelmedCast:.60,
   midMin:145, midMax:225, aiThinkMin:gs(.18), aiThinkMax:gs(.38)
 };
 const CHARS={
@@ -2749,7 +2749,7 @@ const CHARS={
       `<b>Entrance</b> Space distorts, Gojo appears with one hand in his pocket, adjusts his blindfold and assumes a combat stance. Exactly ${rts(GOJO.entranceT)}s; every opponent waits.`,
       `<b>Passive · Six Eyes</b> Blue, Red and Purple gain 15% accuracy. Gojo identifies real fighters rather than afterimages or clones, but cannot target an untargetable opponent. No automatic dodge, healing or cooldown reduction.`,
       `<b>Passive · Infinity</b> Starts with ${GOJO.infinityMax} shared charges. Each direct hit consumes one charge and blocks its damage and control. DoT, existing ground damage, true damage, sure-hit Domains, Body Swap, Time Manipulation and explicit bypasses ignore it. Recovery starts ${rts(GOJO.infinityDelay)}s after the latest block, then restores one charge every ${rts(GOJO.infinityStep)}s.`,
-      `<b>Basic · Limitless Combat</b> One strike every ${rts(GOJO.basicCd)}s: ${GOJO.basic.join(' / ')} = ${GOJO.basic.reduce((a,b)=>a+b,0)} damage. Blue-Enhanced Strike lightly pulls the target and applies ${rts(GOJO.basicStun)}s hit stun, but never restores Infinity.`,
+      `<b>Basic · Limitless Combat</b> One strike every ${rts(GOJO.basicCd)}s: ${GOJO.basic.join(' / ')} = ${GOJO.basic.reduce((a,b)=>a+b,0)} damage. Every landed strike applies ${rts(GOJO.basicStun)}s hit stun; the third Blue-Enhanced Strike also lightly pulls the target. Basic hits never restore Infinity.`,
       `<b>1 · Cursed Technique Lapse: Blue</b> ${GOJO.blueDmg} damage · ${rts(GOJO.blueCd)}s cooldown. After ${rts(GOJO.blueWind)}s it pulls and stuns for ${rts(GOJO.blueStun)}s. Up to ${GOJO.blueMax} enemies: the primary takes ${GOJO.blueDmg}, secondary targets ${GOJO.blueSplash}; any landed hit restores exactly one Infinity charge per cast.`,
       `<b>2 · Cursed Technique Reversal: Red</b> ${GOJO.redDmg} damage · ${rts(GOJO.redCd)}s cooldown. A dodgeable straight projectile after ${rts(GOJO.redWind)}s, hitting only the first fighter, knocking them back and stunning for ${rts(GOJO.redStun)}s. A stun in the first ${rts(GOJO.redBreak)}s cancels it for half cooldown.`,
       `<b>3 · Hollow Technique: Purple</b> ${GOJO.purpleDmg} damage · ${rts(GOJO.purpleCd)}s cooldown. Immediately empties Infinity and locks its recovery for ${rts(GOJO.purpleLock)}s. After ${rts(GOJO.purpleWind)}s, a fixed straight projectile ignores 30% of damage reduction and can pierce two fighters; the second takes ${Math.round(GOJO.purpleDmg*GOJO.purpleSecond)}. Interrupting before release refunds no charges and leaves 70% cooldown.`,
@@ -3048,13 +3048,13 @@ const DEX={
       {tag:'P',name:'Bright Red Nichirin Blade',vi:`For ${rts(TAN.redT)}s after the Ultimate, sword hits apply Regeneration Suppression: −${Math.round(TAN.suppressHeal*100)}% HP recovery for ${rts(TAN.suppressT)}s, no stacking and no extra damage.`,en:`For ${rts(TAN.redT)}s after the Ultimate, sword hits apply Regeneration Suppression: −${Math.round(TAN.suppressHeal*100)}% HP recovery for ${rts(TAN.suppressT)}s, no stacking and no extra damage.`}
     ]}
   ,gojo:{ role:{vi:'Mage · Controller',en:'Mage · Controller'}, st:{pow:4,spd:4,rng:4,def:5},
-    pw:{dmg:68,dur:78,mob:61,as:72,rng:78,cc:84,uti:82,con:74,cmb:20},
+    pw:{dmg:88,dur:78,mob:56,as:64,rng:92,cc:74,uti:82,con:88,cmb:20},
     bio:{vi:'A mid-range space controller who rotates Blue, Red and Purple behind two finite Infinity charges. Unlimited Void wins space rather than dealing damage, and the kit has no low-HP comeback mechanic.',
          en:'A mid-range space controller who rotates Blue, Red and Purple behind two finite Infinity charges. Unlimited Void wins space rather than dealing damage, and the kit has no low-HP comeback mechanic.'},
     skills:[
       {tag:'P',name:'Six Eyes',vi:'Adds 15% accuracy to Blue, Red and Purple and filters out clones or afterimages; it grants no automatic dodge, healing or cooldown reduction.',en:'Adds 15% accuracy to Blue, Red and Purple and filters out clones or afterimages; it grants no automatic dodge, healing or cooldown reduction.'},
       {tag:'P',name:'Infinity',vi:`${GOJO.infinityMax} shared charges each negate one direct hit. Recovery waits ${rts(GOJO.infinityDelay)}s after the latest block, then returns one charge every ${rts(GOJO.infinityStep)}s. DoT, sure-hit Domains, true damage and explicit bypasses pass through.`,en:`${GOJO.infinityMax} shared charges each negate one direct hit. Recovery waits ${rts(GOJO.infinityDelay)}s after the latest block, then returns one charge every ${rts(GOJO.infinityStep)}s. DoT, sure-hit Domains, true damage and explicit bypasses pass through.`},
-      {tag:'1',name:'Limitless Combat',vi:`Three close strikes for ${GOJO.basic.join(' / ')} damage. Blue-Enhanced Strike pulls lightly and applies ${rts(GOJO.basicStun)}s hit stun without restoring Infinity.`,en:`Three close strikes for ${GOJO.basic.join(' / ')} damage. Blue-Enhanced Strike pulls lightly and applies ${rts(GOJO.basicStun)}s hit stun without restoring Infinity.`},
+      {tag:'1',name:'Limitless Combat',vi:`Three close strikes for ${GOJO.basic.join(' / ')} damage. Every landed strike applies ${rts(GOJO.basicStun)}s hit stun; the third Blue-Enhanced Strike also pulls lightly. Basic hits never restore Infinity.`,en:`Three close strikes for ${GOJO.basic.join(' / ')} damage. Every landed strike applies ${rts(GOJO.basicStun)}s hit stun; the third Blue-Enhanced Strike also pulls lightly. Basic hits never restore Infinity.`},
       {tag:'1',name:'Cursed Technique Lapse: Blue',vi:`Pulls and stuns up to ${GOJO.blueMax} enemies after ${rts(GOJO.blueWind)}s: ${GOJO.blueDmg} to the primary and ${GOJO.blueSplash} to each secondary. A cast that lands restores exactly one Infinity charge.`,en:`Pulls and stuns up to ${GOJO.blueMax} enemies after ${rts(GOJO.blueWind)}s: ${GOJO.blueDmg} to the primary and ${GOJO.blueSplash} to each secondary. A cast that lands restores exactly one Infinity charge.`},
       {tag:'2',name:'Cursed Technique Reversal: Red',vi:`A non-homing straight projectile for ${GOJO.redDmg}, strong knockback and ${rts(GOJO.redStun)}s stun. It hits the first fighter and can be dodged or interrupted during its opening.`,en:`A non-homing straight projectile for ${GOJO.redDmg}, strong knockback and ${rts(GOJO.redStun)}s stun. It hits the first fighter and can be dodged or interrupted during its opening.`},
       {tag:'3',name:'Hollow Technique: Purple',vi:`Consumes every Infinity charge immediately, then fires a fixed line for ${GOJO.purpleDmg}. It ignores 30% of damage reduction, pierces at most two targets and deals ${Math.round(GOJO.purpleSecond*100)}% damage to the second.`,en:`Consumes every Infinity charge immediately, then fires a fixed line for ${GOJO.purpleDmg}. It ignores 30% of damage reduction, pierces at most two targets and deals ${Math.round(GOJO.purpleSecond*100)}% damage to the second.`},
@@ -9667,9 +9667,12 @@ function gojoBasic(f,e){
   setPose(f,i===0?'strike1':(i===1?'strike2':'bluehit'),gs(.28)); aim(f,e,1.02);
   const hit=hurt(e,GOJO.basic[i],f,false,undefined,undefined,false);
   sfx('gojo_strike');
-  if(hit&&i===2){
-    knock(e,f.x-e.x,f.y-e.y,GOJO.basicPull); stunFx(e,GOJO.basicStun,'spin');
-    gojoBanner(f,'BLUE-ENHANCED STRIKE','#78D9FF');
+  if(hit){
+    stunFx(e,GOJO.basicStun,'spark');
+    if(i===2){
+      knock(e,f.x-e.x,f.y-e.y,GOJO.basicPull);
+      gojoBanner(f,'BLUE-ENHANCED STRIKE','#78D9FF');
+    }
   }
   f.gojoThink=rnd(GOJO.aiThinkMin,GOJO.aiThinkMax);
 }

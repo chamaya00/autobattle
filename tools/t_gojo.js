@@ -15,7 +15,7 @@ const near=(a,b,e=.03)=>Math.abs(a-b)<=e;
     const text=[C.name,C.tag,...C.skills,D.role.vi,D.role.en,D.bio.vi,D.bio.en,
       ...D.skills.flatMap(s=>[s.name,s.vi,s.en])].join(' ');
     return {hp:window.__HP.gojo,std:window.__HP_STD,entrance:X.entranceT*RT,basic:X.basic,
-      basicCd:X.basicCd*RT,blue:[X.blueDmg,X.blueSplash,X.blueCd*RT,X.blueWind*RT,X.blueStun*RT],
+      basicCd:X.basicCd*RT,basicStun:X.basicStun*RT,blue:[X.blueDmg,X.blueSplash,X.blueCd*RT,X.blueWind*RT,X.blueStun*RT],
       red:[X.redDmg,X.redCd*RT,X.redWind*RT,X.redBreak*RT,X.redStun*RT],
       purple:[X.purpleDmg,X.purpleSecond,X.purpleCd*RT,X.purpleWind*RT,X.purpleLock*RT],
       domain:[X.domainCd*RT,X.domainWind*RT,X.domainBreak*RT,X.overloadT*RT,X.overwhelmedT*RT],
@@ -26,15 +26,15 @@ const near=(a,b,e=.03)=>Math.abs(a-b)<=e;
         .every(x=>text.includes(x)), vietnamese:/[À-ỹ]/.test(text), chart:D.pw};
   });
   ok(cfg.hp===cfg.std,'Maximum HP comes from the shared stat system',`${cfg.hp}/${cfg.std}`);
-  ok(near(cfg.entrance,1.5)&&cfg.basic.join('/')==='18/18/28'&&cfg.basicCd===.75,
+  ok(near(cfg.entrance,1.5)&&cfg.basic.join('/')==='18/18/28'&&cfg.basicCd===.75&&cfg.basicStun===.25,
     'entrance and Limitless Combat values are exact');
   ok(cfg.blue.join('/')==='55/30/8.5/0.55/0.6'&&cfg.red.join('/')==='80/11/0.7/0.45/0.75',
     'Blue and Red values are exact');
-  ok(cfg.purple.join('/')==='150/0.6/22/1.6/4'&&cfg.domain.join('/')==='32/1.2/0.8/2/3',
+  ok(cfg.purple.join('/')==='150/0.6/22/1.6/4'&&cfg.domain.join('/')==='32/1.2/0.8/2.5/4',
     'Purple and Unlimited Void values are exact');
   ok(cfg.inf.join('/')==='2/3/5.5','Infinity is two charges with 3s delay and 5.5s recharge');
   ok(cfg.names&&!cfg.vietnamese,'all Gojo names, statuses and display copy are English');
-  ok(cfg.chart.cmb<=25&&cfg.chart.cc>=80&&cfg.chart.dur<=80,'power chart reflects no low-HP comeback and strong but bounded control');
+  ok(cfg.chart.cmb<=25&&cfg.chart.dmg>=80&&cfg.chart.rng>=80&&cfg.chart.con>=80&&cfg.chart.cc>=72&&cfg.chart.cc<=76&&cfg.chart.as<70&&cfg.chart.mob<60,'power chart matches the requested burst/range/consistency profile');
 
   console.log('\n=== 2. Entrance freezes the opponent for all four phases ===');
   const ent=await page.evaluate(()=>{
@@ -94,10 +94,10 @@ const near=(a,b,e=.03)=>Math.abs(a-b)<=e;
     e.moveMul=1;e.castMul=1;window.__gojoStatus(e,0);
     return {damage:1000-hp,over,stun,overwhelmed:e.overwhelmed*window.__RT,move:e.moveMul,cast:e.castMul};
   });
-  ok(domain.damage===0&&near(domain.over,2,.04)&&near(domain.stun,2,.04),
-    'Unlimited Void applies 2s Information Overload and deals 0 damage');
-  ok(near(domain.overwhelmed,3,.04)&&domain.move===.65&&domain.cast===.75,
-    'Information Overload transitions to 3s Overwhelmed: −35% move, −25% attack/cast');
+  ok(domain.damage===0&&near(domain.over,2.5,.04)&&near(domain.stun,2.5,.04),
+    'Unlimited Void applies 2.5s Information Overload and deals 0 damage');
+  ok(near(domain.overwhelmed,4,.04)&&domain.move===.5&&domain.cast===.6,
+    'Information Overload transitions to 4s Overwhelmed: −50% move, −40% attack/cast');
 
   ok(errors.length===0,'no browser page errors',errors[0]);
   await browser.close();
