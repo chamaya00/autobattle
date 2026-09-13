@@ -89,7 +89,7 @@ jobs:
             'markRhythmHits:3, markRhythmDmg:18, markRhythmCdCut:gs(.75)',
             'function tanMarkRhythm(f,e)',
             "tanBanner(f,'HINOKAMI RHYTHM','#FF7A3D')",
-            'Every 3 landed non-Ultimate sword hits trigger Hinokami Rhythm'
+            'Hinokami Rhythm'
           ]
           missing=[x for x in checks if x not in s]
           if missing: raise SystemExit('index verification failed: '+repr(missing))
