@@ -183,6 +183,18 @@ window.__advOn=()=>advOn(); window.__advTune=advTune; window.__advPaint=()=>advP
 window.__ADV_SLOTS=ADV_SLOTS; window.__ADV_STAGES=()=>ADV_STAGES;
 window.__ADV_RANKCD=()=>ADV_RANKCD; window.__ADV_HP0=()=>ADV_HP0; window.__ADV_RANKMAX=()=>ADV_RANKMAX;
 window.__padName=padName; window.__padTick=()=>padTick();
+/* ---- Haruno Sakura ---- */
+window.__SAK=SAK; window.__SAK_BODY_R=()=>SAK_BODY_R; window.__SAK_DEBUFFS=SAK_DEBUFFS;
+window.__sakCut=sakCut; window.__sakResTick=sakResTick; window.__sakStatus=sakStatus;
+window.__sakMode=sakMode; window.__sakShuriken=sakShuriken; window.__sakStrike=sakStrike;
+window.__sakBurst=sakBurst; window.__sakBurstGo=sakBurstGo; window.__sakCrackTick=sakCrackTick;
+window.__sakPunch=sakPunch; window.__sakChargeHit=sakChargeHit;
+window.__sakMedical=sakMedical; window.__sakMedicalGo=sakMedicalGo; window.__sakHealTick=sakHealTick;
+window.__sakSealOn=sakSealOn; window.__sakCanSeal=sakCanSeal; window.__sakRegenTick=sakRegenTick;
+window.__sakuraTick=sakuraTick; window.__sakIbOn=sakIbOn; window.__sakHamperOn=sakHamperOn;
+window.__sakLowAlly=sakLowAlly; window.__sakCastMul=sakCastMul; window.__sakShurDmg=sakShurDmg;
+window.__sakShurCd=sakShurCd; window.__SHURIKEN_DMG=()=>SHURIKEN_DMG; window.__cm=cm;
+window.__sakuraVector=sakuraVector; window.__drawSakuraFx=drawSakuraFx;
 window.__dupColor=dupColor; window.__teamTint=teamTint; window.__setMode=(m,r)=>{
   PMODE=m;
   if(r){ if(r.ffa)ROSTERS.ffa=r.ffa.slice(); if(r.teams)ROSTERS.teams=r.teams.map(a=>a.slice()); }

@@ -1936,6 +1936,206 @@ cả hai nhánh `vi/en`. Vector fallback giữ tóc đỏ sẫm, scar/Mark bên 
 
 ---
 
+### Haruno Sakura (`sakura`)
+Toàn bộ trong hằng `SAK`, khai theo lối của Shikamaru / Horikita / Ginyu / Doraemon /
+Superman / Beatrice (giây người chơi bọc `gs()`). Fighter kiểu **Combat Medic /
+Crowd-Control Bruiser**: sát thương thô THẤP, bù lại bằng kháng hiệu ứng gần như tuyệt đối,
+khống chế nặng tay, hồi máu và một lớp chống đòn chí tử.
+
+> **Mọi chữ hiện ra trong game của nhân vật này là tiếng Anh** — tên chiêu, tên trạng thái,
+> buff, debuff, băng-rôn. Nhật ký vẫn tiếng Việt như mấy người kia. `t_sakura.js` quét mảng
+> `skills` để chắc không lẫn một chữ có dấu nào.
+
+> **Máu KHÔNG khai trong `SAK`** — `mkChar()` đọc `HP.sakura` (mặc định `HP_STD`) để ô chỉnh
+> máu ở màn chọn vẫn chạy, đúng lối Tanjiro / Gojo / Conan / Isagi.
+
+#### Nội tại — Medical Expertise, và vì sao nó là MỘT CỬA DUY NHẤT
+
+Giảm **70%** thời gian của mọi debuff có thời gian (Burning, Bleeding, Poison, Internal
+Bleeding, Exhausted, Slowed, Weakened, Silence, Root, Freeze, Sleep, Confusion, Fear…),
+riêng **Stunned chỉ giảm 30%**. Sàn `SAK.resFloor` = **0.25 giây người chơi**: rút ngắn
+tới đâu cũng không xuống dưới mốc đó, nhưng cũng **không bao giờ KÉO DÀI** một hiệu ứng
+vốn đã ngắn hơn sàn.
+
+- **Chỉ rút NGẮN thời gian, không giảm dmg mỗi tick.** Sát thương duy trì đi đường
+  `dots[]`: cửa này cắt `left`, tuyệt đối không đụng `dps`. Đo được: cháy 5 dmg/s trong 5
+  giây ⇒ vẫn **5 dmg mỗi nhịp**, chỉ còn **1.5 giây**.
+- **Không đụng tới**: lực đẩy, kéo, dịch chuyển bắt buộc, sát thương trực tiếp, xuyên giáp,
+  và mọi thứ không có thời gian tồn tại.
+
+> **Cách cắm là chỗ tự quyết quan trọng nhất của nhân vật này.** Engine KHÔNG có hàm chung
+> nào để "dán một debuff có thời gian" — mỗi nhân vật gán thẳng vào trường của mình
+> (`exhaust`, `dis`, `chill`, `gnSlow`, `beaSlow`…), rải ra hơn bốn chục chỗ. Bọc từng chỗ
+> gọi thì vừa phải sửa hơn bốn chục điểm, vừa chắc chắn LỌT LƯỚI với nhân vật thêm về sau —
+> đúng cái bẫy `gnHeal()` đã ghi ở mục Captain Ginyu.
+>
+> Vì vậy `sakResTick()` **soi theo TRƯỜNG chứ không bọc theo chỗ gọi**: mỗi nhịp so giá trị
+> hiện tại với mốc nhịp trước; trường nào **vọt lên** nghĩa là vừa có người dán debuff mới,
+> và chính con số vọt lên đó là thời lượng vừa dán (mọi chỗ trong engine đều dùng
+> `Math.max(cũ, mới)`). Cắt đúng một lần rồi ghi lại mốc. Làm mới bằng một debuff ngắn hơn
+> **không bao giờ cắt cụt phần đang còn** (`Math.max(was, sakCut(cur))`).
+>
+> Hai điều bắt buộc khi đụng vào đây:
+> 1. **`SAK_DEBUFFS` là DANH SÁCH TRẮNG, không phải quét bừa.** `invuln`, `gnRage`,
+>    `castBuff` là BUFF — quét nhầm là cô tự cắt buff của chính mình.
+> 2. **`stun` KHÔNG nằm trong danh sách**: choáng chỉ giảm 30% và đi qua `stunFx()`.
+>
+> **Thêm debuff mới cho nhân vật khác thì chỉ việc thêm tên trường vào `SAK_DEBUFFS`** — cô
+> kháng được ngay, không phải đi sửa chỗ gây hiệu ứng.
+>
+> `sakuraTick()` gọi ở **ĐẦU vòng duyệt fighter**, trước cả `if(f.stun>0)f.stun-=dt`, để
+> cửa này nhìn thấy debuff ở đúng giá trị vừa dán chứ không phải giá trị đã trôi một nhịp.
+
+#### Đòn thường — hai thế, đổi theo khoảng cách CÓ ĐỘ TRỄ
+
+| | |
+|---|---|
+| **Shuriken Throw** | `Math.round(SHURIKEN_DMG*.80)` = **20 dmg**, hồi chiêu `cm(1.35)/1.15` — tức **80% sát thương và nhanh hơn 15%** so với Konohamaru |
+| **Chakra Strike** | **15 dmg** mỗi `gs(1.2)`, **25%** gây **Internal Bleeding** 3 dmg/s trong 5s |
+
+- **Damage shuriken tính TỪ `SHURIKEN_DMG`, không gõ tay con số 20.** Người dùng chốt:
+  chỉnh Konohamaru thì Sakura phải tiếp tục bằng 80% giá trị mới. Đọc qua `sakShurDmg()`.
+- **Hất lùi CHỈ xảy ra khi Internal Bleeding kích hoạt**, không phải mọi cú đấm. Lực đi qua
+  công thức `W*hitKb*6` vì lực tắt dần theo `exp(-6t)` — cùng lối Air Cannon và Drive Shot.
+- **Mốc đổi thế đo bằng HẰNG SỐ `SAK_BODY_R`, KHÔNG đọc `f.r`**: Small Light của Doraemon
+  bóp `f.r` nhỏ đi 15%, mà tầm đánh thì không được đổi theo. Cùng luật với R của Beatrice.
+- **Hai mốc LỆCH NHAU là cố ý** (`meleeIn` 78 vào / `meleeOut` 93.6 ra): đứng đúng giữa hai
+  mốc thì giữ nguyên thế đang đánh. Không có khoảng trễ này thì địch đứng ngay ranh giới là
+  hai animation nhấp nháy liên tục. `t_sakura.js` đo đủ bốn bước của vòng trễ đó.
+- **Hampered** (`slowOdds` 30%) chỉ giảm tốc CHẠY — không đụng tốc thi triển, không chặn
+  dash, không cộng dồn. **Bốc RIÊNG cho từng viên và ĐÚNG LÚC nó chạm người** (cờ
+  `p.sakSlow` trong vòng duyệt đạn), bốc lúc bắn thì viên bị né vẫn làm chậm — đúng cái bẫy
+  của Minya ở mục Beatrice.
+
+#### Ba chiêu
+
+- **1 · Cherry Blossom Burst** — gồng `gs(.75)` rồi đập đất, đường nứt chạy thẳng: **25 dmg
+  + choáng 3s**, mỗi kẻ địch trên đường đi ăn **đúng một lần** mỗi lượt dùng. Hướng **KHOÁ
+  ngay lúc tay chạm đất** nên mục tiêu đổi hướng sau đó là trượt; đường nứt không bẻ cong
+  đuổi theo ai và dừng ở rìa sàn. Bị cắt ngang lúc gồng ⇒ chỉ chờ `gs(4)`.
+  Người trúng bị **hất nhẹ lên** (`sakLift`) rồi rơi xuống gần chỗ trúng — **không gọi
+  `knock()`**, vì đó là hất lên chứ không phải hất văng ngang.
+- **2 · Chakra-Enhanced Punch** — cú lao thật, `spd:384` = **120% tốc dash của ChiChi** (320).
+  Chỉnh hướng nhẹ trong `gs(.15)` đầu rồi **khoá hẳn**, chỉ trúng kẻ địch **đầu tiên** va
+  chạm. Trúng: **30 dmg + choáng 3.5s + Internal Bleeding 5 dmg/s trong 5s**, hết choáng mới
+  tới **Chakra Disruption** −50% chạy / −40% cast trong 6s.
+  > **`f.dash` của cô tuyệt đối KHÔNG mang cờ `guard`** — `guard` là thứ cho ChiChi miễn
+  > khống chế lúc lao, mà bản mô tả nói thẳng là Sakura **không** miễn khống chế khi lao.
+  > `sakuraTick()` cắt cú lao ngay khi cô dính choáng hoặc đóng băng.
+  > **Chakra Disruption xếp hàng qua `sakDisruptAfter`** rồi `sakStatus()` mở ra đúng lúc
+  > `stun<=0` — cùng lối luồng sáng của Ginyu và ghì chân của Kamehameha, đừng cộng thẳng
+  > vào lúc trúng đòn.
+  > **Hai bản Internal Bleeding KHÔNG cộng dồn**: `sakIbOn()` xoá lớp cũ rồi mới đẩy lớp
+  > mới, và bản **yếu không ghi đè bản mạnh** (giữ `dps` cao hơn, chỉ làm mới thời gian).
+- **3 · Medical Ninjutsu** — kết ấn `gs(1)` đứng yên, **vẫn ăn đòn và vẫn bị khống chế**;
+  bị cắt ngang ⇒ chỉ chờ `gs(4)`. Xong cast thì **5 nhịp** cách nhau `gs(.5)` hồi **5% lượng
+  máu ĐÃ MẤT** mỗi nhịp (tổng **25%**), và cô **đi lại / đánh nhau bình thường** trong lúc
+  nó chạy.
+  - **Lượng máu đã mất CHỤP LẠI đúng lúc cast xong**, không tính lại sau mỗi nhịp.
+  - Có đồng đội thì hệ số chia đôi: **2.5% cho cô, 2.5% cho đồng đội máu thấp nhất**, và
+    **tính RIÊNG lượng máu đã mất của từng người**. Đo được: cô thiếu 400 ⇒ 10/nhịp, đồng
+    đội thiếu 600 ⇒ 15/nhịp.
+  - **Đồng đội chết giữa chừng thì phần của họ MẤT HẲN**, không dồn sang ai.
+  - Không overheal, không hồi sinh, không tự giải khống chế.
+
+#### Ultimate — Strength of a Hundred Seal
+
+**KHÔNG tự bung theo hồi chiêu.** `hurt()` chặn ngay trước `defeat()` (cạnh Time Machine của
+Doraemon và CHANGE của Ginyu): đòn nào sắp đưa máu về 0 thì `sakCanSeal()` đúng ⇒ máu đặt về
+**đúng 12% máu tối đa** và Byakugo chạy `gs(10)`.
+
+> **PHÂN CẢNH FOCUS rồi mới đổi hình.** Người dùng chốt riêng: *"lúc lên form bách hào thuật
+> đó là phải focus vào rồi thay đổi ngoại hình đấy"*. `sakSealOn()` đặt
+> `G.freeze = SAK.sealCine` + `G.freezeAt = f` nên camera lao vào sát mặt cô. Đây là phân
+> cảnh **NGẮN NHẤT** cả game (0.6 giây trong trận, đúng con số bản mô tả nêu) — mấy phân
+> cảnh kia là 1.5~3.0.
+>
+> **Đóng băng ở đây KHÔNG cứu cô khỏi combo nhiều hit**: hẹn giờ không mang cờ `cine` và đạn
+> đang bay đều DỪNG LẠI rồi chạy tiếp, nên mấy hit còn lại vẫn rơi xuống đủ. Đã đo: hit đầu
+> mở dấu ấn (60 → 96 máu), hit thứ hai ngay sau đó **hạ gục thật**.
+>
+> **Đổi hình** thì có ba tầng, đọc được ở cỡ trong trận: dấu ấn hình thoi **nở rộng** rồi
+> chạy hoa văn xuống hai bên mặt, cổ và cánh tay · **tóc sáng hẳn lên và bị thổi dựng đứng**
+> · cột chakra tím-lam dựng lên quanh người trong pha `sakSealAnim`, sau đó còn lại một lớp
+> khí mỏng chạy dọc thân. Tất cả vẽ bằng **phép cộng sáng** và alpha thấp nên **không nuốt
+> mất model** — đúng bài học của luồng khí Ginyu.
+>
+> Quãng `sakSealAnim` **KHÔNG khoá chân thêm**: phân cảnh đã dừng cả sàn rồi, khoá nữa là cô
+> đứng chôn chân thêm một nhịp dài sau khi camera đã lùi ra.
+
+- **`Math.floor` chứ không `Math.round`** khi đặt máu về 12%: máu tối đa lẻ mà làm tròn LÊN
+  thì rơi cao hơn mốc tơi tả (`hp <= maxHp*.20`) và **model tơi tả không hiện** — đúng bài
+  học của `ginyuPossess()`. Đo cả 800 lẫn 999.
+- **Chỉ chặn ĐÚNG MỘT instance lethal damage.** Sau đó **không invuln, không khung bất tử,
+  không chặn lần hai**. Đây là yêu cầu cân bằng nêu thẳng trong bản mô tả — đừng "sửa" thành
+  miễn thương.
+- Byakugo: **−35% dmg nhận** (đi qua `dm()` nên xuyên giáp vẫn ăn đúng), **miễn khống chế
+  100%** (`stunFx` return false), **tốc chạy ×2**, **tốc thi triển ×2.75**.
+  > **Tốc thi triển ăn vào QUÃNG GỒNG của chính cô (`sakCastMul`), KHÔNG ăn vào `castMul`.**
+  > Người dùng chốt "Cast Speed không ảnh hưởng cooldown" — mà trong engine này `castMul`
+  > CHÍNH LÀ nhịp trôi hồi chiêu, nhét vào đó là sai hẳn yêu cầu. Đo được: `castMul` vẫn 1.
+- **Katsuyu** hồi **2% máu TỐI ĐA mỗi giây người chơi** cho cô và **mỗi đồng đội còn sống**;
+  **Byakugo Regeneration** hồi thêm **2% máu ĐANG THIẾU mỗi giây**, **tính lại mỗi nhịp**, và
+  **chỉ mình cô** được. Hai nguồn chạy song song — đo được 23.68 máu mỗi giây người chơi ở mốc
+  400/800.
+  > **Hai con số này phải nhân `RT`** (`katsuyu:.02*RT`): chúng tính theo GIÂY NGƯỜI CHƠI, mà
+  > `dt` truyền vào là giây trong trận — cùng luật với `dots[].dps` ở mục 1. **Đây là một lỗi
+  > thật đã sửa**: quên `RT` thì nhịp hồi chỉ còn một nửa (đo ra 11.92 thay vì 24).
+  > Katsuyu **không phải một fighter** — chỉ là một cờ đồng hồ (`o.katsuyu`) cộng một hình vẽ
+  > trong `drawSakuraFx()`, nên nó tự động không nhắm được, không ăn dmg, không chặn đạn,
+  > không đánh ai, đúng bản mô tả. Nhiều Sakura cùng đội thì **không cộng dồn**, chỉ giữ
+  > quãng dài nhất (`Math.max`).
+  > Sakura gục hay hết Byakugo ⇒ `sakRegenTick()` thấy `katsuyuOwner` không còn hợp lệ và
+  > **xoá sạch fragment**, hồi máu đồng đội dừng ngay trong nhịp đó.
+
+#### Chỗ khác phải đi theo
+
+- `sakStatus()` chạy **CUỐI** trong `statusTick()` vì `gnStatus` **GÁN đè** `moveMul`/
+  `castMul` — nhân trước nó là mất trắng (đúng cái bẫy của `tsuPinTick`).
+- `sakHamper` / `sakDisrupt` / `sakDisruptAfter` / `sakLift` / `katsuyu` khai trong `mk()`
+  với giá trị trung tính vì **cô dán chúng lên NGƯỜI KHÁC** — cùng lối Disoriented của
+  Doraemon và Frozen của Superman.
+- Ba cửa dọn debuff có sẵn đã nhận thêm mấy trường đó: **Emergency Door** (chỉ xoá làm chậm,
+  nên lấy `sakHamper` + `sakDisrupt`), **Time Machine**, và **Murak** của Beatrice.
+  Riêng Murak **không đụng `dots`** nên Internal Bleeding vẫn nằm nguyên — đúng luật đã chốt.
+- **`G.cam.shake` trước đây là một trường CHẾT**: có chỗ ghi mà không có chỗ đọc. Giờ
+  `camApply()` đọc nó và lắc khung nhìn, biên độ rất nhỏ, **đông người thì hạ thêm 55%**
+  (yêu cầu riêng: "không làm camera rung quá mạnh trong trận nhiều người"). Rung **SAU** phép
+  dời camera nên nó chỉ lắc khung nhìn, **không dời toạ độ thật của ai** — mọi phép đo vị trí
+  trong test vẫn đọc ra đúng con số.
+- AI đi qua `sakuraVec()` (dải tầm trung, cùng ngôn ngữ waypoint / strafe / jitter với Conan
+  và Gojo). **Bị áp sát thì cô KHÔNG bỏ chạy** — cô là bruiser, Chakra Strike và Cherry
+  Blossom Burst mới là thứ gỡ vây. Byakugo thì đổi hẳn sang ép sát.
+  `f.want` đặt trong `sakuraTick()` nên nhánh `ranged` có sẵn lo phần bước chân.
+- `sakClosing(f,e)` đọc `vx/vy` để biết địch có đang **chạy thẳng về phía cô** hay không —
+  cửa ưu tiên của Cherry Blossom Burst, vì đường nứt khoá hướng nên nó ăn nhất vào người
+  đang lao tới. *(Đây là một **lỗi thật đã sửa**: hàm được gọi trong `think()` mà quên định
+  nghĩa, và nó chỉ nổ ở vài nhánh nên 9/11 cặp đấu vẫn chạy sạch — `t_reg.js` mở rộng mới
+  bắt được. Thêm nhân vật thì nhớ chạy `t_reg` chứ đừng tin mỗi test riêng.)*
+
+**Ô dán ảnh riêng**: `atk1` · `punch` · `kick` · `burst` · `charge` · `heal` · `seal` ·
+`win` · `down`, cộng `idle/hurt/injured`. Thiếu ảnh thì lùi về ô gần nghĩa nhất.
+**Ô dán tiếng**: nhóm riêng `Haruno Sakura`, mười một ô, mỗi ô một `case` trong `synth()`.
+**Đấm đá mượn thẳng `sfx('punch')` của ChiChi**, đúng lối đã chốt cho Horikita / Ginyu /
+Doraemon / Superman / Beatrice — đừng dựng ô mới.
+
+Kiểm bằng `node tools/t_sakura.js` (78 mục, phần lớn ĐO THẬT trong trận).
+
+> **CÒN TREO — trận GƯƠNG Sakura vs Sakura không ngã ngũ.** Đo thật: máu hai bên dao động
+> quanh 390~525 suốt 45 giây trong trận và **không bên nào đi xuống**. Nguyên nhân là số học
+> của chính bộ chiêu: Medical Ninjutsu hồi **25% máu ĐANG THIẾU mỗi 9 giây** (≈11 máu/giây
+> khi thiếu 400) trong khi sát thương của cô cố ý để thấp (~10/giây) và sát thương duy trì
+> của đối phương thì bị chính nội tại của cô cắt 70%. Hồi ≥ sát thương nên thành hoà vĩnh viễn.
+> - **Mười cặp còn lại đều ngã ngũ bình thường** (12~39 giây), nên đây là chuyện riêng của
+>   trận gương.
+> - **League / Cup đã tự xử**: `compTick()` cắt ở `COMP_MAXT` = 90 giây trong trận rồi tính
+>   theo phần trăm máu. Chỉ **đấu tay đôi thường** là chạy mãi, vì `compTick` gác ở `compLive`.
+> - CLAUDE.md vốn đã lường trước chuyện này ở mục 2c-bis (*"Hai người cùng có cửa hồi máu thì
+>   về lý thuyết đánh nhau mãi không xong"*) — Sakura là người đầu tiên làm nó xảy ra thật.
+> - **Chưa đụng vào vì người dùng chốt cứng mấy con số hồi máu** (5%/nhịp · 25% tổng · hồi
+>   chiêu 9 giây). Muốn chữa thì có ba lối, mỗi lối một dòng: hạ `SAK.mnSolo`, nới
+>   `SAK.mnCd`, hoặc bỏ cờ `compLive` khỏi `compTick()` để trần thời gian áp cho mọi chế độ.
+
 ## 2c. Ba chế độ đấu — 1v1, hỗn chiến, đánh theo đội
 
 Chọn ở **đầu màn chọn nhân vật** (`.mTab`, ba nút `#mTabDuel` / `#mTabFfa` / `#mTabTeam`).
@@ -3126,6 +3326,16 @@ Mấy tên cũ (`--ink` / `--panel` / `--gold` …) **giữ nguyên** vì đã r
 
 ### Chiều cao `--ctl` CHỈ áp cho ô trên thanh điều khiển
 
+node tools/t_sakura.js # Haruno Sakura: nội tại giảm 70% thời gian debuff / 30% choáng qua MỘT cửa
+                        # duy nhất (dps mỗi tick giữ nguyên, chỉ số nhịp giảm; sàn 0.25s;
+                        # không đụng lực đẩy), shuriken bằng 80% Konohamaru và nhanh hơn 15%,
+                        # hai thế đánh đổi theo khoảng cách CÓ ĐỘ TRỄ, Cherry Blossom Burst
+                        # 25 dmg + choáng 3s khoá hướng, Chakra-Enhanced Punch 30 dmg +
+                        # choáng 3.5s + Internal Bleeding rồi Chakra Disruption (cú lao KHÔNG
+                        # miễn khống chế), Medical Ninjutsu hồi 25% máu đã mất và chia đôi
+                        # khi có đồng đội, và Strength of a Hundred Seal: phân cảnh focus,
+                        # máu về đúng 12% máu tối đa, KHÔNG có bất tử nên combo nhiều hit
+                        # vẫn giết được, Katsuyu hồi cho cả đội và tắt ngay khi cô gục
 ```css
 .bar>button,.bar>select,.bar>label.chk,.cselBar>button,.arcOver>button{height:var(--ctl)}
 ```
