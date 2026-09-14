@@ -1,9 +1,7 @@
 name: Inspect Isagi integration points
-
 on:
   push:
     branches: [feature/isagi-yoichi]
-
 jobs:
   inspect:
     runs-on: ubuntu-latest
@@ -11,20 +9,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/isagi-yoichi
-      - name: Inspect anchors
+      - name: Inspect exact ranges
         run: |
-          echo '=== files ==='
-          find tools -maxdepth 1 -type f -printf '%f\n' | sort
-          echo '=== constants / roster / dex ==='
-          grep -nE "const (HP|CONAN|TAN|GOJO|CHARS|DEX)|^[[:space:]]*,?(conan|tsubasa|chichi):" index.html | head -n 120 || true
-          echo '=== combat helpers ==='
-          grep -nE "function (hurt|stunFx|knock|tryEvade|hitsBody|nearestFoe|foeOk|moveAI|step|update|drawFighter|draw.*Fighter|render)" index.html | head -n 160 || true
-          echo '=== conan block ==='
-          n=$(grep -n "function conanShotsTick" index.html | head -1 | cut -d: -f1); if [ -n "$n" ]; then sed -n "$((n-180)),$((n+260))p" index.html; fi
-          echo '=== projectile/wave loop ==='
-          grep -n "for(const p of G.proj" index.html | head -n 20 || true
-          echo '=== renderer refs ==='
-          grep -nE "conan|critical|gauge|draw.*ball|type==='ball'|p.type==='ball'" index.html | tail -n 180 || true
-          echo '=== tests ==='
-          sed -n '1,240p' tools/t_conan.js 2>/dev/null || true
-          sed -n '1,180p' tools/mk_play.py 2>/dev/null || true
+          for r in '1940,2310' '2815,3305' '3415,3685' '5650,6035' '12610,13165' '13745,14540' '17070,17180' '17620,17675'; do
+            echo "=== RANGE $r ==="
+            sed -n "${r}p" index.html
+          done
