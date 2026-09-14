@@ -148,7 +148,7 @@ window.__aliveTeams=aliveTeams; window.__defeat=defeat; window.__finish=finish;
 window.__teamLabel=teamLabel; window.__vsSegments=vsSegments; window.__versusBox=versusBox;
 /* ---------- bản người chơi + phiêu lưu ---------- */
 window.__PLAYKIND=()=>PLAYKIND; window.__setPlayKind=k=>setPlayKind(k);
-window.__mode=()=>mode; window.__isRun=()=>running; window.__autoSkill=()=>autoSkill;
+window.__mode=()=>mode; window.__isPlayerDbg=f=>isPlayer(f); window.__syncHuman=()=>syncHuman(); window.__ginyuPossess=ginyuPossess; window.__isRun=()=>running; window.__autoSkill=()=>autoSkill;
 window.__keys=keys;                       // bấm phím giả: __keys.j=true
 window.__MOBS=MOBS; window.__MOB_KEYS=MOB_KEYS; window.__isMobKey=isMobKey;
 window.__CKEYS=()=>CKEYS;

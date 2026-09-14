@@ -720,6 +720,28 @@ thân xác Ginyu do địch điều khiển (`swapAs==='foe'`) thì chết là c
   giờ là đi — cướp xác họ thì chẳng còn gì để cướp. Chỗ chặn nằm ở cả `gnChangeTarget()`
   lẫn nhánh va chạm lẫn `ginyuPossess()`.
 
+> **QUYỀN ĐIỀU KHIỂN ĐI THEO HỒN, không đi theo object.** Người dùng chốt: *"khi ginyu
+> chuyển thân xác thì thân xác Ginyu bây h là của tanjiro (là chúng ta) vậy chúng ta điều
+> khiển thân xác ginyu chứ"*. Vì vậy `isPlayer()` đọc cờ **`f.human`** chứ **đừng so object
+> với `G.k`/`G.c`** — so object thì người chơi tiếp tục bấm cái thân xác cũ, mà thân xác đó
+> giờ do hồn Ginyu điều khiển. `ginyuPossess()` tráo `human` cùng lúc tráo `gnSoul`, và
+> `syncHuman()` gắn lại cờ sau mỗi lần dựng trận / đổi ô chế độ.
+> Cùng một luật với `compSoul()` của giải đấu: **thắng thua và quyền điều khiển đều tính
+> theo HỒN**. Hai hàm `ginyuSwapThink()` / `gnSoulThink()` vốn đã đọc `keys[...]` khi
+> `auto` tắt, nên không phải sửa gì thêm ở đó.
+>
+> Nút chiêu cũng tách làm hai theo đúng luật đã chốt: **ô J lấy tên theo THÂN XÁC**, còn
+> **K / L / U lấy theo HỒN**. `padTick()` soi cặp (thân xác / hồn) mỗi nhịp và dựng lại nút
+> khi nó đổi — cú CHANGE nổ GIỮA TRẬN nên dựng một lần lúc vào trận là không đủ.
+
+> **Màn ra mắt đang chạy dở cũng phải dọn** (`gnEntry` · `tanEntry` · `conanEntry` ·
+> `drEntry`), cùng lý do với mấy khối dọn `supEntry` / `beaEntry` / `gojoEntry` ngay dưới:
+> tick nuôi chúng gác ở `!swapAs` nên sau khi hoán đổi thì chúng NGỪNG CHẠY mà cờ vẫn còn —
+> mà màn ra mắt thì khoá cả sàn mỗi nhịp, để lại là hai thân xác đứng khoá nhau vĩnh viễn
+> (đo được: `lock` ghim ở 0.3 và không ai nhúc nhích). Trong trận thật thì hiếm gặp vì
+> CHANGE chỉ nổ lúc Ginyu sắp chết, nhưng ba khối dọn kia đã lo đúng chuyện này rồi nên
+> bốn ông còn lại phải đi theo cho nhất quán.
+
 **Trúng — `ginyuPossess(g,t)`.** Nguyên tắc: **hồn đổi chỗ, THÂN XÁC đứng yên.** Không đụng
 tới `key`, `spriteH`, `color`, vị trí — chỉ đổi **`name`** và cờ điều khiển. Nhờ vậy ra đúng
 cái người dùng muốn: **thân xác A mà chữ B trên thanh máu**, và ngược lại.
@@ -2178,6 +2200,9 @@ CHƠI. Hai biến **khác việc nhau, đừng gộp**:
 `mode` (`auto` ↔ `p1`), `autoSkill`, và lớp nút bấm. Nhờ vậy **bản auto đi đúng đường cũ** —
 đó là điều kiện người dùng nêu đầu tiên.
 
+- **`isPlayer()` đọc cờ `f.human`, đừng so object với `G.k`** — cú CHANGE của Ginyu đổi HỒN
+  chứ không đổi thân xác, nên so object là người chơi bấm nhầm thân xác. Xem mục CHANGE!!!
+  của Captain Ginyu.
 - **Phần điều khiển tay đã có sẵn từ lâu, đừng viết lại**: cả mười ba nhân vật đã có nhánh
   `keys['j'/'k'/'l'/'u']` trong `think()`, `playerVec()` đã ăn WASD, và `autoSkill` đã có ô
   chọn trong xưởng. Bản người chơi chỉ **bật** mấy thứ đó lên.

@@ -5551,6 +5551,7 @@ function newGame(){
   /* Phiêu lưu: siết máu người chơi theo cấp và máu / sát thương địch theo số màn, rồi mở
      sổ đếm exp của lượt này. Phải nằm SAU khi G.fighters đã dựng xong. */
   if(PMODE==='adv'&&ADV){ G.advXp=0; G.advSxp=0; advTune(); }
+  syncHuman();                 // ai đang do người chơi cầm, theo ô chế độ
   if(typeof resetSfxPos==='function') resetSfxPos();
   const englishMatch=G.fighters.some(f=>(f.key==='tanjiro'||f.key==='gojo'||f.key==='conan')&&!f.summon);
   if(englishMatch&&PMODE==='team')     say(`Team battle ready. ${teamLabel(0)} vs ${teamLabel(1)}.`,'g');
@@ -8168,6 +8169,11 @@ function ginyuPossess(g,t){
   const gname=g.name, tname=t.name;
   g.swapAs='foe';   g.gnSoul=t.key;  g.name=tname;
   t.swapAs='ginyu'; t.gnSoul='ginyu'; t.name=gname;
+  /* QUYỀN ĐIỀU KHIỂN ĐI THEO HỒN. Người chơi bị cướp xác thì từ giờ cầm cái thân xác
+     Ginyu (object `g`) — nơi hồn mình vừa sang; còn thân xác cũ (`t`) do hồn Ginyu cầm.
+     Không tráo chỗ này thì người chơi ngồi bấm cái thân xác không còn là mình nữa. */
+  const gh=g.human, th=t.human;
+  g.human=th; t.human=gh;
   /* Cả hai thân xác cùng về 20% máu tối đa của chính nó, không bên nào lệch hơn bên nào.
      Phải LÀM TRÒN XUỐNG chứ không được Math.round: mốc bật cờ tơi tả trong step() là
      f.hp <= f.maxHp*.20, mà làm tròn lên thì với máu tối đa lẻ (người chơi chỉnh được ô
@@ -8210,6 +8216,17 @@ function ginyuPossess(g,t){
     o.beaEmt=0; o.beaMurak=0; o.beaLift=0; o.beaEntry=null; o.beaHide=false;
     if(o.beaShamac&&o.beaShamac.e) o.beaShamac.e.beaWarp=null;
     o.beaShamac=null; o.beaUlt=null; o.beaWarp=null;
+  }
+  /* MÀN RA MẮT đang chạy dở cũng phải dọn, cùng lý do với mấy khối ngay dưới: tick nuôi
+     chúng gác ở `!swapAs` nên sau khi hoán đổi thì chúng NGỪNG CHẠY mà cờ vẫn còn — màn ra
+     mắt thì khoá cả sàn mỗi nhịp, để lại là hai thân xác đứng khoá nhau vĩnh viễn.
+     Thực tế hiếm gặp (CHANGE chỉ nổ khi Ginyu sắp chết, lúc đó màn ra mắt xong từ lâu),
+     nhưng mấy khối dọn dẹp bên dưới đã lo đúng chuyện này cho Superman / Beatrice / Gojo
+     rồi, nên bốn ông còn lại phải đi theo cho nhất quán. */
+  for(const o of [g,t]){
+    o.gnEntry=null; o.tanEntry=null; o.conanEntry=null;
+    o.drEntry=null; o.drHide=false;
+    o.lock=0;
   }
   /* Thân xác Superman bị cướp: mấy chiêu đang gồng dở của anh phải dọn sạch, vì
      supermanTick() không chạy nữa khi swapAs đã bật — để lại là chúng treo mãi. */
@@ -10876,7 +10893,22 @@ function tanjiroTick(f,dt){
    tách thân trong step(). */
 const MELEE_MIN=58, MELEE_MAX=64, MELEE_BAND=4, MELEE_GAP=6;
 const orbWant=f=>f.orbR||((MELEE_MIN+MELEE_MAX)/2);
-const isPlayer=f=>!!G&&((mode==='p1'&&f===G.k)||(mode==='p2'&&f===G.c));
+/* AI ĐANG DO NGƯỜI CHƠI CẦM — đọc cờ `f.human` chứ ĐỪNG so object với `G.k`/`G.c`.
+   Lý do: cú CHANGE của Ginyu đổi HỒN chứ không đổi thân xác. Người chơi bị cướp xác thì
+   hồn mình sang nằm trong object của Ginyu, nên so object là người chơi tiếp tục cầm cái
+   thân xác cũ — mà thân xác đó giờ do hồn Ginyu điều khiển. Người dùng bác đúng chỗ này:
+   *"khi ginyu chuyển thân xác thì thân xác Ginyu bây h là của tanjiro (là chúng ta) vậy
+   chúng ta điều khiển thân xác ginyu chứ"*.
+   Cùng một luật với `compSoul()` của giải đấu: thắng thua và quyền điều khiển đều tính
+   theo HỒN. `ginyuPossess()` vì vậy tráo luôn cờ này cùng lúc tráo `gnSoul`. */
+const isPlayer=f=>!!G&&!!f&&f.human===true&&(mode==='p1'||mode==='p2');
+/* Gắn lại cờ `human` theo `mode`. Gọi sau mỗi lần dựng trận và mỗi lần đổi ô chế độ. */
+function syncHuman(){
+  if(!G||!G.fighters)return;
+  for(const f of G.fighters) f.human=false;
+  const who=mode==='p1'?G.k:mode==='p2'?G.c:null;
+  if(who) who.human=true;
+}
 function playerVec(){
   let x=0,y=0;
   if(keys['a']||keys['arrowleft'])x--; if(keys['d']||keys['arrowright'])x++;
@@ -16496,6 +16528,7 @@ el('play').addEventListener('click',()=>{ ac(); musicStart(); if(G.over)newGame(
 el('reset').addEventListener('click',()=>{ newGame(); running=false; el('play').textContent=t('play'); });
 el('speed').addEventListener('change',e=>speedMul=parseFloat(e.target.value));
 el('mode').addEventListener('change',e=>{ mode=e.target.value; newGame(); running=false; el('play').textContent=t('play'); });
+/* setPlayKind() đổi `mode` mà không dựng lại trận, nên phải gắn lại cờ ngay tại đó. */
 el('autoskill').addEventListener('change',e=>autoSkill=e.target.checked);
 addEventListener('keydown',e=>{
   const k=e.key.toLowerCase(); keys[k]=true;
@@ -17305,6 +17338,7 @@ function setPlayKind(kind){
   document.body.classList.toggle('human',isHuman());
   mode=isHuman()?'p1':'auto';
   const sel=document.getElementById('mode'); if(sel) sel.value=mode;
+  syncHuman();                 // đổi `mode` mà không dựng lại trận thì phải gắn lại cờ
   /* Bản người chơi thì TỰ BẤM chiêu — để `autoSkill` bật thì máy tự tung hết, nút chiêu
      trên màn hình thành vô nghĩa. Bản auto trả lại đúng mặc định cũ. */
   autoSkill=!isHuman();
@@ -17332,10 +17366,16 @@ function padHero(){
 }
 function padBuild(){
   const box=document.getElementById('padSk'); if(!box) return;
-  const h=padHero(), key=h?(h.gnSoul||h.key):(PMODE==='adv'&&ADV?ADV.key:TMP.a||PICK.a);
+  const h=padHero();
+  /* Sau cú CHANGE của Ginyu thì tên trên nút phải tách làm hai, đúng luật đã chốt:
+     ĐÒN TAY đi theo THÂN XÁC (ô J) còn CHIÊU đi theo HỒN (ô K / L / U). Lấy chung một
+     key là nút ghi sai một nửa. */
+  const soul=h?(h.gnSoul||h.key):(PMODE==='adv'&&ADV?ADV.key:TMP.a||PICK.a);
+  const body=h?h.key:soul;
   box.innerHTML=PAD_SK.map(S=>
     `<button class="padBtn" data-key="${S.k}" data-cd="${S.cd}" type="button">`+
-    `<u>${S.k.toUpperCase()}</u><s>${padName(key,S.n)}</s><span class="padCd"></span></button>`).join('');
+    `<u>${S.k.toUpperCase()}</u><s>${padName(S.n===1?body:soul,S.n)}</s>`+
+    `<span class="padCd"></span></button>`).join('');
   padWire(box);
 }
 /* Bấm giữ = giữ phím. Dùng pointer event cho cả chuột lẫn ngón tay, và `setPointerCapture`
@@ -17359,10 +17399,16 @@ function padBind(b){
 }
 /* Vẽ lại trạng thái nút mỗi khung hình: vòng hồi chiêu, ô đã mở chưa, và sáng lên khi bấm
    bằng bàn phím thật. Gọi từ `loop()`, nên phải rẻ — chỉ gán khi giá trị thật sự đổi. */
+let padSig='';
 function padTick(){
   if(!isHuman()) return;
   const box=document.getElementById('padSk'); if(!box) return;
   const h=padHero();
+  /* Cú CHANGE của Ginyu đổi cả thân xác lẫn hồn của người chơi GIỮA TRẬN, mà tên chiêu
+     trên nút thì dựng một lần lúc vào trận. Soi cặp (thân xác / hồn) mỗi nhịp, đổi thì
+     dựng lại — không thì người chơi bị cướp xác vẫn thấy nguyên bộ nút cũ. */
+  const sig=h?(h.key+'/'+(h.gnSoul||'')):'';
+  if(sig!==padSig){ padSig=sig; if(h){ padBuild(); return; } }
   for(const b of box.querySelectorAll('[data-key]')){
     const k=b.dataset.key, cdk=b.dataset.cd;
     const lock=advOn()&&advSlot(k)&&!advRank(k);

@@ -531,9 +531,102 @@ async function padCd() {
   return errors;
 }
 
+/* ---------- 7. CHANGE của Ginyu: quyền điều khiển đi theo HỒN ---------- */
+async function soulSwap() {
+  console.log('\n== 7. bị Ginyu cướp xác thì cầm thân xác Ginyu ==');
+  const { browser, page, errors } = await newPage(buildPlay());
+  await page.click('#arcStart');
+  await page.click('#whoHuman');
+  await page.waitForTimeout(200);
+  await page.click('#cselGo');                         // -> chọn P1
+  await page.waitForTimeout(180);
+  await page.click('#listA .cTile[data-key="tanjiro"]');
+  await page.click('#cselGo');
+  await page.waitForTimeout(180);
+  await page.click('#listB .cTile[data-key="ginyu"]');
+  await page.click('#cselGo');
+  await page.waitForTimeout(180);
+  await page.click('#cselGo');
+  await page.waitForTimeout(3800);
+
+  /* CHỜ HẾT MÀN RA MẮT của cả hai bên rồi mới ép cướp xác — đúng như trong trận thật:
+     CHANGE chỉ nổ khi Ginyu sắp chết, lúc đó màn ra mắt xong từ lâu. Ép ngay lúc hai người
+     còn đang bay vào sân thì đo nhầm sang màn ra mắt (cả sàn đang bị khoá mỗi nhịp). */
+  await page.evaluate(async () => {
+    const G = window.__G();
+    for (let i = 0; i < 300; i++) {
+      if (!G.fighters.some(f => f.gnEntry || f.tanEntry)) return;
+      await new Promise(r => setTimeout(r, 50));
+    }
+  });
+  const before = await page.evaluate(() => {
+    const G = window.__G();
+    const me = G.fighters.find(f => window.__isPlayerDbg(f));
+    return { key: me && me.key, name: me && me.name, isK: me === G.k };
+  });
+  ok('trước khi bị cướp: người chơi cầm thân xác Tanjiro',
+     before.key === 'tanjiro' && before.isK, before.key);
+
+  // ép Ginyu cướp xác người chơi
+  const after = await page.evaluate(() => {
+    const G = window.__G();
+    const g = G.fighters.find(f => f.key === 'ginyu');
+    const t = G.fighters.find(f => f.key === 'tanjiro');
+    window.__ginyuPossess(g, t);
+    const me = G.fighters.filter(f => window.__isPlayerDbg(f));
+    const m = me[0];
+    return {
+      n: me.length,
+      key: m && m.key,                 // thân xác đang cầm
+      soul: m && m.gnSoul,             // hồn ngồi trong đó
+      name: m && m.name,               // chữ hiện trên thanh máu
+      swapAs: m && m.swapAs,
+      stillK: m === G.k,
+      otherSoul: G.fighters.find(f => f !== m && !f.summon).gnSoul
+    };
+  });
+  ok('bị cướp xong: người chơi cầm THÂN XÁC GINYU', after.key === 'ginyu', after.key);
+  ok('và hồn trong đó đúng là Tanjiro', after.soul === 'tanjiro', after.soul);
+  ok('chỉ MỘT người mang cờ điều khiển', after.n === 1, after.n + ' người');
+  ok('thân xác kia do hồn Ginyu cầm', after.otherSoul === 'ginyu', after.otherSoul);
+  ok('quyền điều khiển KHÔNG còn bám vào G.k nữa', !after.stillK);
+
+  // bấm phím phải ăn vào đúng thân xác mới
+  const move = await page.evaluate(async () => {
+    const G = window.__G();
+    /* CHỜ HẾT PHÂN CẢNH trước đã: `ginyuPossess()` đặt `G.freeze=1.8` (giây TRONG TRẬN)
+       và `step()` return sớm suốt lúc đó — bấm phím trong quãng này thì không ai nhúc
+       nhích, đó là đúng chứ không phải lỗi. */
+    for (let i = 0; i < 200 && G.freeze > 0; i++) await new Promise(r => setTimeout(r, 50));
+    const m = G.fighters.find(f => window.__isPlayerDbg(f));
+    const o = G.fighters.find(f => f !== m && !f.summon);
+    m.stun = 0; m.lock = 0; o.lock = 9; o.stun = 9;
+    const y0 = m.y, oy0 = o.y;
+    window.__keys.w = true;
+    await new Promise(r => setTimeout(r, 800));
+    window.__keys.w = false;
+    return { dy: m.y - y0, other: Math.abs(o.y - oy0), froze: G.freeze };
+  });
+  ok('bấm W thì THÂN XÁC GINYU đi lên', move.dy < -8, 'dy=' + move.dy.toFixed(1));
+  ok('thân xác cũ không nhúc nhích theo phím của người chơi', move.other < 6,
+     'lệch ' + move.other.toFixed(1) + 'px');
+
+  // nút chiêu dựng lại: ô J theo THÂN XÁC, ô K/L/U theo HỒN
+  const pad = await page.evaluate(async () => {
+    window.__padTick(); await new Promise(r => setTimeout(r, 60)); window.__padTick();
+    return [...document.querySelectorAll('#padSk [data-key]')]
+      .map(b => ({ k: b.dataset.key, n: b.querySelector('s').textContent }));
+  });
+  ok('nút chiêu dựng lại sau khi bị cướp xác', pad.length === 4 && pad.every(p => p.n),
+     pad.map(p => p.k + ':' + p.n).join(' · '));
+
+  await browser.close();
+  return errors;
+}
+
 (async () => {
   let errs = [];
-  for (const fn of [mobs, autoUntouched, human, adventure, advFight, padCd]) {
+  for (const fn of [mobs, autoUntouched, human, adventure, advFight, padCd, soulSwap]) {
     try { errs = errs.concat(await fn()); }
     catch (e) { ok(fn.name + ' chạy được', false, e.message); }
   }
