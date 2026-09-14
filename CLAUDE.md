@@ -2297,15 +2297,72 @@ càng về sau càng đông (2 → 5 con) và càng nặng đòn.
 > Quái thì **KHÔNG** đi qua đường này — sát thương của chúng đã scale riêng bằng `advMobDmg`,
 > cắt thêm lần nữa là nhân hai lần.
 
-**Hai thanh tiến trình ĐI RIÊNG**, đúng yêu cầu *"có điểm để nâng điểm các thuộc tính, rồi có
-điểm exp riêng để nâng skill"*:
+### Tiến trình đi bằng THẺ NÂNG CẤP, không đi bằng điểm
 
-| Thanh | Ăn từ đâu | Tiêu vào gì |
+> **Hai pool điểm cũ (`sp` thuộc tính / `sxp` skill) đã BỎ HẲN.** Người dùng bác thẳng:
+> *"Không được biến progression chủ yếu thành +10% damage / +5% HP. Phần thú vị nhất phải
+> là: thay đổi cơ chế skill; thêm hiệu ứng; synergy; combo; projectile; chain; mark; reset
+> cooldown; AoE; CC..."*. **Đừng dựng lại hai bảng mua điểm đó.**
+
+Giờ chỉ còn **một** thanh `exp`. Lên cấp ⇒ **dừng trận**, hiện **ba thẻ**, chọn một
+(`advPick3` → `advTake`). Chỉ số vẫn còn nhưng chỉ là mấy thẻ `common` nằm CHUNG một hũ với
+thẻ cơ chế — đo được: **29 thẻ, chỉ 4 thẻ chỉ số**, 19 thẻ cắm thật vào một cửa cơ chế.
+
+**Lên cấp xảy ra GIỮA TRẬN** (exp rơi ra từ mỗi con vừa hạ, `advGain` cộng ngay) nên cờ
+`advCards` phải **chặn thẳng `step()`** đúng lối `vsOn` — không thì mấy màn ra mắt và đồng hồ
+hiệu ứng vẫn chạy trong lúc người chơi đang đọc thẻ. Đo được: `G.t` đứng nguyên suốt lúc chọn.
+
+> **EXP cộng NGAY lúc từng con gục, và `advResult()` KHÔNG cộng lại.** Cộng ở cả hai chỗ là
+> ăn gấp đôi.
+
+### Lớp hiệu ứng (Adventure Modifier Layer) — NĂM CỬA, không sửa nhân vật nào
+
+Người dùng: *"Adventure phải là một layer riêng. Không làm thay đổi hoặc phá existing
+fighters, existing balance, existing game modes."* Vì vậy **tuyệt đối không sửa `think()` hay
+thân chiêu của mười hai nhân vật**. Mọi thẻ cắm vào đúng năm cửa chung:
+
+| cửa | ở đâu | dùng cho |
 |---|---|---|
-| `exp` | hạ địch | lên cấp ⇒ mỗi cấp **3 điểm thuộc tính** (`ADV_SP`) |
-| `sxp` | hạ địch | mở và **nâng bậc chiêu** |
+| `hit` | trong `hurt()`, **ngay trước khi trừ máu** | mark, dmg cộng thêm, nổ, hút máu, xử trảm |
+| `kill` | trong `defeat()` | lan mark, hồi chiêu, nổ xác |
+| `proj` | vòng duyệt `G.proj`, một lần mỗi viên (đi chung lối `p.gnSkew`) | xuyên, chia đạn, tốc bay, nổ |
+| `cast` | soi ô hồi chiêu vừa **nạp lại** trong `advOnTick` | combo, nạp pin chiêu |
+| `tick` | vòng duyệt fighter mỗi nhịp | hào quang, đồng hồ riêng |
 
-**Đừng gộp hai cái làm một** — lên cấp không tự mở chiêu, và nâng chiêu không tự lên cấp.
+- Cửa `hit` đặt **sau** mọi lớp chặn / né / giảm sát thương (nên thẻ không cứu được đòn đã bị
+  chặn) nhưng **trước** khi trừ máu (nên thẻ vẫn sửa được lượng sát thương).
+- **Ngoài chế độ phiêu lưu thì cả năm cửa trả nguyên giá trị về** — đo được: chưa có thẻ nào
+  thì `advOnHit(100)` ra đúng `100`, và `t_reg` vẫn 55/55 trận sạch lỗi.
+- Thêm nhân vật mới **không phải sửa lớp này**, chỉ thêm dòng vào bảng `ADV_UP`.
+
+> **CHẶN VÒNG LẶP VÔ HẠN (§72) — `advHurt2()`.** Đòn dội và cú nổ đều gọi lại `hurt()`, mà
+> `hurt()` lại chạy `advOnHit` — không chặn thì dội đẻ ra dội, nổ đẻ ra nổ, trận treo cứng.
+> Mọi sát thương PHÁI SINH phải đi qua `advHurt2()`: nó bật cờ `ADV_SEC` trong lúc gọi, và
+> `advOnHit` thấy cờ thì bỏ qua TOÀN BỘ hook. Đòn phái sinh vẫn gây sát thương bình thường
+> nhưng không đẻ thêm một lớp nữa. **Thêm thẻ nào sinh ra sát thương mới thì BẮT BUỘC gọi
+> `advHurt2`, đừng gọi thẳng `hurt`.**
+
+**MARK là trục synergy chung**, không phải dấu riêng của từng nhân vật: ai gắn cũng được
+(`advMark`), mọi thẻ khác đọc chung (`advMarked`), và thẻ nào tiêu nó thì gọi `advEatMark()`
+để hai thẻ không cùng ăn một cái dấu. Kẻ bị đánh dấu có một vòng hồng nhấp nháy dưới chân.
+
+**Bảng thẻ `ADV_UP`** đúng khung dữ liệu đã nêu: `id · fighter · slot · rar · tags · max ·
+req · excl · name{vi,en} · desc{vi,en}` cộng một trong năm handler (hoặc `on` cho hiệu ứng
+một lần). `fighter:null` = dùng chung cho mọi nhân vật, nên **nhân vật mới tự có sẵn cả bộ**.
+
+Ba luật bốc thẻ, làm đủ cả ba:
+- **§68** thẻ đã đủ bậc thì biến khỏi hũ (`advPool` lọc theo `max`);
+- **§69** đà build: thẻ trùng `tags` với thứ mình đã có thì nặng ký hơn một nhịp (trần +60%);
+- **§70** pity **ẩn**: mấy lượt liền không ra thẻ MỞ CHIÊU thì nó nặng ký dần (đo được
+  30 → 111 sau 3 lượt khô).
+
+Nhánh **loại trừ** qua `excl`: chọn một hướng đòn thường (Nạp Pin / Đòn Nặng / Tay Nhanh) thì
+hai hướng kia khoá hẳn. **Bốc lại** (`ADV.rr`) và **giữ một thẻ** qua lần bốc lại (chuột phải,
+`ADV.keep`) — đúng §9.
+
+> **Cân bằng đo lại bằng `bal.js` với build BỐC NGẪU NHIÊN** (mỗi cấp bốc từ đúng cái hũ
+> thật, ưu tiên thẻ mở chiêu khi nó ra): ChiChi 9/11, Konohamaru 10/11, Beatrice 11/11, mấy
+> trận boss cuối kết ở 6~20% máu. Màn quái vẫn thoải mái 79~100% — đúng chất màn farm.
 
 - **Máu lv1 THẤP hẳn**: `ADV_HP0 = 260`, cộng `14/cấp` và `18` mỗi điểm Thể lực. **Không đọc
   `HP[key]`** ở chế độ này — 800 máu thì quái màn 1 không gãi nổi.
@@ -3759,9 +3816,15 @@ node tools/t_player.js  # BẢN NGƯỜI CHƠI và chế độ PHIÊU LƯU: bả
                         # PHIÊU LƯU (lv1 máu thấp và chỉ có đòn thường — ba ô chiêu kia bấm
                         # không ăn, boss đúng ở mỗi màn thứ 4, quái đông và mạnh dần, đủ exp
                         # thì lên nhiều cấp một lượt, điểm thuộc tính ăn vào hệ số thật, điểm
-                        # skill mở rồi mới bấm được, bậc chiêu chỉ làm nhanh ĐÚNG ô đó, chưa
-                        # đủ cấp thì thừa điểm cũng khoá); và đánh thật một màn: hạ hết quái
-                        # thì ăn exp rồi sang màn kế, thua thì vẫn giữ phần đã farm
+                        # thẻ mở chiêu mới bấm được, bậc chiêu chỉ làm nhanh ĐÚNG ô đó);
+                        # BẢNG THẺ (29 thẻ đủ khung dữ liệu, thẻ cơ chế áp đảo thẻ chỉ số,
+                        # đủ bốn bậc hiếm, bốc ba thẻ không trùng, thẻ đủ bậc biến khỏi hũ,
+                        # nhánh loại trừ khoá nhau, pity ẩn kéo thẻ mở chiêu lên);
+                        # THẺ CHẠY THẬT trong trận (mark chỉ cộng dmg khi CÓ dấu, xuyên và
+                        # chia ba mũi ăn vào đạn thật, nổ vùng không đẻ vòng lặp vô hạn,
+                        # lên cấp giữa trận thì TRẬN ĐỨNG HẲN rồi mới cho chọn thẻ);
+                        # đánh thật một màn; và CƯỚP XÁC: bị Ginyu change thì người chơi
+                        # cầm THÂN XÁC GINYU chứ không cầm thân xác cũ
 node tools/t_modes.js   # ba chế độ đấu: 1v1 vẫn y như cũ (hai người, đúng hai đầu sàn),
                         # hỗn chiến (mỗi người một phe, hạ một người thì trận còn chạy,
                         # người cuối cùng thắng, băng-rôn gạch tên người đã bị hạ,

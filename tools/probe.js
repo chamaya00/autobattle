@@ -157,11 +157,19 @@ window.__advNew=advNew; window.__advNeed=advNeed; window.__advMaxHp=()=>advMaxHp
 window.__advStageDef=advStageDef; window.__advIsBoss=advIsBoss; window.__advRoster=advRoster;
 window.__advMobHp=advMobHp; window.__advMobDmg=advMobDmg; window.__advBossHp=advBossHp; window.__advBossDmg=advBossDmg;
 window.__advGain=advGain; window.__advLevel=advLevel; window.__advResult=advResult;
-window.__advBuyStat=advBuyStat; window.__advBuySkill=advBuySkill; window.__advRank=advRank;
+window.__advRank=advRank;
+/* lớp hiệu ứng + thẻ nâng cấp */
+window.__ADV_UP=ADV_UP; window.__ADV_BY_ID=ADV_BY_ID; window.__ADV_RAR=ADV_RAR;
+window.__advGive=advGive; window.__advTake=advTake; window.__advHas=advHas;
+window.__advStack=advStack; window.__advPool=advPool; window.__advPick3=advPick3;
+window.__advIndex=advIndex; window.__advCards=()=>advCards; window.__advLevelCheck=()=>advLevelCheck();
+window.__advOnHit=advOnHit; window.__advOnKill=advOnKill; window.__advOnProj=advOnProj;
+window.__advMark=advMark; window.__advMarked=advMarked; window.__advBoom=advBoom;
+window.__ADV_HOOKS=()=>ADV_ON; window.__advWeight=advWeight; window.__advRerollGo=()=>advRerollGo();
 window.__advStatTick=advStatTick; window.__advSlotRate=advSlotRate; window.__advLockKeys=advLockKeys;
 window.__advOn=()=>advOn(); window.__advTune=advTune; window.__advPaint=()=>advPaint();
-window.__ADV_SLOTS=ADV_SLOTS; window.__ADV_ST=ADV_ST; window.__ADV_STAGES=()=>ADV_STAGES;
-window.__ADV_SP=()=>ADV_SP; window.__ADV_RANKCD=()=>ADV_RANKCD; window.__ADV_HP0=()=>ADV_HP0;
+window.__ADV_SLOTS=ADV_SLOTS; window.__ADV_STAGES=()=>ADV_STAGES;
+window.__ADV_RANKCD=()=>ADV_RANKCD; window.__ADV_HP0=()=>ADV_HP0; window.__ADV_RANKMAX=()=>ADV_RANKMAX;
 window.__padName=padName; window.__padTick=()=>padTick();
 window.__dupColor=dupColor; window.__teamTint=teamTint; window.__setMode=(m,r)=>{
   PMODE=m;

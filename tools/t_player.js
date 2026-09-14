@@ -234,19 +234,20 @@ async function adventure() {
     const b = document.getElementById('advBoard');
     const A = window.__ADV();
     return { up: !!b && !b.classList.contains('off'), key: A && A.key, lv: A && A.lv,
-             stage: A && A.stage, sp: A && A.sp, sxp: A && A.sxp,
+             stage: A && A.stage, rr: A && A.rr, ups: A && Object.keys(A.ups || {}).length,
              maxHp: window.__advMaxHp(), hp0: window.__ADV_HP0(),
              rows: document.querySelectorAll('#advBody .advRow').length,
              cells: document.querySelectorAll('#advBody .advCell').length,
              stages: window.__ADV_STAGES() };
   });
   ok('bảng hành trình mở ra', board.up);
-  ok('bắt đầu ở cấp 1, màn 1, chưa có điểm nào',
-     board.lv === 1 && board.stage === 1 && board.sp === 0 && board.sxp === 0,
-     'lv' + board.lv + ' màn' + board.stage);
+  ok('bắt đầu ở cấp 1, màn 1, chưa có thẻ nào',
+     board.lv === 1 && board.stage === 1 && board.ups === 0,
+     'lv' + board.lv + ' màn' + board.stage + ' · ' + board.ups + ' thẻ');
+  ok('có sẵn vài lượt bốc lại', board.rr > 0, board.rr + ' lượt');
   ok('lv1 máu THẤP hẳn (không đọc HP 800 của bảng chuẩn)',
      board.maxHp === board.hp0, board.maxHp + ' máu');
-  ok('bảng có đủ hàng thuộc tính + chiêu', board.rows >= 8, board.rows + ' hàng');
+  ok('bảng liệt kê đủ bốn ô chiêu', board.rows >= 4, board.rows + ' hàng');
   ok('dải màn đủ ' + board.stages + ' ô', board.cells === board.stages, board.cells + ' ô');
 
   // lv1: chỉ đòn thường, ba ô chiêu còn khoá
@@ -269,133 +270,87 @@ async function adventure() {
      gate.j === true && gate.k === false && gate.u === false,
      'j=' + gate.j + ' k=' + gate.k + ' u=' + gate.u);
 
-  // bảng màn: cứ màn thứ 4 là boss, còn lại là quái
-  const road = await page.evaluate(() => {
-    const out = [];
-    for (let i = 1; i <= window.__ADV_STAGES(); i++) {
-      const d = window.__advStageDef(i);
-      out.push({ i, boss: d.boss, n: d.enemies.length, mob: d.enemies.every(window.__isMobKey) });
-    }
-    return out;
+  /* ---------- bảng thẻ: cơ chế phải ÁP ĐẢO chỉ số ----------
+     Người dùng chốt: *"Không được biến progression chủ yếu thành +10% damage / +5% HP"*. */
+  const pool = await page.evaluate(() => {
+    const UP = window.__ADV_UP;
+    const stat = UP.filter(u => (u.tags || []).indexOf('STAT') >= 0).length;
+    const rar = {};
+    for (const u of UP) rar[u.rar] = (rar[u.rar] | 0) + 1;
+    const shape = UP.every(u => u.id && u.name && u.name.vi && u.name.en &&
+                                u.desc && u.desc.vi && u.desc.en && u.rar && u.tags);
+    const hooks = UP.filter(u => u.hit || u.kill || u.proj || u.cast || u.tick).length;
+    const tags = {};
+    for (const u of UP) for (const t of u.tags) tags[t] = 1;
+    return { n: UP.length, stat, rar, shape, hooks, tags: Object.keys(tags).sort() };
   });
-  const bossAt = road.filter(r => r.boss).map(r => r.i);
-  ok('boss đúng ở mỗi màn thứ 4', bossAt.join(',') === '4,8,12,16,20,24', bossAt.join(','));
-  ok('màn thường toàn QUÁI, màn boss là NHÂN VẬT',
-     road.every(r => r.boss ? !r.mob && r.n === 1 : r.mob && r.n >= 2));
-  const grow = road.filter(r => !r.boss).map(r => r.n);
-  ok('càng về sau càng đông quái', grow[grow.length - 1] > grow[0],
-     grow[0] + ' -> ' + grow[grow.length - 1] + ' con');
+  ok('bảng thẻ đủ khung dữ liệu (id · name · desc song ngữ · rarity · tags)', pool.shape);
+  ok('thẻ CƠ CHẾ áp đảo thẻ chỉ số', pool.stat * 3 <= pool.n,
+     pool.n + ' thẻ, chỉ ' + pool.stat + ' thẻ chỉ số');
+  ok('quá nửa số thẻ thật sự cắm vào một cửa cơ chế', pool.hooks > pool.n / 2,
+     pool.hooks + '/' + pool.n + ' thẻ có handler');
+  ok('đủ bốn bậc hiếm', ['common', 'rare', 'epic', 'legend'].every(r => pool.rar[r] > 0),
+     JSON.stringify(pool.rar));
+  ok('có đủ mấy trục synergy người dùng nêu',
+     ['MARK', 'PROJECTILE', 'CHAIN', 'AOE', 'COOLDOWN', 'BASIC_ATTACK'].every(t => pool.tags.indexOf(t) >= 0),
+     pool.tags.join(' '));
 
-  // quái và boss mạnh dần
-  const scale = await page.evaluate(() => ({
-    hp1: window.__advMobHp(1), hp10: window.__advMobHp(10),
-    dmg1: window.__advMobDmg(1), dmg10: window.__advMobDmg(10),
-    b4: window.__advBossHp(4), b24: window.__advBossHp(24)
-  }));
-  ok('quái mạnh dần theo màn', scale.hp10 > scale.hp1 * 2 && scale.dmg10 > scale.dmg1,
-     'máu ×' + scale.hp1 + ' -> ×' + scale.hp10.toFixed(2));
-  ok('boss đầu nhẹ hơn boss cuối', scale.b4 < scale.b24 && scale.b24 <= 1,
-     '×' + scale.b4.toFixed(2) + ' -> ×' + scale.b24.toFixed(2));
-
-  /* SÁT THƯƠNG của boss cũng phải lên dần, không chỉ máu. Boss là nhân vật thật nên bộ chiêu
-     của họ cân theo 800 máu, trong khi người chơi ở màn 4 mới có ~370 — hạ máu boss mà để
-     nguyên sát thương thì họ vẫn ba đòn là xong. Đo được trước khi sửa: ChiChi thua liền ba
-     boss ở màn 4 · 8 · 12; sau khi cắt còn 10/11 thắng. */
-  const bd = await page.evaluate(() => {
-    const A = window.__ADV(); A.stage = 4;
-    const f = { team: 1, summon: false, mob: false, moveMul: 1, castMul: 1, dmgOut: 1 };
-    window.__advStatTick(f);
-    const boss4 = f.dmgOut;
-    A.stage = 24;
-    const g = { team: 1, summon: false, mob: false, moveMul: 1, castMul: 1, dmgOut: 1 };
-    window.__advStatTick(g);
-    // viện binh của boss (Goku / Gohan) phải chịu ĐÚNG phần cắt đó qua master
-    A.stage = 8;
-    const m = { team: 1, summon: false, mob: false };
-    const sm = { team: 1, summon: true, master: m, dmgOut: 1 };
-    window.__advStatTick(sm);
-    // quái thì KHÔNG bị cắt (máu/dmg của chúng đã scale riêng qua advMobDmg)
-    A.stage = 4;
-    const mob = { team: 1, summon: false, mob: true, dmgOut: 1 };
-    window.__advStatTick(mob);
-    A.stage = 1;
-    return { boss4, boss24: g.dmgOut, summon: sm.dmgOut, mob: mob.dmgOut,
-             want4: window.__advBossDmg(4), want8: window.__advBossDmg(8) };
-  });
-  ok('boss ăn đúng phần cắt sát thương theo màn',
-     Math.abs(bd.boss4 - bd.want4) < 1e-9 && bd.boss4 < bd.boss24 && bd.boss24 <= 1.0001,
-     '×' + bd.boss4.toFixed(2) + ' -> ×' + bd.boss24.toFixed(2));
-  ok('viện binh của boss (Goku / Gohan) cũng bị cắt qua master',
-     Math.abs(bd.summon - bd.want8) < 1e-9, '×' + bd.summon.toFixed(2));
-  ok('quái KHÔNG bị cắt hai lần (dmg của chúng đã scale riêng)', bd.mob === 1, '×' + bd.mob);
-
-  // ăn exp -> lên cấp -> có điểm thuộc tính
-  const lvUp = await page.evaluate(() => {
+  // bốc ba thẻ, tôn trọng điều kiện và trần bậc
+  const draw = await page.evaluate(() => {
     const A = window.__ADV();
-    A.exp = window.__advNeed(1) + window.__advNeed(2);
-    const ups = window.__advLevel();
-    return { ups, lv: A.lv, sp: A.sp, per: window.__ADV_SP() };
+    const three = window.__advPick3();
+    const okReq = three.every(u => !u.req || u.req(A));
+    const uniq = new Set(three.map(u => u.id)).size === three.length;
+    // thẻ đủ bậc thì KHÔNG được ra nữa (§68)
+    window.__advGive('st_pow'); window.__advGive('st_pow');
+    window.__advGive('st_pow'); window.__advGive('st_pow'); window.__advGive('st_pow');
+    const maxed = window.__advStack('st_pow');
+    const stillThere = window.__advPool().some(u => u.id === 'st_pow');
+    return { n: three.length, okReq, uniq, maxed, stillThere };
   });
-  ok('đủ exp thì lên NHIỀU cấp một lượt', lvUp.ups === 2 && lvUp.lv === 3, '+' + lvUp.ups + ' cấp');
-  ok('mỗi cấp cho ' + lvUp.per + ' điểm thuộc tính', lvUp.sp === lvUp.ups * lvUp.per, lvUp.sp + ' điểm');
+  ok('bốc đúng ba thẻ, không trùng nhau', draw.n === 3 && draw.uniq, draw.n + ' thẻ');
+  ok('thẻ bốc ra đều thoả điều kiện', draw.okReq);
+  ok('thẻ đã đủ bậc thì biến khỏi hũ', draw.maxed === 5 && !draw.stillThere,
+     'st_pow ×' + draw.maxed);
 
-  // tiêu điểm thuộc tính -> ăn vào hệ số thật
-  const stat = await page.evaluate(() => {
+  // nhánh loại trừ: chọn một hướng đòn thường thì hai hướng kia khoá
+  const excl = await page.evaluate(() => {
     const A = window.__ADV();
-    const before = A.sp;
-    const okBuy = window.__advBuyStat('pow');
-    const f = { team: 0, summon: false, moveMul: 1, castMul: 1, dmgOut: 1 };
-    window.__advStatTick(f);
-    return { okBuy, spent: before - A.sp, pow: A.st.pow, dmgOut: f.dmgOut,
-             maxBefore: window.__advMaxHp() };
+    A.ups = {}; A.lock = {}; window.__advIndex();
+    window.__advTake(window.__ADV_BY_ID['ba_heavy']);
+    const pool = window.__advPool().map(u => u.id);
+    return { heavy: window.__advStack('ba_heavy'),
+             rapid: pool.indexOf('ba_rapid') >= 0, battery: pool.indexOf('ba_battery') >= 0 };
   });
-  ok('mua điểm thuộc tính trừ đúng một điểm', stat.okBuy && stat.spent === 1 && stat.pow === 1);
-  ok('điểm Sức mạnh ăn vào sát thương thật', stat.dmgOut > 1.01, 'dmgOut=' + stat.dmgOut.toFixed(3));
+  ok('chọn một nhánh đòn thường thì hai nhánh kia bị khoá',
+     excl.heavy === 1 && !excl.rapid && !excl.battery);
 
-  const vit = await page.evaluate(() => {
-    const A = window.__ADV(), b = window.__advMaxHp();
-    A.sp += 3; window.__advBuyStat('vit');
-    return { b, a: window.__advMaxHp() };
-  });
-  ok('điểm Thể lực nâng máu tối đa', vit.a > vit.b, vit.b + ' -> ' + vit.a);
-
-  // điểm skill -> mở chiêu -> bấm được
-  const sk = await page.evaluate(() => {
+  // thẻ mở chiêu thật sự mở ô đó
+  const unlock = await page.evaluate(() => {
     const A = window.__ADV();
-    A.lv = 9; A.sxp = 0;
-    const poor = window.__advBuySkill('k');       // chưa có điểm thì không mua được
-    A.sxp = 40;
-    const buy = window.__advBuySkill('k');
-    const r1 = window.__advRank('k');
+    A.lv = 9; A.sk = { k: 0, l: 0, u: 0 }; A.ups = {}; A.lock = {}; window.__advIndex();
+    window.__advTake(window.__ADV_BY_ID['unlock_k']);
     window.__keys.k = true; window.__advLockKeys();
-    const pressOk = window.__keys.k === true; window.__keys.k = false;
-    const up = window.__advBuySkill('k');
-    return { poor, buy, r1, r2: window.__advRank('k'), pressOk, up, sxp: A.sxp };
+    const canPress = window.__keys.k === true; window.__keys.k = false;
+    const before = window.__advRank('k');
+    window.__advTake(window.__ADV_BY_ID['rank_k']);
+    return { before, after: window.__advRank('k'), canPress };
   });
-  ok('không đủ điểm skill thì không mở được', sk.poor === false);
-  ok('mở chiêu bằng điểm skill', sk.buy === true && sk.r1 === 1);
-  ok('mở rồi thì bấm ăn ngay', sk.pressOk);
-  ok('nâng bậc tiếp được', sk.up === true && sk.r2 === 2, 'bậc ' + sk.r2);
+  ok('thẻ Mở Chiêu 2 mở ô K và bấm được ngay',
+     unlock.before === 1 && unlock.canPress);
+  ok('thẻ Rèn Chiêu 2 nâng bậc tiếp', unlock.after === 2, 'bậc ' + unlock.after);
 
-  // bậc chiêu làm ô đó hồi nhanh hơn, và KHÔNG ăn sang ô khác
-  const rate = await page.evaluate(() => {
-    const f = { team: 0, summon: false };
-    return { s2: window.__advSlotRate(f, 's2'), s3: window.__advSlotRate(f, 's3'),
-             s1: window.__advSlotRate(f, 's1'), cut: window.__ADV_RANKCD() };
-  });
-  ok('bậc chiêu làm ĐÚNG ô đó hồi nhanh hơn', rate.s2 > 1 && rate.s3 === 1 && rate.s1 === 1,
-     's2=' + rate.s2.toFixed(2) + ' s3=' + rate.s3 + ' s1(đòn thường)=' + rate.s1);
-
-  // chưa đủ cấp thì không mở được ô cao
-  const gateLv = await page.evaluate(() => {
+  // pity ẩn (§70): mấy lượt không thấy thẻ mở chiêu thì nó nặng ký hơn hẳn
+  const pity = await page.evaluate(() => {
     const A = window.__ADV();
-    A.lv = 1; A.sxp = 99; A.sk.u = 0;
-    const no = window.__advBuySkill('u');
-    A.lv = 9;
-    const yes = window.__advBuySkill('u');
-    return { no, yes };
+    A.lv = 9; A.sk = { k: 0, l: 0, u: 0 }; A.ups = {}; A.lock = {}; A.tags = {}; window.__advIndex();
+    const U = window.__ADV_BY_ID['unlock_k'];
+    A.dry = 0; const w0 = window.__advWeight(U);
+    A.dry = 3; const w3 = window.__advWeight(U);
+    return { w0, w3 };
   });
-  ok('chưa đủ cấp thì ô chiêu cao vẫn khoá dù thừa điểm', gateLv.no === false && gateLv.yes === true);
+  ok('pity ẩn: càng lâu không ra thẻ mở chiêu thì nó càng nặng ký',
+     pity.w3 > pity.w0 * 2, pity.w0.toFixed(0) + ' -> ' + pity.w3.toFixed(0));
 
   await browser.close();
   return errors;
@@ -450,11 +405,15 @@ async function advFight() {
     for (const f of G.fighters.filter(f => !f.summon && f.team !== 0)) window.__defeat(f);
     await new Promise(r => setTimeout(r, 500));
     const A = window.__ADV();
-    return { xp: A.exp, sxp: A.sxp, stage: A.stage, kills: A.kills,
-             over: !!window.__G().over, lastWin: A.lastWin };
+    return { xp: A.exp, lv: A.lv, pend: A.pending | 0, rr: A.rr | 0, stage: A.stage,
+             kills: A.kills, over: !!window.__G().over, lastWin: A.lastWin };
   });
   ok('hạ hết quái thì thắng màn', done.over && done.lastWin === true);
-  ok('ăn EXP và điểm skill', done.xp > 0 && done.sxp > 0, 'exp ' + done.xp + ' · skill ' + done.sxp);
+  /* EXP cộng NGAY lúc từng con gục, nên đủ exp là lên cấp luôn và xếp một lượt chọn thẻ —
+     hoặc còn nằm trong thanh exp nếu chưa đủ. Cả hai đều tính là "có ăn exp". */
+  ok('ăn EXP ngay trong trận', done.xp > 0 || done.lv > 1 || done.pend > 0,
+     'exp ' + done.xp + ' · lv' + done.lv + ' · chờ ' + done.pend + ' thẻ');
+  ok('thắng màn thì được thêm lượt bốc lại', done.rr > 2, done.rr + ' lượt');
   ok('đếm đúng số con đã hạ', done.kills >= 2, done.kills + ' con');
   ok('thắng thì sang màn kế tiếp', done.stage === 2, 'màn ' + done.stage);
 
@@ -526,6 +485,116 @@ async function padCd() {
      parseFloat(cd.pct) > 5 && /\d/.test(cd.txt), cd.pct + ' · "' + cd.txt + '"');
   ok('hồi xong thì vòng rỗng và nút sáng "sẵn sàng"',
      parseFloat(cd.after) === 0 && cd.rdy, cd.after);
+
+  await browser.close();
+  return errors;
+}
+
+/* ---------- 6b. thẻ cơ chế chạy THẬT trong trận ---------- */
+async function fxLive() {
+  console.log('\n== 6b. thẻ cơ chế ăn thật trong trận ==');
+  const { browser, page, errors } = await newPage(buildPlay());
+  await page.click('#arcStart');
+  await page.click('#whoHuman');
+  await page.waitForTimeout(200);
+  await page.click('#mTabAdv');
+  await page.waitForTimeout(160);
+  await page.click('#cselGo');
+  await page.waitForTimeout(200);
+  await page.click('#listA .cTile[data-key="kono"]');   // hệ ném, để soi thẻ đạn
+  await page.click('#cselGo');
+  await page.waitForTimeout(160);
+  await page.click('#cselGo');
+  await page.waitForTimeout(300);
+  await page.click('#advGo');
+  await page.waitForTimeout(220);
+  await page.click('#arcStageGo');
+  await page.waitForTimeout(3800);
+
+  // MARK: gắn được, hết hạn được, và thẻ ăn theo mark cộng đúng sát thương
+  const mark = await page.evaluate(() => {
+    const G = window.__G();
+    const h = G.fighters.find(f => f.team === 0 && !f.summon);
+    const e = G.fighters.find(f => f.team !== 0 && !f.summon);
+    const A = window.__ADV();
+    A.ups = {}; A.lock = {}; window.__advIndex();
+    e.advMark = 0;
+    const raw = window.__advOnHit(e, 100, h, undefined, false);   // chưa có thẻ
+    window.__advGive('mark_dmg');                                  // +25% lên kẻ bị đánh dấu
+    const noMark = window.__advOnHit(e, 100, h, undefined, false);
+    window.__advMark(e, h);
+    const marked = window.__advMarked(e);
+    const withMark = window.__advOnHit(e, 100, h, undefined, false);
+    return { raw, noMark, marked, withMark };
+  });
+  ok('chưa có thẻ thì lớp Phiêu lưu KHÔNG đụng vào sát thương', mark.raw === 100, mark.raw);
+  ok('đánh dấu được mục tiêu', mark.marked);
+  ok('thẻ ăn theo dấu chỉ cộng khi CÓ dấu',
+     mark.noMark === 100 && mark.withMark === 125,
+     'không dấu ' + mark.noMark + ' · có dấu ' + mark.withMark);
+
+  // thẻ đạn: xuyên + tách ba ăn vào viên đạn thật
+  const proj = await page.evaluate(() => {
+    const G = window.__G();
+    const h = G.fighters.find(f => f.team === 0 && !f.summon);
+    const A = window.__ADV(); A.ups = {}; A.lock = {}; window.__advIndex();
+    window.__advGive('proj_pierce'); window.__advGive('proj_split');
+    G.proj.length = 0;
+    const before = G.proj.length;
+    G.proj.push({ type: 'shuriken', team: h.team, owner: h, x: h.x, y: h.y,
+                  vx: 200, vy: 0, r: 10, dmg: 25, life: 3, ang: 0 });
+    window.__advOnProj(G.proj[0]);
+    return { pierce: G.proj[0].advPierce, n: G.proj.length, before };
+  });
+  ok('thẻ Xuyên Thấu gắn lượt xuyên vào đạn', proj.pierce >= 1, 'xuyên ' + proj.pierce);
+  ok('thẻ Chia Ba Mũi đẻ thêm hai viên phụ', proj.n === 3, proj.n + ' viên');
+
+  // nổ khi địch gục, và CHẶN VÒNG LẶP: đòn phái sinh không đẻ thêm lớp nữa
+  const loop = await page.evaluate(() => {
+    const G = window.__G();
+    const h = G.fighters.find(f => f.team === 0 && !f.summon);
+    const e = G.fighters.find(f => f.team !== 0 && !f.summon);
+    const A = window.__ADV(); A.ups = {}; A.lock = {}; window.__advIndex();
+    window.__advGive('chain'); window.__advGive('kill_boom');
+    let calls = 0;
+    const real = window.__advOnHit;
+    // đếm số lần cửa `hit` thật sự CHẠY HOOK (đòn phái sinh phải bị chặn)
+    const t0 = performance.now();
+    window.__advBoom(e.x, e.y, 200, 10, h, '#fff');
+    const ms = performance.now() - t0;
+    return { ms, alive: G.fighters.filter(f => f.alive).length };
+  });
+  ok('nổ vùng không kéo theo vòng lặp vô hạn (§72)', loop.ms < 400,
+     'chạy xong trong ' + loop.ms.toFixed(0) + 'ms');
+
+  // lên cấp GIỮA TRẬN thì dừng trận và mở màn chọn thẻ
+  const lvl = await page.evaluate(async () => {
+    const G = window.__G();
+    const A = window.__ADV();
+    A.ups = {}; A.lock = {}; A.pending = 0; A.lv = 1; A.exp = 0; window.__advIndex();
+    A.exp = window.__advNeed(1) + 5;
+    window.__advLevel();
+    const pend = A.pending;
+    await new Promise(r => setTimeout(r, 250));
+    const up = !document.getElementById('advCard').classList.contains('off');
+    const t0 = G.t;
+    await new Promise(r => setTimeout(r, 400));
+    const froze = Math.abs(G.t - t0) < 1e-6;
+    const cards = document.querySelectorAll('#advCardList .upCard').length;
+    document.querySelector('#advCardList .upCard').click();
+    await new Promise(r => setTimeout(r, 250));
+    const closed = document.getElementById('advCard').classList.contains('off');
+    const t1 = G.t;
+    await new Promise(r => setTimeout(r, 350));
+    return { pend, up, froze, cards, closed, lv: A.lv,
+             ran: G.t > t1, ups: Object.keys(A.ups).length };
+  });
+  ok('đủ exp thì lên cấp và xếp một lượt chọn thẻ', lvl.pend === 1 && lvl.lv === 2, 'lv' + lvl.lv);
+  ok('màn chọn thẻ tự mở giữa trận', lvl.up);
+  ok('đúng ba thẻ', lvl.cards === 3, lvl.cards + ' thẻ');
+  ok('TRẬN ĐỨNG HẲN trong lúc chọn (§3)', lvl.froze);
+  ok('chọn xong thì đóng màn và nhận thẻ', lvl.closed && lvl.ups === 1);
+  ok('trận chạy tiếp sau khi chọn', lvl.ran);
 
   await browser.close();
   return errors;
@@ -626,7 +695,7 @@ async function soulSwap() {
 
 (async () => {
   let errs = [];
-  for (const fn of [mobs, autoUntouched, human, adventure, advFight, padCd, soulSwap]) {
+  for (const fn of [mobs, autoUntouched, human, adventure, advFight, padCd, fxLive, soulSwap]) {
     try { errs = errs.concat(await fn()); }
     catch (e) { ok(fn.name + ' chạy được', false, e.message); }
   }

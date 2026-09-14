@@ -1449,6 +1449,39 @@
     body.human.arcade .wrap{grid-template-columns:minmax(0,1fr) 300px}
   }
 
+  /* ---------- thẻ nâng cấp ---------- */
+  .upRow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 4px}
+  @media(max-width:760px){ .upRow{grid-template-columns:1fr} }
+  .upCard{position:relative;display:flex;flex-direction:column;gap:7px;text-align:left;
+    padding:16px 14px 13px;border:0;border-radius:16px;cursor:pointer;color:#EAF0FF;
+    min-height:186px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 14%,var(--s2)),var(--s1));
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--rc) 45%,var(--line)),0 10px 26px rgba(0,0,0,.45);
+    transition:box-shadow .16s var(--ease),background .16s var(--ease)}
+  .upCard:hover,.upCard:focus-visible{
+    background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 26%,var(--s2)),var(--s1));
+    box-shadow:inset 0 0 0 2px var(--rc),0 14px 34px rgba(0,0,0,.55)}
+  .upCard.keep{box-shadow:inset 0 0 0 2px var(--gold),0 14px 34px rgba(0,0,0,.55)}
+  .upCard.keep::before{content:'📌';position:absolute;top:9px;right:11px;font-size:15px}
+  .upRar{font-style:normal;font-family:var(--fd);font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--rc)}
+  .upName{font-family:var(--fd);font-size:17px;line-height:1.2}
+  .upDesc{margin:0;font-size:12.5px;line-height:1.5;opacity:.9;flex:1}
+  .upDesc b{color:var(--rc)}
+  .upFoot{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:2px}
+  .upFoot em{font-style:normal;font-size:8.5px;letter-spacing:.08em;padding:2px 6px;
+    border-radius:20px;background:var(--ink2);color:#9FB0C8;
+    box-shadow:inset 0 0 0 1px var(--line)}
+  .upFoot u{margin-left:auto;text-decoration:none;font-family:var(--fd);font-size:11px;color:var(--gold)}
+  .upHint{font-size:11px;opacity:.66;align-self:center}
+  @media(max-width:760px){ .upHint{display:none} }
+  /* dải thẻ đang có, hiện trong bảng hành trình */
+  .upOwn{display:flex;flex-wrap:wrap;gap:6px}
+  .upChip{display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:20px;
+    font-size:11px;background:var(--s2);box-shadow:inset 0 0 0 1px var(--line)}
+  .upChip i{font-style:normal;width:7px;height:7px;border-radius:50%;background:var(--rc)}
+  .upChip u{text-decoration:none;font-family:var(--fd);color:var(--gold);font-size:10.5px}
+
   /* ---------- bảng Phiêu lưu ---------- */
   .advTop{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;
     padding:12px;border-radius:14px;background:var(--s2);box-shadow:inset 0 0 0 1px var(--line)}
@@ -1784,6 +1817,20 @@
   </div>
 </div>
 
+<!-- MÀN CHỌN THẺ NÂNG CẤP. Hiện giữa trận khi lên cấp; cờ `advCards` chặn thẳng step()
+     nên cả sàn đứng yên trong lúc chọn. z-index trên bảng hành trình. -->
+<div class="csel off" id="advCard" style="z-index:69">
+  <div class="cselBox" style="max-width:1000px">
+    <h2 id="advCardTitle">LEVEL UP</h2>
+    <div class="cselSub" id="advCardSub"></div>
+    <div class="upRow" id="advCardList"></div>
+    <div class="cselBar">
+      <button id="advReroll" type="button">↻</button>
+      <span class="upHint" data-i18n="advKeepHint">Bấm chuột phải vào một thẻ để GIỮ nó cho lần bốc lại</span>
+    </div>
+  </div>
+</div>
+
 <div class="csel off" id="charSelect">
   <div class="cselBox">
     <h2>CHỌN <span>NHÂN VẬT</span></h2>
@@ -1930,6 +1977,10 @@ const L={
     whoHuman:'Tự cầm tay đánh', whoHumanSub:'WASD + nút chiêu · có chế độ Phiêu lưu',
     mAdv:'Phiêu lưu', mAdvSub:'1 người · farm quái lên cấp',
     subAdv:'Chọn nhân vật để đi phiêu lưu · {n} đấu thủ',
+    advBuild:'BUILD ĐANG CÓ', advOwnN:'{n} thẻ', advNoUp:'Chưa có thẻ nào — lên cấp là được chọn.',
+    advRr:'Lượt bốc lại:', advNeedCard:'Chờ thẻ mở khoá (từ cấp {lv})',
+    advCardTitle:'LÊN CẤP', advCardSub:'Cấp {lv} — chọn một nâng cấp',
+    advRerollN:'↻ Bốc lại ({n})', advKeepHint:'Bấm chuột phải vào một thẻ để GIỮ nó cho lần bốc lại',
     advTitle:'PHIÊU LƯU', advPick:'⚔ Đổi nhân vật', advQuit:'✕ Bỏ hành trình',
     arcAdvBtn:'▶ Bảng hành trình',
     advSubMob:'Màn {n}/{of} · {who}', advSubBoss:'Màn {n}/{of} · BOSS: {who}',
@@ -2018,6 +2069,10 @@ const L={
     whoHuman:'Play it yourself', whoHumanSub:'WASD + skill buttons · unlocks Adventure',
     mAdv:'Adventure', mAdvSub:'1 player · farm monsters, level up',
     subAdv:'Pick a fighter for the run · {n} fighters',
+    advBuild:'CURRENT BUILD', advOwnN:'{n} cards', advNoUp:'No cards yet — level up to pick one.',
+    advRr:'Rerolls:', advNeedCard:'Waiting on an unlock card (level {lv}+)',
+    advCardTitle:'LEVEL UP', advCardSub:'Level {lv} — pick one upgrade',
+    advRerollN:'↻ Reroll ({n})', advKeepHint:'Right-click a card to KEEP it through the next reroll',
     advTitle:'ADVENTURE', advPick:'⚔ Change fighter', advQuit:'✕ Abandon run',
     arcAdvBtn:'▶ Run board',
     advSubMob:'Stage {n}/{of} · {who}', advSubBoss:'Stage {n}/{of} · BOSS: {who}',
@@ -3677,6 +3732,12 @@ async function loadSaved(){
           ADV.sk=Object.assign({k:0,l:0,u:0},a.sk||{});
           ADV.stage=Math.max(1,Math.min(ADV_STAGES,ADV.stage|0||1));
           ADV.lv=Math.max(1,Math.min(ADV_LVMAX,ADV.lv|0||1));
+          /* Sổ thẻ và mấy trường đi kèm. Hành trình lưu từ bản TRƯỚC (còn sp/sxp) mở lại
+             thì mấy trường này rỗng — cứ để rỗng, người chơi đi tiếp bằng thẻ. */
+          ADV.ups=a.ups||{}; ADV.lock=a.lock||{}; ADV.tags=a.tags||{};
+          ADV.dry=a.dry|0; ADV.rr=a.rr===undefined?ADV_RR0:(a.rr|0);
+          ADV.pending=a.pending|0; ADV.keep=a.keep||null;
+          advIndex();                         // dựng lại chỉ mục hook theo sổ thẻ vừa nạp
         }
       }catch(_){}
     }).catch(()=>{});
@@ -5855,6 +5916,10 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
        · Chỉ tính phần máu THẬT SỰ mất đi (`min(amt, t.hp)`) — đòn thừa lúc kết liễu
          không được tính thêm, nếu không thì một cú ultimate vào người còn 5 máu cũng
          cộng cả trăm điểm hiệu số. */
+  /* CỬA `hit` của lớp Phiêu lưu — đặt ĐÚNG chỗ này: sau mọi lớp chặn / né / giảm sát
+     thương (nên thẻ không cứu được một đòn đã bị chặn) nhưng TRƯỚC khi trừ máu (nên thẻ
+     vẫn sửa được lượng sát thương). Ngoài chế độ phiêu lưu thì nó trả nguyên `amt` về. */
+  amt=advOnHit(t,amt,src,kind,raw);
   const cred=src&&(src.summon?src.master:src);
   if(cred&&!cred.summon) cred.dmgDealt=(cred.dmgDealt||0)+Math.min(amt,t.hp);
   t.hp=Math.max(0,t.hp-amt);
@@ -5980,6 +6045,7 @@ function defeat(t,src){
   t.alive=false; t.hp=0;
   /* Phiêu lưu: ăn điểm NGAY lúc con đó gục, không đợi hết màn — thua giữa màn vẫn giữ được
      phần đã farm, nên đánh lại không mất trắng. */
+  advOnKill(t,src);
   advGain(t);
   t.dash=null; t.lock=0; t.bind=null; t.domain=null;
   t.supCone=null; t.supHv=null; t.supFb=null; t.supMs=null; t.supCombo=null; t.drCone=null;
@@ -6099,31 +6165,25 @@ let compLive=false;              // đang ở TRONG một trận của giải
 
    Hai thanh tiến trình ĐI RIÊNG, đúng yêu cầu *"có điểm để nâng điểm các thuộc tính, rồi có
    điểm exp riêng để nâng skill"*:
-     `exp` → lên cấp → mỗi cấp cho `ADV_SP` điểm THUỘC TÍNH (`sp`);
-     `sxp` → điểm SKILL, rơi ra từ chính lũ địch, tiêu để mở và nâng bậc chiêu.
-   Đừng gộp hai cái làm một — lên cấp không tự mở chiêu, và nâng chiêu không tự lên cấp. */
+     `exp` → lên cấp → mỗi cấp mở MỘT lượt chọn thẻ nâng cấp (xem lớp hiệu ứng bên dưới).
+   Hai pool điểm cũ (`sp` thuộc tính / `sxp` skill) đã BỎ: chúng biến progression thành
+   "+10% damage / +5% HP", đúng cái người dùng bác. Giờ chỉ số chỉ là mấy thẻ `common`
+   nằm chung một hũ với thẻ cơ chế. */
 const ADV_SAVE='cfg_adv';
 const ADV_STAGES=24;                  // 24 màn, cứ màn thứ 4 là một BOSS ⇒ sáu boss
 const ADV_LVMAX=30;
-const ADV_SP=3;                       // mỗi cấp: 3 điểm thuộc tính
 /* Máu lúc lv1 để THẤP hẳn — người dùng: *"ban đầu nhân vật lv1 và có ít máu"*. Không đọc
    `HP[key]` ở chế độ này: 800 máu thì mấy con quái màn 1 không gãi nổi. */
 const ADV_HP0=260, ADV_HPLV=14;
 const ADV_POW=.02, ADV_VIT=18, ADV_AGI=.015, ADV_FOC=.015;
-const ADV_ST=[
-  {k:'pow', vi:'Sức mạnh',   en:'Power',     s:{vi:`+${ADV_POW*100}% sát thương gây ra`,   en:`+${ADV_POW*100}% damage dealt`}},
-  {k:'vit', vi:'Thể lực',    en:'Vitality',  s:{vi:`+${ADV_VIT} máu tối đa`,               en:`+${ADV_VIT} max HP`}},
-  {k:'agi', vi:'Nhanh nhẹn', en:'Agility',   s:{vi:`+${ADV_AGI*100}% tốc chạy`,            en:`+${ADV_AGI*100}% move speed`}},
-  {k:'foc', vi:'Tập trung',  en:'Focus',     s:{vi:`+${ADV_FOC*100}% tốc hồi chiêu`,       en:`+${ADV_FOC*100}% cooldown rate`}}
-];
-/* Ba ô chiêu mở bằng điểm skill. Ô `j` KHÔNG có trong bảng này: với cả mười ba nhân vật thì
-   `keys['j']` chính là đòn thường (shuriken của Konohamaru, cú đấm của ChiChi…), nên nó luôn
-   có sẵn — đúng câu *"lv1 … ko có skill và chỉ có basic atk"*.
-   `lv` là cấp tối thiểu mới được mở, `cost` là số điểm skill phải trả. */
+/* Ba ô chiêu mở bằng THẺ NÂNG CẤP. Ô `j` KHÔNG có trong bảng này: với cả mười hai nhân vật
+   thì `keys['j']` chính là đòn thường (shuriken của Konohamaru, cú đấm của ChiChi…), nên nó
+   luôn có sẵn — đúng câu *"lv1 … ko có skill và chỉ có basic atk"*.
+   `lv` là cấp tối thiểu để thẻ mở ô đó được phép xuất hiện trong hũ. */
 const ADV_SLOTS=[
-  {k:'k', n:2, lv:2, cost:2},
-  {k:'l', n:3, lv:5, cost:3},
-  {k:'u', n:4, lv:9, cost:5}
+  {k:'k', n:2, lv:2},
+  {k:'l', n:3, lv:4},
+  {k:'u', n:4, lv:7}
 ];
 const ADV_RANKMAX=5, ADV_RANKCD=.08;   // mỗi bậc: ô chiêu đó hồi nhanh thêm 8%
 const advNeed=lv=>Math.round(30+lv*16+lv*lv*5);           // exp cần để lên cấp kế tiếp
@@ -6135,9 +6195,11 @@ const advSlot=k=>ADV_SLOTS.find(s=>s.k===k);
 /* Người chơi đang cầm ai. Ở chế độ này chỉ có ĐÚNG MỘT người thuộc phe 0. */
 const advHero=()=>G&&G.fighters.find(f=>f&&!f.summon&&f.team===0)||null;
 function advNew(key){
-  return {key, lv:1, exp:0, sp:0, sxp:0, st:{pow:0,vit:0,agi:0,foc:0}, sk:{k:0,l:0,u:0},
+  return {key, lv:1, exp:0, st:{pow:0,vit:0,agi:0,foc:0}, sk:{k:0,l:0,u:0},
+          ups:{}, lock:{}, tags:{}, dry:0, rr:ADV_RR0, pending:0, keep:null,
           stage:1, best:0, kills:0};
 }
+const ADV_RR0=2;                      // số lượt bốc lại có sẵn lúc mở hành trình
 const advMaxHp=()=>Math.round(ADV_HP0+(ADV.lv-1)*ADV_HPLV+ADV.st.vit*ADV_VIT);
 function advSave(){ if(ADV) Store.set(ADV_SAVE,JSON.stringify(ADV)); }
 function advWipe(){ ADV=null; Store.del(ADV_SAVE); }
@@ -6235,14 +6297,20 @@ function advGain(t){
   if(!advOn()||!t||t.summon||t.team===0) return;
   const M=t.mob?MOBS[t.mobKind]:null;
   const xp  = M?Math.round(M.xp *(1+.18*(ADV.stage-1))) : Math.round(90+ADV.stage*14);
-  const sxp = M?M.sxp : 6;
-  G.advXp=(G.advXp|0)+xp; G.advSxp=(G.advSxp|0)+sxp; ADV.kills++;
+  G.advXp=(G.advXp|0)+xp; ADV.kills++;
+  /* EXP ăn NGAY GIỮA TRẬN chứ không đợi hết màn — §3 muốn lên cấp là dừng trận chọn thẻ
+     liền, đó mới là nhịp roguelite. `advLevel()` đẩy vào hàng chờ, `loop()` mở màn. */
+  ADV.exp+=xp; advLevel();
 }
-/* Lên cấp: có thể lên NHIỀU cấp một lượt nếu ăn đủ exp, nên phải chạy vòng while. */
+/* Lên cấp: có thể lên NHIỀU cấp một lượt nếu ăn đủ exp, nên phải chạy vòng while.
+   Mỗi cấp đẩy MỘT lượt chọn thẻ vào hàng chờ (`pending`) — `advLevelCheck()` trong vòng
+   `loop()` sẽ dừng trận và mở màn chọn thẻ, đúng §3 của bản mô tả. Không còn cộng điểm
+   thuộc tính suông nữa: chỉ số giờ là mấy thẻ `common` trong cùng một hũ. */
 function advLevel(){
   let up=0;
-  while(ADV.lv<ADV_LVMAX&&ADV.exp>=advNeed(ADV.lv)){ ADV.exp-=advNeed(ADV.lv); ADV.lv++; ADV.sp+=ADV_SP; up++; }
+  while(ADV.lv<ADV_LVMAX&&ADV.exp>=advNeed(ADV.lv)){ ADV.exp-=advNeed(ADV.lv); ADV.lv++; up++; }
   if(ADV.lv>=ADV_LVMAX) ADV.exp=0;
+  if(up){ ADV.pending=(ADV.pending|0)+up; sfx('goal'); }
   return up;
 }
 /* Gọi từ `finish()` — đúng chỗ `compResult()` được gọi, vì ra khỏi hàm đó là đội hình vừa
@@ -6250,29 +6318,504 @@ function advLevel(){
 function advResult(win){
   if(!advOn()) return;
   const heroWin=!!win&&win.team===0;
-  ADV.exp+=(G.advXp|0); ADV.sxp+=(G.advSxp|0);
-  const ups=advLevel();
+  /* EXP đã cộng dần ngay lúc hạ từng con (xem `advGain`), nên ở đây KHÔNG cộng lại —
+     cộng hai lần là ăn gấp đôi. Chỉ còn phần thưởng kết màn. */
+  if(heroWin){ ADV.rr=(ADV.rr|0)+(advIsBoss(ADV.stage)?2:1); }
+  const ups=0;
   if(heroWin){
     ADV.best=Math.max(ADV.best,ADV.stage);
     if(ADV.stage<ADV_STAGES) ADV.stage++;
     else ADV.done=true;
   }
-  ADV.lastWin=heroWin; ADV.lastXp=(G.advXp|0); ADV.lastSxp=(G.advSxp|0); ADV.lastUp=ups;
+  ADV.lastWin=heroWin; ADV.lastXp=(G.advXp|0); ADV.lastUp=ups;
   advSave();
 }
-/* ---------- tiêu điểm ---------- */
-function advBuyStat(k){
-  if(!ADV||ADV.sp<=0||!ADV_ST.some(s=>s.k===k)) return false;
-  ADV.sp--; ADV.st[k]=(ADV.st[k]|0)+1; advSave(); return true;
+/* Mọi nâng cấp giờ đi qua MÀN CHỌN THẺ (`advTake`), không còn cửa mua bằng điểm nào. */
+/* ==================== LỚP HIỆU ỨNG PHIÊU LƯU (Adventure Modifier Layer) ====================
+   Người dùng chốt rất rõ hai thứ, và cả file này viết theo đúng hai câu đó:
+
+     *"Không được biến progression chủ yếu thành +10% damage / +5% HP. Phần thú vị nhất phải
+       là: thay đổi cơ chế skill; thêm hiệu ứng; synergy; combo; projectile; chain; mark;
+       reset cooldown; AoE; CC..."*
+
+     *"Adventure phải là một layer riêng. Không làm thay đổi hoặc phá existing fighters,
+       existing balance, existing game modes."*
+
+   Vì vậy TUYỆT ĐỐI không sửa `think()` hay thân chiêu của mười hai nhân vật. Mọi nâng cấp
+   cắm vào đúng NĂM CỬA CHUNG mà cả game vốn đã đi qua:
+
+     | cửa        | ở đâu                            | dùng cho |
+     |------------|----------------------------------|----------|
+     | `hit`      | trong `hurt()`, ngay trước khi trừ máu | mark, sát thương cộng thêm, nổ, hút máu, xử trảm |
+     | `kill`     | trong `defeat()`                 | lan mark, hồi chiêu, nổ khi chết |
+     | `proj`     | vòng duyệt `G.proj`, một lần cho mỗi viên | xuyên, chia đạn, tốc bay, dội lại |
+     | `cast`     | `advCast()` gọi từ vòng hồi chiêu | combo, nạp pin chiêu |
+     | `tick`     | vòng duyệt fighter mỗi nhịp      | hào quang, đồng hồ riêng |
+
+   Thêm nhân vật mới KHÔNG phải sửa lớp này — chỉ thêm dòng vào bảng `ADV_UP`. */
+
+/* Thẻ nâng cấp. Đúng khung dữ liệu người dùng nêu: id / fighter / skill / name / desc /
+   rarity / requirements / effects / exclusiveGroup / synergyTags / max.
+   `fighter: null` = thẻ dùng chung cho mọi nhân vật. */
+const ADV_RAR={common:{w:56,c:'#9FB0C8'},rare:{w:30,c:'#4DE2FF'},epic:{w:12,c:'#C77DFF'},legend:{w:4,c:'#FFC542'}};
+const ADV_RARN={common:{vi:'Thường',en:'Common'},rare:{vi:'Hiếm',en:'Rare'},
+                epic:{vi:'Sử thi',en:'Epic'},legend:{vi:'Huyền thoại',en:'Legendary'}};
+
+/* ---------- MARK — trục synergy chính ----------
+   Người dùng: *"Skill 1 đặt Mark. Skill 2 đánh enemy có Mark → explosion. Skill 3 → stun.
+   Ultimate → refresh Mark và spread."* Nên Mark là một trạng thái CHUNG, ai gắn cũng được
+   và mọi nâng cấp khác đọc chung nó — chứ không phải mỗi nhân vật một kiểu dấu riêng. */
+const ADV_MARK_T=4;                  // giây trong trận
+function advMark(t,src){
+  if(!t||!t.alive||t.advMark>0&&false) return;
+  t.advMark=Math.max(t.advMark||0,ADV_MARK_T);
+  t.advMarkBy=src||null;
+  if(!t.advMarkFx){ t.advMarkFx=1; ring(t.x,t.y,54,'#FF4FA3',.3); }
 }
-function advBuySkill(k){
-  const S=advSlot(k); if(!S||!ADV) return false;
-  const r=advRank(k);
-  if(r>=ADV_RANKMAX) return false;
-  if(ADV.lv<S.lv) return false;
-  const cost=r===0?S.cost:S.cost+r;      // mở thì trả giá gốc, nâng bậc thì đắt dần
-  if(ADV.sxp<cost) return false;
-  ADV.sxp-=cost; ADV.sk[k]=r+1; advSave(); return true;
+const advMarked=t=>!!t&&(t.advMark||0)>0;
+/* Gỡ mark và trả lời "có gỡ được không" — mấy thẻ ăn theo mark gọi cái này để biết mình có
+   được kích hay không, tránh hai thẻ cùng tiêu một cái mark. */
+function advEatMark(t){ if(!advMarked(t))return false; t.advMark=0; t.advMarkBy=null; return true; }
+
+/* ---------- sổ nâng cấp đang sở hữu ---------- */
+const advUps=()=>(ADV&&ADV.ups)||{};
+const advHas=id=>((advUps()[id])|0)>0;
+const advStack=id=>(advUps()[id])|0;
+const ADV_BY_ID={};
+let ADV_ON={hit:[],kill:[],proj:[],cast:[],tick:[]};
+/* Dựng lại chỉ mục hook mỗi khi bộ nâng cấp đổi. Chạy một lượt qua bảng chứ đừng duyệt cả
+   bảng mỗi nhịp — vòng `hit` nổ vài chục lần một giây. */
+function advIndex(){
+  ADV_ON={hit:[],kill:[],proj:[],cast:[],tick:[]};
+  if(!ADV||!ADV.ups) return;
+  for(const id of Object.keys(ADV.ups)){
+    const U=ADV_BY_ID[id]; if(!U||!ADV.ups[id]) continue;
+    for(const k of ['hit','kill','proj','cast','tick']) if(U[k]) ADV_ON[k].push(U);
+  }
+}
+function advGive(id){
+  if(!ADV||!ADV_BY_ID[id]) return false;
+  const U=ADV_BY_ID[id];
+  ADV.ups=ADV.ups||{};
+  ADV.ups[id]=Math.min(U.max||1,(ADV.ups[id]|0)+1);
+  if(U.excl){ ADV.lock=ADV.lock||{}; ADV.lock[U.excl]=id; }   // chọn nhánh này thì nhánh kia khoá
+  if(U.on) U.on(ADV);                                          // hiệu ứng một lần (mở chiêu, +máu…)
+  advIndex();
+  return true;
+}
+/* ---------- năm cửa ---------- */
+/* `hit` chạy TRONG `hurt()` ngay trước khi trừ máu, nên nó sửa được cả lượng sát thương.
+   Trả về lượng đã chỉnh. `o` gói đủ ngữ cảnh để thẻ không phải tự đi tìm. */
+/* CHẶN VÒNG LẶP VÔ HẠN (§72 của bản mô tả). Đòn dội và cú nổ đều gọi lại `hurt()`, mà
+   `hurt()` thì lại chạy `advOnHit` — không chặn thì dội sinh ra dội, nổ sinh ra nổ, và
+   trận treo cứng. Mọi sát thương PHÁI SINH phải đi qua `advHurt2()`: nó bật cờ trong lúc
+   gọi, và `advOnHit` thấy cờ thì bỏ qua toàn bộ hook. Nghĩa là đòn phái sinh vẫn gây sát
+   thương bình thường nhưng KHÔNG đẻ thêm một lớp nữa. */
+let ADV_SEC=0;
+function advHurt2(t,amt,src,crit,kind){
+  ADV_SEC++;
+  try{ return hurt(t,amt,src,crit,kind||'big'); }
+  finally{ ADV_SEC--; }
+}
+function advOnHit(t,amt,src,kind,raw){
+  if(ADV_SEC>0) return amt;                 // đòn phái sinh: không đẻ thêm lớp nào nữa
+  if(!advOn()||!ADV_ON.hit.length||!src||src.team===t.team) return amt;
+  if(!advSrcMine(src)) return amt;
+  const o={t,src,amt,kind,raw,mark:advMarked(t),add:0,mul:1};
+  for(const U of ADV_ON.hit){ try{ U.hit(o,advStack(U.id)); }catch(_){} }
+  return Math.max(0,(o.amt+o.add)*o.mul);
+}
+/* Ai gây sát thương thì tính là "của người chơi" — kể cả viện binh và đồng minh của họ. */
+function advSrcMine(src){
+  if(!src) return false;
+  const own=src.summon?(src.master||src):src;
+  return !!own&&own.team===0;
+}
+function advOnKill(t,src){
+  if(!advOn()||!ADV_ON.kill.length||!advSrcMine(src)) return;
+  const o={t,src,x:t.x,y:t.y};
+  for(const U of ADV_ON.kill){ try{ U.kill(o,advStack(U.id)); }catch(_){} }
+}
+function advOnProj(p){
+  if(!advOn()||!ADV_ON.proj.length||!advSrcMine(p.owner)) return;
+  for(const U of ADV_ON.proj){ try{ U.proj(p,advStack(U.id)); }catch(_){} }
+}
+/* `cast` nổ khi người chơi vừa tung một chiêu — nhận ra bằng cách soi ô hồi chiêu vừa được
+   NẠP LẠI (từ 0 nhảy lên một số dương). Cách này không phải cắm móc vào `think()` của ai. */
+function advOnCast(f,slot){
+  if(!advOn()||!ADV_ON.cast.length) return;
+  const o={f,slot};
+  for(const U of ADV_ON.cast){ try{ U.cast(o,advStack(U.id)); }catch(_){} }
+}
+function advOnTick(f,dt){
+  if(!advOn()||f.team!==0||f.summon) return;
+  /* Nhận ra "vừa tung một chiêu" bằng cách soi ô hồi chiêu vừa NHẢY LÊN từ gần 0 — cách
+     này không phải cắm móc vào `think()` của mười hai nhân vật. */
+  if(ADV_ON.cast.length){
+    const prev=f.advCdWas||(f.advCdWas={});
+    for(const k of ['s2','s3','s4']){
+      const now=f.cds[k]||0;
+      if(now>(prev[k]||0)+.05) advOnCast(f,k);
+      prev[k]=now;
+    }
+  }
+  for(const U of ADV_ON.tick){ try{ U.tick(f,dt,advStack(U.id)); }catch(_){} }
+}
+/* Cắt bớt hồi chiêu còn lại của người chơi — dùng chung cho "reset cooldown", "skill
+   battery", "combo". Chỉ đụng vào mấy ô CHIÊU, không đụng ô đòn thường. */
+function advCut(f,sec,slots){
+  if(!f||!f.cds) return;
+  for(const k of (slots||['s2','s3','s4'])) if(f.cds[k]>0) f.cds[k]=Math.max(0,f.cds[k]-sec);
+}
+/* Nổ một vùng nhỏ quanh một điểm — dùng cho mark explosion, chain, nổ khi chết.
+   `kind='big'` để Shikamaru né được mà không cộng dồn tỉ lệ, đúng luật ở mục 6. */
+function advBoom(x,y,r,dmg,src,tint,label){
+  ring(x,y,r,tint||'#FF9A3C',.45);
+  G.fx.push({type:'punch',x,y,life:.18,ml:.18});
+  for(const o of G.fighters){
+    if(!o.alive||o.summon&&!o.ally) continue;
+    if(!src||o.team===src.team) continue;
+    if(offField(o)) continue;
+    if(Math.hypot(o.x-x,o.y-y)-o.r>r) continue;
+    advHurt2(o,dmg,src,label||false,'big');
+  }
+}
+/* ==================== BẢNG THẺ NÂNG CẤP ====================
+   Tỉ lệ thẻ CƠ CHẾ so với thẻ chỉ số cố ý để lệch hẳn về phía cơ chế — đúng câu người dùng
+   chốt. Thẻ `common` được phép là chỉ số, nhưng từ `rare` trở lên thì phải ĐỔI CÁCH CHƠI:
+   thêm đạn, xuyên, nổ, mark, chain, reset hồi chiêu, xử trảm…
+
+   Mỗi dòng đúng khung dữ liệu đã nêu: id · fighter · slot · rarity · tags · max · req ·
+   excl · name · desc · một trong năm handler (hoặc `on` cho hiệu ứng một lần).
+   `fighter:null` = dùng chung cho mọi nhân vật, nên nhân vật mới tự có sẵn cả bộ này. */
+const ADV_UP=[
+  /* ---------- mở chiêu: xương sống của progression ---------- */
+  { id:'unlock_k', slot:'s2', rar:'rare', tags:['SKILL'], max:1, key:true,
+    req:A=>A.lv>=2&&!A.sk.k,
+    name:{vi:'Mở Chiêu 2',en:'Unlock Skill 2'},
+    desc:{vi:'Mở ô chiêu <b>K</b> — chiêu thứ hai của chính nhân vật.',
+          en:'Unlocks the <b>K</b> slot — the fighter’s second skill.'},
+    on:A=>{ A.sk.k=1; } },
+  { id:'unlock_l', slot:'s3', rar:'rare', tags:['SKILL'], max:1, key:true,
+    req:A=>A.lv>=4&&!A.sk.l,
+    name:{vi:'Mở Chiêu 3',en:'Unlock Skill 3'},
+    desc:{vi:'Mở ô chiêu <b>L</b> — chiêu thứ ba của chính nhân vật.',
+          en:'Unlocks the <b>L</b> slot — the fighter’s third skill.'},
+    on:A=>{ A.sk.l=1; } },
+  { id:'unlock_u', slot:'s4', rar:'epic', tags:['SKILL','ULTIMATE'], max:1, key:true,
+    req:A=>A.lv>=7&&!A.sk.u,
+    name:{vi:'Mở Tuyệt chiêu',en:'Unlock Ultimate'},
+    desc:{vi:'Mở ô <b>U</b>, và mở lại mấy nội tại bung theo ngưỡng máu của nhân vật.',
+          en:'Unlocks the <b>U</b> slot, and re-enables the fighter’s HP-threshold passives.'},
+    on:A=>{ A.sk.u=1; } },
+  /* nâng bậc ô chiêu đã mở — hồi chiêu nhanh dần */
+  { id:'rank_k', slot:'s2', rar:'common', tags:['SKILL','COOLDOWN'], max:4, req:A=>!!A.sk.k,
+    name:{vi:'Rèn Chiêu 2',en:'Hone Skill 2'},
+    desc:{vi:`Ô <b>K</b> hồi nhanh thêm <b>${Math.round(ADV_RANKCD*100)}%</b> mỗi bậc.`,
+          en:`<b>K</b> cools down <b>${Math.round(ADV_RANKCD*100)}%</b> faster per stack.`},
+    on:A=>{ A.sk.k=Math.min(ADV_RANKMAX,A.sk.k+1); } },
+  { id:'rank_l', slot:'s3', rar:'common', tags:['SKILL','COOLDOWN'], max:4, req:A=>!!A.sk.l,
+    name:{vi:'Rèn Chiêu 3',en:'Hone Skill 3'},
+    desc:{vi:`Ô <b>L</b> hồi nhanh thêm <b>${Math.round(ADV_RANKCD*100)}%</b> mỗi bậc.`,
+          en:`<b>L</b> cools down <b>${Math.round(ADV_RANKCD*100)}%</b> faster per stack.`},
+    on:A=>{ A.sk.l=Math.min(ADV_RANKMAX,A.sk.l+1); } },
+  { id:'rank_u', slot:'s4', rar:'rare', tags:['ULTIMATE','COOLDOWN'], max:4, req:A=>!!A.sk.u,
+    name:{vi:'Rèn Tuyệt chiêu',en:'Hone Ultimate'},
+    desc:{vi:`Ô <b>U</b> hồi nhanh thêm <b>${Math.round(ADV_RANKCD*100)}%</b> mỗi bậc.`,
+          en:`<b>U</b> cools down <b>${Math.round(ADV_RANKCD*100)}%</b> faster per stack.`},
+    on:A=>{ A.sk.u=Math.min(ADV_RANKMAX,A.sk.u+1); } },
+
+  /* ---------- MARK và synergy quanh nó ---------- */
+  { id:'mark_basic', rar:'rare', tags:['MARK','BASIC_ATTACK'], max:1,
+    name:{vi:'Điểm Yếu Lộ Ra',en:'Opening Spotted'},
+    desc:{vi:`Cứ <b>4 đòn thường</b> trúng thì <b>đánh dấu</b> mục tiêu trong ${rts(ADV_MARK_T)}s.`,
+          en:`Every <b>4 basic hits</b> <b>Marks</b> the target for ${rts(ADV_MARK_T)}s.`},
+    hit(o){
+      if(o.kind==='dot'||o.kind==='domain') return;
+      const f=o.src; f.advBasicN=(f.advBasicN|0)+1;
+      if(f.advBasicN>=4){ f.advBasicN=0; advMark(o.t,f); }
+    } },
+  { id:'mark_skill', rar:'rare', tags:['MARK','SKILL'], max:1,
+    name:{vi:'Dấu Của Thợ Săn',en:'Hunter’s Sigil'},
+    desc:{vi:`Mọi chiêu (không phải đòn thường) <b>đánh dấu</b> mục tiêu trong ${rts(ADV_MARK_T)}s.`,
+          en:`Any skill hit (not basics) <b>Marks</b> the target for ${rts(ADV_MARK_T)}s.`},
+    hit(o){ if(o.kind==='big'||o.kind==='ult') advMark(o.t,o.src); } },
+  { id:'mark_boom', rar:'epic', tags:['MARK','AOE'], max:2, req:A=>advAnyMark(A),
+    name:{vi:'Kích Nổ Dấu',en:'Detonate the Mark'},
+    desc:{vi:'Đánh trúng kẻ <b>đang bị đánh dấu</b> ⇒ gỡ dấu và <b>nổ một vùng</b> quanh nó.',
+          en:'Hitting a <b>Marked</b> foe consumes the Mark and <b>detonates an AoE</b>.'},
+    hit(o,n){ if(!o.mark||o.kind==='dot') return;
+      if(!advEatMark(o.t)) return;
+      later(0,()=>advBoom(o.t.x,o.t.y,96,26+14*n,o.src,'#FF4FA3','MARK BLAST!'),false); } },
+  { id:'mark_stun', rar:'epic', tags:['MARK','STUN','CC'], max:1, req:A=>advAnyMark(A),
+    name:{vi:'Dấu Ghim Chân',en:'Pinning Mark'},
+    desc:{vi:'Chiêu đánh trúng kẻ <b>đang bị đánh dấu</b> ⇒ gỡ dấu và <b>choáng</b> 0.9s.',
+          en:'A skill hitting a <b>Marked</b> foe consumes it and <b>stuns</b> for 0.9s.'},
+    hit(o){ if(!o.mark||(o.kind!=='big'&&o.kind!=='ult')) return;
+      if(!advEatMark(o.t)) return;
+      later(0,()=>stunFx(o.t,.45,'spark'),false); } },
+  { id:'mark_dmg', rar:'rare', tags:['MARK'], max:3, req:A=>advAnyMark(A),
+    name:{vi:'Nhắm Vào Chỗ Hở',en:'Press the Advantage'},
+    desc:{vi:'Sát thương lên kẻ <b>đang bị đánh dấu</b> <b>+25%</b> mỗi bậc.',
+          en:'<b>+25%</b> damage per stack against <b>Marked</b> foes.'},
+    hit(o,n){ if(o.mark) o.mul*=1+.25*n; } },
+  { id:'mark_spread', rar:'legend', tags:['MARK'], max:1, req:A=>advAnyMark(A),
+    name:{vi:'Dấu Lan',en:'Creeping Mark'},
+    desc:{vi:'Kẻ <b>bị đánh dấu</b> gục ⇒ dấu <b>lan sang</b> hai kẻ gần nhất.',
+          en:'When a <b>Marked</b> foe dies, the Mark <b>spreads</b> to the two nearest foes.'},
+    kill(o){
+      if(!advMarked(o.t)) return;
+      const near=G.fighters.filter(x=>x.alive&&x!==o.t&&x.team!==0&&!(x.summon&&!x.ally))
+        .sort((a,b)=>Math.hypot(a.x-o.x,a.y-o.y)-Math.hypot(b.x-o.x,b.y-o.y)).slice(0,2);
+      for(const x of near) advMark(x,o.src);
+    } },
+
+  /* ---------- đạn ---------- */
+  { id:'proj_pierce', rar:'rare', tags:['PROJECTILE'], max:2,
+    name:{vi:'Xuyên Thấu',en:'Piercing Shot'},
+    desc:{vi:'Đạn <b>xuyên thêm 1</b> kẻ địch mỗi bậc.',
+          en:'Projectiles <b>pierce 1 more</b> enemy per stack.'},
+    proj(p,n){ p.advPierce=(p.advPierce|0)+n; } },
+  { id:'proj_fast', rar:'common', tags:['PROJECTILE'], max:3,
+    name:{vi:'Tăng Sơ Tốc',en:'Muzzle Velocity'},
+    desc:{vi:'Đạn bay nhanh thêm <b>25%</b> mỗi bậc.',
+          en:'Projectiles fly <b>25%</b> faster per stack.'},
+    proj(p,n){ const k=1+.25*n; p.vx*=k; p.vy*=k; } },
+  { id:'proj_boom', rar:'epic', tags:['PROJECTILE','AOE'], max:2,
+    name:{vi:'Đạn Nổ',en:'Detonating Rounds'},
+    desc:{vi:'Đạn <b>nổ một vùng</b> ở chỗ nó tan — trúng người hay trúng tường đều nổ.',
+          en:'Projectiles <b>burst</b> where they end — on a hit or on a wall.'},
+    proj(p,n){ p.advBoom=n; } },
+  { id:'proj_split', rar:'legend', tags:['PROJECTILE'], max:1,
+    name:{vi:'Chia Ba Mũi',en:'Trident Volley'},
+    desc:{vi:'Mỗi viên đạn <b>tách thành ba</b>, hai viên phụ lệch sang hai bên.',
+          en:'Every projectile <b>splits into three</b>, two fanning out to the sides.'},
+    proj(p){
+      if(p.advSplit) return; p.advSplit=1;
+      const a=Math.atan2(p.vy,p.vx), sp=Math.hypot(p.vx,p.vy);
+      for(const d of [-.22,.22]){
+        const q=Object.assign({},p);
+        q.advSplit=1; q.advNew=1; q.hitList=null; q.skip=null;
+        q.vx=Math.cos(a+d)*sp; q.vy=Math.sin(a+d)*sp; q.ang=a+d;
+        q.dmg=Math.round(p.dmg*.55); q.homing=false; q.noHome=true;
+        G.proj.push(q);
+      }
+    } },
+
+  /* ---------- đòn thường: phải còn giá trị tới cuối run ---------- */
+  { id:'ba_battery', rar:'rare', tags:['BASIC_ATTACK','COOLDOWN'], max:3, excl:'ba',
+    name:{vi:'Nạp Pin',en:'Skill Battery'},
+    desc:{vi:'Mỗi đòn thường trúng <b>giảm 0.2s</b> hồi chiêu của mọi ô chiêu (mỗi bậc).',
+          en:'Each basic hit cuts <b>0.2s</b> off every skill cooldown (per stack).'},
+    hit(o,n){ if(o.kind==='dot'||o.kind==='big'||o.kind==='ult') return;
+      advCut(o.src,.1*n); } },
+  { id:'ba_heavy', rar:'rare', tags:['BASIC_ATTACK','CC'], max:1, excl:'ba',
+    name:{vi:'Đòn Nặng',en:'Heavy Swing'},
+    desc:{vi:'Cứ <b>5 đòn thường</b> thì đòn kế <b>gấp đôi sát thương</b> và <b>hất lùi</b>.',
+          en:'Every <b>5th basic</b> deals <b>double damage</b> and <b>knocks back</b>.'},
+    hit(o){ if(o.kind==='dot'||o.kind==='big'||o.kind==='ult') return;
+      const f=o.src; f.advHeavyN=(f.advHeavyN|0)+1;
+      if(f.advHeavyN<5) return;
+      f.advHeavyN=0; o.mul*=2;
+      const t=o.t, d=Math.hypot(t.x-f.x,t.y-f.y)||1;
+      later(0,()=>{ knock(t,(t.x-f.x)/d,(t.y-f.y)/d,W*.12*6); pop(t.x,t.y,'HEAVY!','#FFC542',true); },false); } },
+  { id:'ba_rapid', rar:'common', tags:['BASIC_ATTACK'], max:3, excl:'ba',
+    name:{vi:'Tay Nhanh',en:'Quick Hands'},
+    desc:{vi:'Đòn thường ra nhanh thêm <b>12%</b> mỗi bậc.',
+          en:'Basic attacks come out <b>12%</b> faster per stack.'},
+    tick(f,dt,n){ f.advBaRate=1+.12*n; } },
+
+  /* ---------- chain / AoE / xử trảm ---------- */
+  { id:'chain', rar:'epic', tags:['CHAIN','AOE'], max:2,
+    name:{vi:'Dội Sang Ngang',en:'Arcing Strike'},
+    desc:{vi:'Đòn đánh <b>dội sang</b> một kẻ gần đó, gây <b>40%</b> sát thương (mỗi bậc thêm một lần dội).',
+          en:'Hits <b>arc</b> to a nearby foe for <b>40%</b> damage (one more bounce per stack).'},
+    hit(o,n){
+      if(o.kind==='dot'||o.kind==='domain'||o.chained) return;
+      const src=o.src, t=o.t, dmg=Math.round(o.amt*.4);
+      if(dmg<=0) return;
+      const near=G.fighters.filter(x=>x.alive&&x!==t&&x.team!==src.team&&!(x.summon&&!x.ally)&&!offField(x)
+          &&Math.hypot(x.x-t.x,x.y-t.y)<190)
+        .sort((a,b)=>Math.hypot(a.x-t.x,a.y-t.y)-Math.hypot(b.x-t.x,b.y-t.y)).slice(0,n);
+      for(const x of near) later(.04,()=>{
+        if(!x.alive)return;
+        ctxBolt(t,x);
+        advHurt2(x,dmg,src,false,'big');
+      },false);
+    } },
+  { id:'execute', rar:'epic', tags:['EXECUTE'], max:1,
+    name:{vi:'Kết Liễu',en:'Finish It'},
+    desc:{vi:'Kẻ địch dưới <b>18% máu</b> ăn thêm <b>60%</b> sát thương.',
+          en:'Foes below <b>18% HP</b> take <b>60%</b> more damage.'},
+    hit(o){ if(o.t.hp<=o.t.maxHp*.18) o.mul*=1.6; } },
+  { id:'kill_boom', rar:'rare', tags:['AOE'], max:2,
+    name:{vi:'Nổ Xác',en:'Corpse Burst'},
+    desc:{vi:'Kẻ địch gục thì <b>nổ tung</b>, gây sát thương quanh đó (mỗi bậc mạnh hơn).',
+          en:'Slain foes <b>explode</b>, damaging everything nearby (stronger per stack).'},
+    kill(o,n){ later(.05,()=>advBoom(o.x,o.y,104,24+16*n,o.src,'#FF7A4F','BURST!'),false); } },
+  { id:'kill_cd', rar:'epic', tags:['COOLDOWN'], max:1,
+    name:{vi:'Đà Thắng',en:'Momentum'},
+    desc:{vi:'Hạ được một kẻ địch ⇒ <b>giảm 1.5s</b> hồi chiêu của mọi ô chiêu.',
+          en:'Defeating a foe cuts <b>1.5s</b> from every skill cooldown.'},
+    kill(o){ advCut(o.src,.75); pop(o.src.x,o.src.y,'COOLDOWN!','#4DE2FF',false); } },
+  { id:'kill_heal', rar:'rare', tags:['HEAL'], max:3,
+    name:{vi:'Hút Sinh Lực',en:'Siphon'},
+    desc:{vi:'Hạ được một kẻ địch ⇒ hồi <b>6% máu tối đa</b> mỗi bậc.',
+          en:'Defeating a foe heals <b>6% max HP</b> per stack.'},
+    kill(o,n){ const f=o.src; if(!f||!f.alive)return;
+      const h=Math.round(f.maxHp*.06*n); f.hp=Math.min(f.maxHp,f.hp+h);
+      pop(f.x,f.y,'+'+h,'#6BE39A',false); } },
+  { id:'lifesteal', rar:'rare', tags:['HEAL'], max:2,
+    name:{vi:'Uống Máu',en:'Bloodthirst'},
+    desc:{vi:'Hồi <b>6%</b> lượng sát thương gây ra mỗi bậc.',
+          en:'Heal for <b>6%</b> of damage dealt per stack.'},
+    hit(o,n){ const f=o.src; if(!f||!f.alive||o.kind==='dot')return;
+      const h=Math.max(1,Math.round(o.amt*.06*n));
+      later(0,()=>{ if(f.alive) f.hp=Math.min(f.maxHp,f.hp+h); },false); } },
+
+  /* ---------- chỉ số: có, nhưng chỉ là thẻ THƯỜNG ---------- */
+  { id:'st_vit', rar:'common', tags:['STAT'], max:5,
+    name:{vi:'Thể Lực',en:'Vitality'},
+    desc:{vi:`<b>+${ADV_VIT*3} máu tối đa</b> mỗi bậc (hồi luôn bấy nhiêu).`,
+          en:`<b>+${ADV_VIT*3} max HP</b> per stack (and heals for it).`},
+    on:A=>{ A.st.vit=(A.st.vit|0)+3; } },
+  { id:'st_pow', rar:'common', tags:['STAT'], max:5,
+    name:{vi:'Sức Mạnh',en:'Power'},
+    desc:{vi:`Sát thương <b>+${ADV_POW*300}%</b> mỗi bậc.`,
+          en:`<b>+${ADV_POW*300}%</b> damage per stack.`},
+    on:A=>{ A.st.pow=(A.st.pow|0)+3; } },
+  { id:'st_agi', rar:'common', tags:['STAT'], max:5,
+    name:{vi:'Nhanh Nhẹn',en:'Agility'},
+    desc:{vi:`Tốc chạy <b>+${ADV_AGI*300}%</b> mỗi bậc.`,
+          en:`<b>+${ADV_AGI*300}%</b> move speed per stack.`},
+    on:A=>{ A.st.agi=(A.st.agi|0)+3; } },
+  { id:'st_foc', rar:'common', tags:['STAT','COOLDOWN'], max:5,
+    name:{vi:'Tập Trung',en:'Focus'},
+    desc:{vi:`Tốc hồi chiêu <b>+${ADV_FOC*300}%</b> mỗi bậc.`,
+          en:`<b>+${ADV_FOC*300}%</b> cooldown rate per stack.`},
+    on:A=>{ A.st.foc=(A.st.foc|0)+3; } }
+];
+for(const U of ADV_UP) ADV_BY_ID[U.id]=U;
+/* Có thẻ nào GẮN mark chưa — mấy thẻ ăn theo mark chỉ hiện ra sau khi đã có nguồn mark,
+   không thì người chơi bốc phải một thẻ chết. */
+const advAnyMark=A=>advHas('mark_basic')||advHas('mark_skill');
+/* Một tia điện nối hai người, dùng cho đòn dội. */
+function ctxBolt(a,b){ G.fx.push({type:'bolt',x:a.x,y:a.y,x2:b.x,y2:b.y,life:.18,ml:.18}); }
+/* ==================== BỐC THẺ ====================
+   Ba luật người dùng nêu, làm đủ cả ba:
+     §68 — thẻ đã đủ bậc thì KHÔNG được xuất hiện trong hũ nữa;
+     §69 — không random hoàn toàn: đang xây hướng nào thì thẻ cùng `tags` hơi dễ ra hơn;
+     §70 — pity ẨN: mấy lượt liền không thấy thẻ MỞ CHIÊU thì đẩy tỉ lệ nó lên. */
+function advPool(){
+  if(!ADV) return [];
+  const lock=ADV.lock||{};
+  return ADV_UP.filter(U=>{
+    if(U.fighter&&U.fighter!==ADV.key) return false;
+    if(advStack(U.id)>=(U.max||1)) return false;                 // §68
+    if(U.excl&&lock[U.excl]&&lock[U.excl]!==U.id) return false;  // nhánh loại trừ
+    if(U.req&&!U.req(ADV)) return false;
+    return true;
+  });
+}
+/* Trọng số của một thẻ: độ hiếm × đà build (§69) × pity (§70). */
+function advWeight(U){
+  let w=(ADV_RAR[U.rar]||ADV_RAR.common).w;
+  // đà build: mỗi tag mình đã có sẵn thì thẻ cùng tag dễ ra hơn một nhịp
+  const mine=ADV.tags||{};
+  let syn=0; for(const t of (U.tags||[])) if(mine[t]) syn++;
+  w*=1+Math.min(.6,syn*.22);
+  // pity: mấy lượt liền chưa thấy thẻ mở chiêu thì kéo nó lên
+  if(U.key) w*=1+Math.min(3,(ADV.dry|0)*.9);
+  return Math.max(1,w);
+}
+function advPick3(){
+  const pool=advPool().slice();
+  const out=[], keep=ADV.keep||null;
+  if(keep){ const K=ADV_BY_ID[keep]; if(K&&pool.indexOf(K)>=0){ out.push(K); pool.splice(pool.indexOf(K),1); } }
+  while(out.length<3&&pool.length){
+    let tot=0; for(const U of pool) tot+=advWeight(U);
+    let r=Math.random()*tot, i=0;
+    for(;i<pool.length;i++){ r-=advWeight(pool[i]); if(r<=0) break; }
+    out.push(pool.splice(Math.min(i,pool.length-1),1)[0]);
+  }
+  return out;
+}
+/* Nhận một thẻ: ghi vào sổ, cập nhật bảng tag (cho §69), và đặt lại đồng hồ pity. */
+function advTake(U){
+  if(!U||!ADV) return;
+  advGive(U.id);
+  ADV.tags=ADV.tags||{};
+  for(const t of (U.tags||[])) ADV.tags[t]=(ADV.tags[t]|0)+1;
+  ADV.dry=U.key?0:(ADV.dry|0)+1;
+  ADV.keep=null;
+  // máu tối đa đổi thì hồi luôn đúng phần vừa cộng, không thì +máu mà thanh vẫn đứng im
+  const h=advHero();
+  if(h&&h.team===0){ const m=advMaxHp(); const d=m-h.maxHp; h.maxHp=m; if(d>0) h.hp=Math.min(m,h.hp+d); }
+  advSave();
+}
+
+/* ==================== MÀN CHỌN THẺ ====================
+   §3: "Game tạm dừng trong thời gian chọn nâng cấp." Cờ `advCards` chặn thẳng `step()`
+   đúng lối `vsOn`, nên trận đứng hẳn — kể cả mấy màn ra mắt, vì chúng đo bằng giây TRONG
+   TRẬN. Lên cấp GIỮA TRẬN là chuyện thường (exp rơi ra từ mỗi con vừa hạ) nên chỗ này bắt
+   buộc phải dừng được trận đang chạy. */
+let advCards=null;
+function advLevelCheck(){
+  if(!advOn()||advCards) return;
+  if((ADV.pending|0)<=0) return;
+  ADV.pending--;
+  advCards=advPick3();
+  if(!advCards.length){ advCards=null; return; }      // hết thẻ để bốc thì thôi
+  advCardPaint();
+  const b=document.getElementById('advCard'); if(b) b.classList.remove('off');
+  sfx('ui_board');
+}
+function advCardClose(){
+  advCards=null;
+  const b=document.getElementById('advCard'); if(b) b.classList.add('off');
+}
+function advCardPaint(){
+  const box=document.getElementById('advCardList'); if(!box||!advCards) return;
+  const sub=document.getElementById('advCardSub');
+  if(sub) sub.textContent=tf('advCardSub',{lv:ADV.lv});
+  const ttl=document.getElementById('advCardTitle');
+  if(ttl) ttl.textContent=t('advCardTitle');
+  box.innerHTML=advCards.map((U,i)=>{
+    const R=ADV_RAR[U.rar]||ADV_RAR.common;
+    const have=advStack(U.id), mx=U.max||1;
+    return `<button class="upCard r-${U.rar}" data-i="${i}" type="button" style="--rc:${R.c}">`+
+      `<i class="upRar">${tr(ADV_RARN[U.rar])}</i>`+
+      `<b class="upName">${tr(U.name)}</b>`+
+      `<p class="upDesc">${tr(U.desc)}</p>`+
+      `<span class="upFoot">${(U.tags||[]).slice(0,3).map(x=>`<em>${x}</em>`).join('')}`+
+      (mx>1?`<u>${have}/${mx}</u>`:'')+`</span></button>`;
+  }).join('');
+  for(const b of box.querySelectorAll('[data-i]')){
+    b.addEventListener('click',()=>{
+      const U=advCards[+b.dataset.i]; if(!U) return;
+      sfx(U.rar==='legend'?'ui_go':U.rar==='epic'?'ui_next':'ui_tap');
+      advTake(U);
+      advCardClose();
+      padBuild();
+      advLevelCheck();                 // lên hai cấp một lượt thì hỏi tiếp ngay
+    });
+    // giữ lại một thẻ cho lần bốc lại (§9)
+    b.addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      const U=advCards[+b.dataset.i]; if(!U) return;
+      ADV.keep=ADV.keep===U.id?null:U.id; advSave(); advCardPaint();
+    });
+    if(ADV.keep&&advCards[+b.dataset.i]&&advCards[+b.dataset.i].id===ADV.keep) b.classList.add('keep');
+  }
+  const rr=document.getElementById('advReroll');
+  if(rr){
+    rr.textContent=tf('advRerollN',{n:ADV.rr|0});
+    rr.disabled=(ADV.rr|0)<=0;
+  }
+}
+function advRerollGo(){
+  if(!ADV||(ADV.rr|0)<=0||!advCards) return;
+  ADV.rr--; advCards=advPick3(); advSave(); advCardPaint(); sfx('ui_tap');
 }
 const duelLike=m=>m==='duel'||m==='league'||m==='cup';
 const compOn=()=>!!COMP;
@@ -11111,6 +11654,10 @@ function aiVec(f,e){
 
 /* ---------- step ---------- */
 function step(dt){
+  /* Đang chọn thẻ nâng cấp thì trận đứng hẳn (§3). Chặn ngay đây chứ đừng chỉ đặt
+     `running=false`: mấy màn ra mắt và đồng hồ hiệu ứng đều đo bằng giây TRONG TRẬN, chặn
+     ở đây thì chúng đứng yên theo — đúng lối cờ `vsOn` của màn VS. */
+  if(advCards) return;
   if(vsOn) return;              // còn đứng ở màn VS thì trận chưa bắt đầu, kể cả màn ra mắt
   G.t+=dt;
   if(G.flashScreen>0)G.flashScreen-=dt;
@@ -11180,6 +11727,7 @@ function step(dt){
     if(f.lunge>0) f.lunge=Math.max(0,f.lunge-dt*3.2);
     if(f.invuln>0) f.invuln=Math.max(0,f.invuln-dt);
     if(f.vuln>0) f.vuln=Math.max(0,f.vuln-dt);
+    if(f.advMark>0){ f.advMark=Math.max(0,f.advMark-dt); if(f.advMark<=0) f.advMarkFx=0; }
     if(f.exhaust>0) f.exhaust=Math.max(0,f.exhaust-dt);
     if(f.dashCd>0) f.dashCd=Math.max(0,f.dashCd-dt);
     if(f.wakeT>0) f.wakeT=Math.max(0,f.wakeT-dt);
@@ -11193,6 +11741,7 @@ function step(dt){
     // mỗi nhịp, qua đúng một cửa
     statusTick(f,dt);
     advStatTick(f);            // phải nhân SAU statusTick: hàm đó dựng lại hệ số từ đầu
+    advOnTick(f,dt);
     /* SAU `statusTick`: hàm đó DỰNG LẠI `moveMul` từ đầu mỗi nhịp, nhân trước là mất trắng. */
     if(f.key==='tsubasa'&&!f.summon&&!f.swapAs) tsuPinTick(f,dt);
     if(f.key==='shika'&&!f.summon&&f.alive&&!f.swapAs){ shikaPassive(f,dt); bindTick(f,dt); domainTick(f,dt); }
@@ -11537,6 +12086,8 @@ function step(dt){
     if(!p) continue;
     /* Ginyu vào thân xác người khác thì tay chân không quen: đạn vừa rời tay đã vẹo
        hẳn sang một bên và mất luôn khả năng dò tìm. Chiêu của chính anh không dính. */
+    /* CỬA `proj` — một lần cho mỗi viên, đi chung lối `p.gnSkew` ngay dưới. */
+    if(p.advNew===undefined){ p.advNew=1; advOnProj(p); }
     if(p.gnSkew===undefined){
       p.gnSkew=1;
       const ow=p.owner;
@@ -11680,8 +12231,16 @@ function step(dt){
         /* Kamehameha và Masenko là ultimate; phân thân vẫn chỉ là chiêu lớn thường. */
         const ult = p.type==='kame'||p.type==='masenko';
         const kd = ult?'ult':(p.type==='clone'?'big':undefined);
+        /* Thẻ "Xuyên Thấu" của Phiêu lưu: viên đạn còn lượt xuyên thì KHÔNG chết ở người
+           đầu tiên. Nhớ tên người đã trúng để nó không gặm đi gặm lại một mục tiêu. */
+        if(p.advPierce>0){
+          p.advHit=p.advHit||[];
+          if(p.advHit.indexOf(f)>=0) continue;
+          p.advHit.push(f);
+        }
         const landed=hurt(f,p.dmg,p.owner,p.type==='kame'?'KAMEHAMEHA!':!!p.crit,kd);
         if(!landed){ dead=true; break; }
+        if(p.advPierce>0){ p.advPierce--; sfx('hit'); continue; }
         if(p.bleed) bleedOn(f,p.owner);                  // shuriken của Shikamaru để lại vết cắt
         sfx('hit');
         if(p.type==='clone'){
@@ -11703,6 +12262,11 @@ function step(dt){
     if(p.gone) dead=true;
     if(dead&&p.type==='change'&&!p.done&&p.owner) ginyuChangeMiss(p.owner);
     if(dead&&p.type==='twin'&&p.owner) later(.25,()=>releaseTwin(p.owner));
+    /* Đạn mang cờ nổ của thẻ Phiêu lưu: nổ ĐÚNG LÚC nó tan, tại chỗ nó tan. Đặt ở đây vì
+       đây là cửa chung duy nhất mọi loại đạn đều đi qua — cắm theo từng loại thì mỗi
+       nhân vật một kiểu và thẻ sẽ chạy sai với nửa bảng. */
+    if(dead&&p.advBoom>0&&advSrcMine(p.owner))
+      advBoom(p.x,p.y,74,18+12*p.advBoom,p.owner,'#FF9A3C');
     if(dead)G.proj.splice(i,1);
   }
   for(let i=G.fx.length-1;i>=0;i--){ const e=G.fx[i]; if(!e) continue; e.life-=dt; if(e.type==='ring')e.r+=(e.max-e.r)*dt*7; if(e.life<=0)G.fx.splice(i,1); }
@@ -13382,6 +13946,15 @@ function drawBars(f){
   if(f.beaHide)return;                          // Beatrice còn ở trong Forbidden Library
   if(f.drHide)return;                          // Doraemon còn trong lòng Anywhere Door
   if(f.supHide)return;                         // Superman còn là bóng người trên cao
+  /* Dấu của Phiêu lưu: một vòng hồng nhấp nháy dưới chân, để người chơi biết đòn nào sẽ
+     kích nổ. Vẽ trong drawBars vì nó đi cùng thanh máu và luôn nằm trên mặt sàn. */
+  if((f.advMark||0)>0){
+    ctx.save();
+    ctx.globalAlpha=.35+Math.sin(G.t*9)*.2;
+    ctx.strokeStyle='#FF4FA3'; ctx.lineWidth=2.4;
+    ctx.beginPath(); ctx.ellipse(f.x,f.y+10,f.r+11,(f.r+11)*.4,0,0,7); ctx.stroke();
+    ctx.restore();
+  }
   if(f.ally||f.mob){
     // đồng minh và QUÁI dùng thanh nhỏ hơn hẳn, để mấy con đứng sát nhau vẫn đọc được
     const w=84,h=16,x=clamp(f.x-w/2,12,W-w-12),y=f.y+28;
@@ -15581,6 +16154,19 @@ function draw(){
       // bom nổ ngay cạnh địch: dùng chung cách vẽ với bom rải rác khắp rừng
       bombAt(e.x,e.y,a,1-a,e.seed,e.big?1.5:1.1);
     }
+    /* Tia điện nối hai người — đòn dội của thẻ "Dội Sang Ngang". Vẽ gãy khúc theo nhịp
+       chứ đừng vẽ một đường thẳng: thẳng thì nhìn như lỗi đồ hoạ. */
+    else if(e.type==='bolt'){
+      ctx.globalAlpha=a; ctx.strokeStyle='#9FE8FF'; ctx.lineWidth=2.6; ctx.lineJoin='round';
+      const dx=e.x2-e.x, dy=e.y2-e.y, n=5;
+      ctx.beginPath(); ctx.moveTo(e.x,e.y);
+      for(let i=1;i<n;i++){
+        const k=i/n, nx=-dy, ny=dx, L=Math.hypot(nx,ny)||1;
+        const off=(i%2?1:-1)*9*(1-Math.abs(k-.5)*2);
+        ctx.lineTo(e.x+dx*k+nx/L*off, e.y+dy*k+ny/L*off);
+      }
+      ctx.lineTo(e.x2,e.y2); ctx.stroke();
+    }
     else if(e.type==='punch'){ ctx.globalAlpha=a; ctx.strokeStyle='#fff'; ctx.lineWidth=3;
       for(let i=0;i<4;i++){ const g=i*1.57+.4; ctx.beginPath(); ctx.moveTo(e.x+Math.cos(g)*9,e.y+Math.sin(g)*9); ctx.lineTo(e.x+Math.cos(g)*22,e.y+Math.sin(g)*22); ctx.stroke(); } }
     ctx.restore();
@@ -16013,6 +16599,7 @@ function loop(now){
   if(running){ acc+=raw*speedMul; let guard=0; while(acc>=1/120 && guard++<600){ step(1/120); acc-=1/120; } }
   draw(); recTick();                        // khung dọc + đẩy khung vào bộ mã hoá, chỉ khi đang ghi
   padTick();                                // vòng hồi chiêu trên nút bấm, chỉ ở bản người chơi
+  advLevelCheck();                          // lên cấp thì dừng trận, mở màn chọn thẻ
   requestAnimationFrame(loop);
 }
 /* ---------- ghi hình sàn đấu ---------- */
@@ -17423,6 +18010,7 @@ function startPicked(){
   if(PMODE==='adv'){
     compClear();
     if(!ADV||ADV.key!==TMP.a) ADV=advNew(TMP.a);
+    advIndex();
     advSave();
     newGame(); running=false; el('play').textContent=t('play');
     advOpen();
@@ -17585,43 +18173,34 @@ function advPaint(){
       <div class="advMeter"><i style="width:${pct}%"></i></div>
       <div class="advMeta">
         <span>EXP ${ADV.exp}${need?' / '+need:''}</span>
-        <span>${t('advSp')} <b style="color:var(--gold)">${ADV.sp}</b></span>
-        <span>${t('advSxp')} <b style="color:var(--cyan)">${ADV.sxp}</b></span>
+        <span>${t('advRr')} <b style="color:var(--cyan)">${ADV.rr|0}</b></span>
         <span>${t('advKills')} ${ADV.kills}</span>
       </div>
     </div>
   </div>`;
 
-  // ---- thuộc tính ----
-  h+=`<div class="advH">${t('advStats')} <span class="advPts">${tf('advLeft',{n:ADV.sp})}</span></div><div class="advList">`;
-  for(const S of ADV_ST){
-    const v=ADV.st[S.k]|0, can=ADV.sp>0;
-    h+=`<div class="advRow"><div><b>${tr({vi:S.vi,en:S.en})}</b><s>${tr(S.s)}</s></div>`+
-       `<div class="advVal">${v>0?'+'+v:'—'}</div>`+
-       `<button class="advBuy" data-st="${S.k}" type="button"${can?'':' disabled'}>+</button></div>`;
-  }
-  h+='</div>';
+  // ---- thẻ đang có ----
+  const own=Object.keys(ADV.ups||{}).filter(k=>ADV.ups[k]>0);
+  h+=`<div class="advH">${t('advBuild')} <span class="advPts">${tf('advOwnN',{n:own.length})}</span></div>`;
+  h+=own.length?`<div class="upOwn">`+own.map(id=>{
+      const U=ADV_BY_ID[id]; if(!U) return '';
+      const R=ADV_RAR[U.rar]||ADV_RAR.common, n=ADV.ups[id], mx=U.max||1;
+      return `<span class="upChip" style="--rc:${R.c}" title="${tr(U.desc).replace(/<[^>]+>/g,'')}">`+
+             `<i></i>${tr(U.name)}${mx>1?`<u>×${n}</u>`:''}</span>`;
+    }).join('')+`</div>`
+    :`<div class="advNote">${t('advNoUp')}</div>`;
 
-  // ---- chiêu ----
-  h+=`<div class="advH">${t('advSkills')} <span class="advPts">${tf('advLeftS',{n:ADV.sxp})}</span></div><div class="advList">`;
+  // ---- ba ô chiêu ----
+  h+=`<div class="advH">${t('advSkills')}</div><div class="advList">`;
   h+=`<div class="advRow"><div><b>J · ${padName(ADV.key,1)}</b><s>${t('advBasic')}</s></div>`+
      `<div class="advVal">${t('advOpen')}</div><div></div></div>`;
   for(const S of ADV_SLOTS){
-    const r=advRank(S.k), lvOk=ADV.lv>=S.lv, maxed=r>=ADV_RANKMAX;
-    const cost=r===0?S.cost:S.cost+r;
-    const can=!maxed&&lvOk&&ADV.sxp>=cost;
-    let note;
-    if(maxed)       note=t('advMax');
-    else if(!lvOk)  note=tf('advNeedLv',{lv:S.lv});
-    else            note=tf(r===0?'advUnlock':'advUp',{c:cost});
-    let pips='<div class="advPips">';
-    for(let i=0;i<ADV_RANKMAX;i++) pips+=`<i class="${i<r?'on':''}"></i>`;
-    pips+='</div>';
-    h+=`<div class="advRow"${r?'':' style="opacity:.72"'}><div>`+
-       `<b>${S.k.toUpperCase()} · ${padName(ADV.key,S.n)}</b><s>${note}`+
-       (r>1?` · ${t('advCdCut')} −${Math.round((r-1)*ADV_RANKCD*100)}%`:'')+`</s></div>`+
-       `<div class="advVal">${r?('★'+r):t('advLock')}${pips}</div>`+
-       `<button class="advBuy" data-sk="${S.k}" type="button"${can?'':' disabled'}>+</button></div>`;
+    const r=advRank(S.k);
+    h+=`<div class="advRow"${r?'':' style="opacity:.6"'}><div>`+
+       `<b>${S.k.toUpperCase()} · ${padName(ADV.key,S.n)}</b>`+
+       `<s>${r?(r>1?`${t('advCdCut')} −${Math.round((r-1)*ADV_RANKCD*100)}%`:t('advOpen'))
+              :tf('advNeedCard',{lv:S.lv})}</s></div>`+
+       `<div class="advVal">${r?('★'+r):t('advLock')}</div><div></div></div>`;
   }
   h+='</div>';
 
@@ -17643,10 +18222,7 @@ function advPaint(){
     go.textContent=ADV.done?t('advReplay'):tf('advGo',{n:ADV.stage});
     go.disabled=false;
   }
-  for(const b of body.querySelectorAll('[data-st]'))
-    b.addEventListener('click',()=>{ if(advBuyStat(b.dataset.st)){ sfx('ui_tap'); advPaint(); } });
-  for(const b of body.querySelectorAll('[data-sk]'))
-    b.addEventListener('click',()=>{ if(advBuySkill(b.dataset.sk)){ sfx('ui_next'); advPaint(); padBuild(); } });
+  /* Không còn nút mua điểm nào: nâng cấp giờ đi qua MÀN CHỌN THẺ lúc lên cấp. */
 }
 /* Vào màn: hỏi sàn trước (đúng lối mỗi trận một sàn của giải đấu) rồi mới dựng trận. */
 function advPlay(){
@@ -18221,6 +18797,7 @@ if(ARCADE){
   el('whoHuman').addEventListener('click',()=>whoGo('human'));
   el('arcAdv').addEventListener('click',()=>advOpen());
   el('advGo').addEventListener('click',advPlay);
+  el('advReroll').addEventListener('click',advRerollGo);
   el('advPick').addEventListener('click',()=>{ advClose(); TMP.mode='adv'; cselPage=cselSteps()[0]; openCsel(); });
   el('advQuit').addEventListener('click',()=>{
     advClose(); advWipe(); PMODE='duel'; TMP.mode='duel';
