@@ -723,6 +723,212 @@ async function fxLive() {
   return errors;
 }
 
+/* ---------- 6c. relic · thức tỉnh · lõi tiến hoá · vỡ thế · boss nhiều pha ---------- */
+async function deepC() {
+  console.log('\n== 6c. relic / thức tỉnh / lõi / vỡ thế / boss pha ==');
+  const { browser, page, errors } = await newPage(buildPlay());
+  await page.click('#arcStart');
+  await page.click('#whoHuman');
+  await page.waitForTimeout(200);
+  await page.click('#mTabAdv');
+  await page.waitForTimeout(160);
+  await page.click('#cselGo');
+  await page.waitForTimeout(200);
+  await page.click('#listA .cTile[data-key="shika"]');
+  await page.click('#cselGo');
+  await page.waitForTimeout(160);
+  await page.click('#cselGo');
+  await page.waitForTimeout(300);
+
+  /* ---- §39: thẻ RIÊNG của nhân vật phải áp đảo thẻ chung ---- */
+  const mix = await page.evaluate(() => {
+    const UP = window.__ADV_UP;
+    const own = UP.filter(u => u.fighter).length;
+    const keys = {};
+    for (const u of UP) if (u.fighter) keys[u.fighter] = (keys[u.fighter] | 0) + 1;
+    const evo = UP.filter(u => u.evo).length;
+    return { n: UP.length, own, pct: Math.round(own / UP.length * 100),
+             chars: Object.keys(keys).length, per: keys, evo,
+             ck: window.__CKEYS().length };
+  });
+  ok('mỗi nhân vật đều có thẻ riêng', mix.chars === mix.ck,
+     mix.chars + '/' + mix.ck + ' nhân vật');
+  ok('§39: thẻ riêng chiếm phần lớn bảng', mix.pct >= 60,
+     mix.own + '/' + mix.n + ' = ' + mix.pct + '%');
+  ok('mỗi nhân vật có một thẻ TIẾN HOÁ', mix.evo === mix.ck, mix.evo + ' thẻ tiến hoá');
+
+  // thẻ của nhân vật KHÁC không bao giờ lọt vào hũ
+  const pool = await page.evaluate(() => {
+    const ids = window.__advPool().map(u => u.id);
+    const A = window.__ADV();
+    const wrong = ids.filter(id => {
+      const U = window.__ADV_BY_ID[id];
+      return U.fighter && U.fighter !== A.key;
+    });
+    const evoIn = ids.filter(id => window.__ADV_BY_ID[id].evo);
+    return { n: ids.length, wrong: wrong.length, evoIn: evoIn.length, key: A.key };
+  });
+  ok('hũ chỉ có thẻ chung + thẻ của CHÍNH nhân vật đang cầm',
+     pool.wrong === 0, pool.key + ' · ' + pool.n + ' thẻ');
+  ok('thẻ TIẾN HOÁ không lọt vào lượt lên cấp thường (phải dùng LÕI)', pool.evoIn === 0);
+
+  /* ---- relic ---- */
+  const rel = await page.evaluate(() => {
+    const all = window.__ADV_RELIC;
+    const curse = all.filter(r => r.curse);
+    const clean = window.__advRelicPool(false);
+    const withCurse = window.__advRelicPool(true);
+    const A = window.__ADV();
+    // nhận một relic: nó phải vào sổ RELIC chứ không vào sổ thẻ
+    window.__advTake(window.__ADV_BY_ID['r_scroll']);
+    const inRel = (A.relics || {}).r_scroll, inUps = (A.ups || {}).r_scroll;
+    // relic cắm được vào cửa hook
+    const hooks = window.__ADV_HOOKS();
+    const wired = hooks.hit.some(u => u.id === 'r_scroll');
+    return { n: all.length, curse: curse.length,
+             cleanHasCurse: clean.some(r => r.curse),
+             curseHas: withCurse.some(r => r.curse),
+             inRel, inUps, wired };
+  });
+  ok('có relic thường và relic BỊ NGUYỀN', rel.n >= 8 && rel.curse >= 3,
+     rel.n + ' relic · ' + rel.curse + ' bị nguyền');
+  ok('relic bị nguyền KHÔNG tự rơi ra (§27: phải thấy rõ cái giá)',
+     !rel.cleanHasCurse && rel.curseHas);
+  ok('relic cất vào sổ RIÊNG, không lẫn với thẻ nâng cấp',
+     rel.inRel === 1 && !rel.inUps);
+  ok('relic cắm được vào cửa hook như thẻ', rel.wired);
+
+  // lời nguyền ăn vào máu tối đa
+  const curse = await page.evaluate(() => {
+    const A = window.__ADV();
+    A.curseHp = 0; const before = window.__advMaxHp();
+    window.__advTake(window.__ADV_BY_ID['r_glass']);
+    const after = window.__advMaxHp();
+    return { before, after, cut: A.curseHp };
+  });
+  ok('relic bị nguyền trừ máu tối đa thật', curse.after < curse.before,
+     curse.before + ' -> ' + curse.after);
+
+  /* ---- thức tỉnh: ba hướng, chỉ lấy được MỘT ---- */
+  const aw = await page.evaluate(() => {
+    const A = window.__ADV();
+    A.awake = null; A.lock = {}; A.relics = {}; window.__advIndex();
+    const n = window.__ADV_AWAKE.length;
+    window.__advTake(window.__ADV_AWAKE[0]);
+    const got = A.awake;
+    // hai hướng kia phải bị khoá
+    const left = window.__ADV_AWAKE.filter(U =>
+      !(U.excl && A.lock[U.excl] && A.lock[U.excl] !== U.id));
+    return { n, got, left: left.length };
+  });
+  ok('có ba hướng thức tỉnh', aw.n === 3, aw.n + ' hướng');
+  ok('chọn một hướng thì hai hướng kia KHOÁ HẲN (§13)',
+     aw.got === 'aw_blitz' && aw.left === 1, 'còn ' + aw.left);
+
+  /* ---- lõi tiến hoá ---- */
+  const evo = await page.evaluate(() => {
+    const A = window.__ADV();
+    A.ups = {}; A.lock = {}; window.__advIndex();
+    const pool = window.__advEvoPool();
+    return { n: pool.length, mine: pool.every(u => !u.fighter || u.fighter === A.key),
+             key: A.key, ids: pool.map(u => u.id) };
+  });
+  ok('lõi mở ra thẻ tiến hoá của ĐÚNG nhân vật đang cầm',
+     evo.n >= 1 && evo.mine, evo.ids.join(' '));
+
+  /* ---- VỠ THẾ (§42/§43) ---- */
+  const brk = await page.evaluate(() => {
+    const G = window.__G();
+    const e = G.fighters.find(f => f.team !== 0 && !f.summon);
+    window.__advBreakSetup(e, 8);
+    const max = e.advBreakMax;
+    // khống chế bào thanh
+    window.__stunFx(e, 1, 'spark');
+    const afterCC = e.advBreak;
+    // bào cho vỡ
+    window.__advBreakHit(e, max * 2, null);
+    const down = e.advBreakDown > 0, stun = e.stun > 0;
+    // đang vỡ thế thì KHÔNG bào tiếp được (không stun-lock)
+    const b2 = e.advBreak;
+    window.__advBreakHit(e, max * 2, null);
+    return { max, afterCC, down, stun, b2, again: e.advBreak };
+  });
+  ok('tinh nhuệ/boss có thanh vỡ thế', brk.max > 0, brk.max + ' điểm');
+  ok('khống chế BÀO thanh (build control có giá trị, §42)', brk.afterCC < brk.max,
+     brk.max + ' -> ' + brk.afterCC);
+  ok('bào hết thì VỠ THẾ và đứng hình', brk.down && brk.stun);
+  ok('đang vỡ thế thì không bào tiếp được (không stun-lock boss)',
+     brk.again === brk.b2);
+
+  /* ---- BOSS NHIỀU PHA (§23) ---- */
+  const ph = await page.evaluate(() => {
+    const G = window.__G();
+    const e = G.fighters.find(f => f.team !== 0 && !f.summon);
+    e.advBossPhase = { i: 0, cine: 0 };
+    e.maxHp = 1000; e.hp = 1000; e.advBossFast = 1; e.advBossRage = 1;
+    const marks = window.__ADV_PHASE;
+    const seen = [];
+    const n0 = G.fighters.length;
+    for (const m of marks) {
+      e.hp = e.maxHp * (m - 0.01);
+      e.advBossPhase.cine = 0; G.freeze = 0;
+      window.__advPhaseTick(e, 1 / 120);
+      seen.push({ i: e.advBossPhase.i, fast: e.advBossFast });
+    }
+    return { marks, seen, rage: e.advBossRage, adds: G.fighters.length - n0 };
+  });
+  ok('boss có ba mốc pha theo máu (§23)', ph.marks.length === 3, ph.marks.join(' / '));
+  ok('mỗi mốc đẩy boss sang pha mới và nhanh tay dần',
+     ph.seen[0].i === 1 && ph.seen[2].i === 3 && ph.seen[2].fast > ph.seen[0].fast,
+     ph.seen.map(x => 'p' + x.i + '×' + x.fast.toFixed(2)).join(' '));
+  ok('pha 3 gọi thêm quân (§23 Summon)', ph.adds > 0, '+' + ph.adds + ' con');
+  ok('pha cuối thì nổi điên (sát thương lên)', ph.rage > 1, '×' + ph.rage);
+
+  /* Mở BẢNG HÀNH TRÌNH thì KHÔNG được cho trận chạy ngầm sau lưng nó. Cùng họ với lỗi
+     "bấm Khai mạc giải mà chớp ra cặp đấu trận trước" của giải đấu: `#cselGo` gọi
+     `arcFight()` vô điều kiện ⇒ bật màn VS, `vsOn` chặn `step()`, và trận chạy ngầm. */
+  const quiet = await page.evaluate(() => {
+    const G = window.__G(), t0 = G.t;
+    return new Promise(r => setTimeout(() => r({
+      t0, t1: G.t, board: !document.getElementById('advBoard').classList.contains('off'),
+      vs: !document.getElementById('arcVs').classList.contains('off')
+    }), 500));
+  });
+  ok('mở bảng hành trình thì KHÔNG chớp màn VS', !quiet.vs);
+  ok('và KHÔNG có trận nào chạy ngầm sau lưng bảng',
+     quiet.board && Math.abs(quiet.t1 - quiet.t0) < 1e-6, 'G.t ' + quiet.t0 + ' -> ' + quiet.t1);
+
+  /* ---- thẻ nhân vật ăn vào trạng thái RIÊNG, không đụng hằng số chung ---- */
+  /* DỰNG LẠI TRẬN TỪ ĐẦU rồi mới đo. Mấy mục trên vặn thẳng vào trận đang có (ghim máu boss,
+     đặt pha, đẩy thêm quái, bật `G.freeze` của phân cảnh đổi pha) — đo tiếp trên đống đó là
+     đọc ra "không nhúc nhích" rồi đổ oan. Đây là họ hàng của lỗi t_beatrice mục 10. */
+  const own = await page.evaluate(() => {
+    const cap0 = window.__SHIKA.lazyCap;
+    /* Màn chọn thẻ đang mở thì `step()` return ngay — dọn trước khi đo. */
+    window.__advCardClose();
+    window.__setADV(window.__advNew('shika'));
+    window.__setMode('adv');                       // PMODE='adv' + newGame() sạch
+    window.__advIndex();
+    const G = window.__G(), h = G.fighters.find(f => f.team === 0 && !f.summon);
+    window.__advTake(window.__ADV_BY_ID['f_shika_chakra']);
+    h.chakra = 0;
+    const before = h.chakra;
+    for (let i = 0; i < 120; i++) window.__step(1 / 120);
+    return { grew: h.chakra > before, gain: Math.round(h.chakra),
+
+
+             key: h.key, alive: h.alive,
+             cap0, cap1: window.__SHIKA.lazyCap };
+  });
+  ok('thẻ riêng ăn vào trạng thái của chính fighter', own.grew,
+     '+' + own.gain + ' chakra/giây');
+  ok('và KHÔNG đụng vào hằng số chung (SHIKA.lazyCap giữ nguyên)',
+     own.cap0 === own.cap1, own.cap0 + ' -> ' + own.cap1);
+
+  await browser.close();
+  return errors;
+}
+
 /* ---------- 7. CHANGE của Ginyu: quyền điều khiển đi theo HỒN ---------- */
 async function soulSwap() {
   console.log('\n== 7. bị Ginyu cướp xác thì cầm thân xác Ginyu ==');
@@ -818,7 +1024,7 @@ async function soulSwap() {
 
 (async () => {
   let errs = [];
-  for (const fn of [mobs, autoUntouched, human, adventure, advFight, padCd, fxLive, soulSwap]) {
+  for (const fn of [mobs, autoUntouched, human, adventure, advFight, padCd, fxLive, deepC, soulSwap]) {
     try { errs = errs.concat(await fn()); }
     catch (e) { ok(fn.name + ' chạy được', false, e.message); }
   }

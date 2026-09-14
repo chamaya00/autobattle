@@ -2313,6 +2313,71 @@ mạng hồi sinh và đánh lại với nửa máu (§31); hết mạng là run
 > NHỊP. Xoá đệm ở `advEnter()`, `newGame()` và `advRestart()`. Test đổi loại node thì phải
 > gọi `__advEncClear()` trước khi đọc lại.
 
+### RELIC (§26) và RELIC BỊ NGUYỀN (§27)
+
+Relic là passive chạy **suốt run**, dùng đúng năm cửa của thẻ nâng cấp — chỉ khác **chỗ rơi
+ra**: kho báu · cửa hàng · tinh nhuệ · boss, chứ không phải lên cấp. Thẻ và relic đi chung
+`ADV_BY_ID` và chung chỉ mục hook, chỉ khác **chỗ cất**: thẻ vào `ADV.ups`, relic vào
+`ADV.relics`. Nhờ vậy màn chọn, `advTake()` và cả năm cửa dùng lại y nguyên.
+
+> **Relic bị nguyền KHÔNG bao giờ tự rơi ra.** Chúng chỉ bán ở **cửa hàng** — chỗ duy nhất
+> người chơi đọc được cái giá rồi mới quyết, đúng tinh thần risk/reward của §27. Kho báu chỉ
+> ra relic thường.
+
+`ADV.curseHp` là phần trăm máu tối đa bị lời nguyền ăn mất, đọc trong `advMaxHp()`. Nó nhận
+**số ÂM** để cộng máu — hướng thức tỉnh Thành Trì dùng đúng đường đó thay vì mở thêm một
+trường mới. Có sàn `.25` để không bao giờ rơi xuống một con số vô nghĩa.
+
+### AWAKENING (§13) và EVOLUTION CORE (§12)
+
+**Ba hướng thức tỉnh** (`ADV_AWAKE`) mở sau khi hạ boss region 2, **loại trừ nhau** qua
+`excl:'awake'`: Bão Đòn (combo + hồi chiêu) · Kẻ Phá Thế (khống chế + phá giáp) · Thành Trì
+(lì đòn + máu). Mỗi hướng kéo build đi một ngả hẳn, không phải "+20% damage".
+
+**Lõi tiến hoá** rơi từ boss. Tiêu lõi mở một thẻ `evo:true` — mấy thẻ nặng ký nhất bảng.
+`advPool()` **lọc hẳn `evo` ra** nên chúng không bao giờ rơi từ lên cấp thường.
+
+Bốn nguồn chọn đi chung **một hàng chờ** trong `advLevelCheck()`, xét theo thứ tự:
+lên cấp → lõi tiến hoá → thức tỉnh → relic. Một lúc chỉ mở MỘT màn.
+
+### BREAK GAUGE (§42 · §43) và BOSS NHIỀU PHA (§23)
+
+> §42: *"Boss không immune CC hoàn toàn. Thay vào đó Boss có CC Resistance Bar."*
+
+Chỉ tinh nhuệ và boss có `f.advBreakMax`. **Mỗi cú khống chế bào thanh** — cắm ngay đầu
+`stunFx()` nên MỌI đường gây choáng đều tính, kể cả chiêu gọi thẳng `stunFx`. Bào hết thì
+**VỠ THẾ**: đứng hình `ADV_BRK_T` và **ăn thêm 40% sát thương**. Hết vỡ thế thì thanh hồi đầy
+và có quãng MIỄN `ADV_BRK_HOLD` — **không stun-lock được boss**, đúng yêu cầu §42.
+
+**Boss ba pha** theo mốc máu 70 · 40 · 15%: mỗi mốc đóng băng một nhịp (telegraph) rồi bung
+một thứ khác — pha 2 nhanh tay, pha 3 **gọi thêm quân**, pha cuối nổi điên nhưng **thanh vỡ
+thế mỏng đi 40%** (nổi điên thì hở thế).
+
+### THẺ RIÊNG CỦA TỪNG NHÂN VẬT (§39)
+
+`ADV_FIGHTER` — **48 thẻ, bốn cho mỗi người**: ba thẻ thường và một thẻ TIẾN HOÁ. Cộng 29 thẻ
+chung thì bảng có **77 thẻ, 62% là thẻ riêng**.
+
+> **CẤM SỬA HẰNG SỐ CHUNG.** `SHIKA.lazyCap`, `GN.beamN`, `DORA.slCd`… dùng cho MỌI chế độ —
+> sửa chúng là phá cân bằng của đấu tay đôi, hỗn chiến và giải đấu, đúng cái §64 cấm. Mọi thẻ
+> riêng vì vậy chỉ đụng vào **trạng thái của riêng một fighter** (`f.rage`, `f.critBonus`,
+> `f.chakra`, `f.cds`, `f.copCd`…) hoặc đi qua năm cửa chung. Đã phải bỏ một vế của thẻ tiến
+> hoá Shikamaru vì nó định nới `SHIKA.lazyCap`. `t_player.js` soi thẳng `SHIKA.lazyCap`
+> trước/sau để chắc không ai lách luật này.
+
+Thẻ riêng đọc **`gnSoul||key`** (`advMine`) chứ không đọc `key`: sau cú CHANGE của Ginyu thì
+chiêu đi theo HỒN, nên thẻ cũng phải đi theo hồn.
+
+`f.advBaRate` (mấy thẻ "đánh nhanh hơn") **dựng lại về 1 mỗi nhịp** ở đầu `advOnTick` rồi mới
+để thẻ nâng lên — đúng lối `statusTick`. Không đặt lại thì hệ số tích mãi và đòn thường nhanh
+vô hạn.
+
+> **LỖI THẬT — mở bảng hành trình mà trận chạy ngầm sau lưng.** `#cselGo` gọi `arcFight()` với
+> điều kiện `!compOn()`, mà phiêu lưu thì `compOn()` false — nên mở bảng hành trình xong game
+> vẫn bật màn VS và cho trận chạy ngầm. Đúng họ với lỗi *"bấm Khai mạc giải mà chớp ra cặp đấu
+> trận trước"* đã ghi ở mục 2e. Gác thêm `PMODE!=='adv'`. Đo được: `vsOn` bật ⇒ `step()` return
+> ⇒ `G.t` đứng nguyên 0 trong khi bảng vẫn mở.
+
 ### Cân bằng — mấy con số này ĐO RỒI MỚI CHỐT, đừng đoán
 
 Đường cong của bản 24-màn-thẳng cũ **quá dốc** khi chuyển sang bản đồ: một region có 8 hàng

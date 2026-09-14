@@ -1481,6 +1481,9 @@
     font-size:11px;background:var(--s2);box-shadow:inset 0 0 0 1px var(--line)}
   .upChip i{font-style:normal;width:7px;height:7px;border-radius:50%;background:var(--rc)}
   .upChip u{text-decoration:none;font-family:var(--fd);color:var(--gold);font-size:10.5px}
+  .upChip.curse{box-shadow:inset 0 0 0 1px #FF4D6D}
+  /* Thẻ TIẾN HOÁ và THỨC TỈNH: viền dày hơn để nhìn ra ngay đây không phải thẻ thường. */
+  .upCard.evo,.upCard.awake{box-shadow:inset 0 0 0 2px var(--rc),0 0 26px color-mix(in srgb,var(--rc) 40%,transparent)}
 
   /* ---------- bản đồ phân nhánh ---------- */
   .advMap{display:flex;flex-direction:column;gap:9px;padding:10px 4px;border-radius:14px;
@@ -2011,6 +2014,9 @@ const L={
     whoHuman:'Tự cầm tay đánh', whoHumanSub:'WASD + nút chiêu · có chế độ Phiêu lưu',
     mAdv:'Phiêu lưu', mAdvSub:'1 người · farm quái lên cấp',
     subAdv:'Chọn nhân vật để đi phiêu lưu · {n} đấu thủ',
+    advRelics:'RELIC & THỨC TỈNH', advCore:'Lõi tiến hoá:', advRelicPick:'Nhận món đồ cổ',
+    advRelicTitle:'RELIC', advEvoTitle:'LÕI TIẾN HOÁ', advAwakeTitle:'THỨC TỈNH',
+    advPickOne:'Chọn một — không lấy lại được',
     advRegN:'Region {n}/{of}', advPickNode:'Chọn đường đi tiếp trên bản đồ',
     advDead:'Hành trình kết thúc — hết mạng hồi sinh', advGold:'Vàng:', advRev:'Hồi sinh:',
     advClose:'✕ Đóng bản đồ', advAgain:'↻ Đi lại từ đầu', advLeave:'▶ Đi tiếp',
@@ -2113,6 +2119,9 @@ const L={
     whoHuman:'Play it yourself', whoHumanSub:'WASD + skill buttons · unlocks Adventure',
     mAdv:'Adventure', mAdvSub:'1 player · farm monsters, level up',
     subAdv:'Pick a fighter for the run · {n} fighters',
+    advRelics:'RELICS & AWAKENING', advCore:'Evolution Cores:', advRelicPick:'Take the artifact',
+    advRelicTitle:'RELIC', advEvoTitle:'EVOLUTION CORE', advAwakeTitle:'AWAKENING',
+    advPickOne:'Pick one — this choice is final',
     advRegN:'Region {n}/{of}', advPickNode:'Pick your route on the map',
     advDead:'Run over — no revives left', advGold:'Gold:', advRev:'Revives:',
     advClose:'✕ Close map', advAgain:'↻ Start a new run', advLeave:'▶ Move on',
@@ -3792,6 +3801,8 @@ async function loadSaved(){
           if(ADV.map.at===undefined) ADV.map.at=-1;
           ADV.map.path=ADV.map.path||[];
           ADV.gold=ADV.gold|0; ADV.rev=a.rev===undefined?ADV_REV0:(a.rev|0);
+          ADV.relics=a.relics||{}; ADV.curseHp=+a.curseHp||0;
+          ADV.cores=a.cores|0; ADV.awake=a.awake||null; ADV.relicOffer=a.relicOffer|0;
           ADV.hp=ADV.hp>0?ADV.hp:ADV_HP0;
           /* Sổ thẻ và mấy trường đi kèm. Hành trình lưu từ bản TRƯỚC (còn sp/sxp) mở lại
              thì mấy trường này rỗng — cứ để rỗng, người chơi đi tiếp bằng thẻ. */
@@ -5812,6 +5823,11 @@ function hitsBody(p,f){
 }
 /* choáng kèm loại hiệu ứng để vẽ cho đúng: điện giật, sao xoay, trái tim… */
 function stunFx(f,dur,kind){
+  /* §42 — mỗi cú khống chế BÀO thanh vỡ thế của tinh nhuệ / boss. Đặt ngay đầu hàm để MỌI
+     đường gây choáng đều tính, kể cả chiêu gọi thẳng `stunFx`. Lượng bào theo THỜI GIAN
+     choáng định gây, nên chiêu khống chế nặng bào nhiều hơn. Ngoài phiêu lưu thì không ai
+     có thanh này nên nhánh tắt hẳn. */
+  if(f&&f.advBreakMax>0&&dur>0) advBreakHit(f,dur*RT*22,null);
   if(f.dash&&f.dash.guard){                      // đang lao tới thì không dính khống chế
     G.floats.push({x:f.x,y:f.y-104,txt:'CC IMMUNE',color:f.color,
       life:.9,ml:.9,banner:true,gold:true,sc:.6,tilt:rnd(-.05,.05)});
@@ -6263,13 +6279,17 @@ function advNew(key){
   const A={key, lv:1, exp:0, st:{pow:0,vit:0,agi:0,foc:0}, sk:{k:0,l:0,u:0},
            ups:{}, lock:{}, tags:{}, dry:0, rr:ADV_RR0, pending:0, keep:null,
            reg:0, gold:ADV_GOLD0, rev:ADV_REV0, kills:0, best:0, dead:false, done:false,
+           relics:{}, curseHp:0, cores:0, awake:null, awakeWant:false, relicOffer:0,
            node:null, log:[]};
   A.map=advMapNew(0);
   A.hp=ADV_HP0;                       // máu mang theo giữa các node
   return A;
 }
 const ADV_RR0=2, ADV_GOLD0=60, ADV_REV0=1;
-const advMaxHp=()=>Math.round(ADV_HP0+(ADV.lv-1)*ADV_HPLV+ADV.st.vit*ADV_VIT);
+/* Máu tối đa, đã trừ phần LỜI NGUYỀN của relic bị nguyền (§27) — `curseHp` ÂM thì là cộng
+   (hướng thức tỉnh Thành Trì). Kẹp sàn ở 25% để không bao giờ rơi xuống con số vô nghĩa. */
+const advMaxHp=()=>Math.max(60,Math.round(
+  (ADV_HP0+(ADV.lv-1)*ADV_HPLV+ADV.st.vit*ADV_VIT)*Math.max(.25,1-(ADV.curseHp||0))));
 /* Hồi máu cho người chơi — dùng chung cho chỗ nghỉ, bình máu, phần thưởng. Trả về lượng
    THẬT SỰ hồi được để chỗ gọi in ra con số đúng. */
 function advHeal(pct){
@@ -6469,6 +6489,10 @@ function advTune(){
       f.mobDmg=Math.max(1,Math.round(M.dmg*E.dmg));
     }else{
       f.maxHp=Math.max(1,Math.round((HP[f.key]||HP_STD)*E.hp)); f.hp=f.maxHp;
+      /* Tinh nhuệ và boss: thanh VỠ THẾ (§42) và, riêng boss, ba pha theo mốc máu (§23). */
+      advBreakSetup(f,advDepth());
+      if(E.kind==='boss') f.advBossPhase={i:0,cine:0};
+      f.advBossFast=1; f.advBossRage=1;
     }
   }
 }
@@ -6487,6 +6511,11 @@ function advStatTick(f){
        hai loại và cho mọi độ sâu. Quái thì KHÔNG đi đường này — sát thương của chúng đã
        scale riêng trong `advTune`, cắt thêm là nhân hai lần. */
     if(!own.mob) f.dmgOut*=advEncounter().dmg;
+    /* Pha boss: nhanh tay và nặng đòn dần. Nhân SAU `statusTick` như mọi hệ số khác. */
+    if(f.advBossFast>1){ f.castMul*=f.advBossFast; f.moveMul*=1+(f.advBossFast-1)*.5; }
+    if(f.advBossRage>1) f.dmgOut*=f.advBossRage;
+    /* Vỡ thế thì ăn thêm sát thương — phần thưởng của build khống chế (§43). */
+    if(f.advBreakDown>0) f.dmgTake*=ADV_BRK_BONUS;
     return;
   }
   if(f.summon) return;                 // viện binh của CHÍNH người chơi giữ nguyên
@@ -6503,6 +6532,10 @@ function advStatTick(f){
    một chỗ duy nhất cho mọi người nên chỉ phải cắm ở đây; không đụng vào `think()` của ai. */
 function advSlotRate(f,cdKey){
   if(!advOn()||!f||f.team!==0||f.summon) return 1;
+  /* Ô ĐÒN THƯỜNG đọc `advBaRate` — mấy thẻ "đánh nhanh hơn" (Tay Nhanh, Nhịp Hơi Thở, và
+     hướng thức tỉnh Bão Đòn) đặt hệ số đó trong `tick`. Mỗi nhân vật một tên ô đòn thường
+     (`s1` với phần lớn, `basic` với Tanjiro / Gojo) nên gom cả hai. */
+  if(cdKey==='s1'||cdKey==='basic') return f.advBaRate||1;
   const m={s2:'k',s3:'l',s4:'u'}[cdKey];
   if(!m) return 1;
   const r=advRank(m);
@@ -6565,7 +6598,14 @@ function advResult(win){
     if(node) node.done=1;
     ADV.best=Math.max(ADV.best|0,advDepth());
     /* Tinh nhuệ và boss còn thưởng thẳng một lượt CHỌN THẺ (§16). */
-    if(E.kind==='elite'||E.kind==='boss') ADV.pending=(ADV.pending|0)+1;
+    if(E.kind==='elite'||E.kind==='boss'){
+      ADV.pending=(ADV.pending|0)+1;
+      ADV.relicOffer=(ADV.relicOffer|0)+1;      // §16: tinh nhuệ và boss còn rơi relic
+    }
+    if(E.kind==='boss'){
+      ADV.cores=(ADV.cores|0)+1;                // §12: boss rơi LÕI TIẾN HOÁ
+      if(ADV.reg>=1&&!ADV.awake) ADV.awakeWant=true;   // §13: thức tỉnh sau boss region 2
+    }
     if(E.kind==='boss'){
       ADV.reg=(ADV.reg|0)+1;
       if(ADV.reg>=ADV_REGIONS){ ADV.done=true; }
@@ -6632,26 +6672,35 @@ function advEatMark(t){ if(!advMarked(t))return false; t.advMark=0; t.advMarkBy=
 
 /* ---------- sổ nâng cấp đang sở hữu ---------- */
 const advUps=()=>(ADV&&ADV.ups)||{};
-const advHas=id=>((advUps()[id])|0)>0;
-const advStack=id=>(advUps()[id])|0;
+const advRel=()=>(ADV&&ADV.relics)||{};
+/* Thẻ và RELIC đi chung một sổ tra (`ADV_BY_ID`) và chung một chỉ mục hook, chỉ khác chỗ
+   CẤT: thẻ vào `ADV.ups`, relic vào `ADV.relics`. Nhờ vậy màn chọn, hàm nhận, và cả năm
+   cửa đều dùng lại y nguyên — relic chỉ khác ở chỗ NÓ RƠI RA TỪ ĐÂU (kho báu, cửa hàng,
+   tinh nhuệ, boss) chứ không rơi ra từ lên cấp. */
+const advHas=id=>(((advUps()[id])|0)+((advRel()[id])|0))>0;
+const advStack=id=>((advUps()[id])|0)||((advRel()[id])|0);
 const ADV_BY_ID={};
 let ADV_ON={hit:[],kill:[],proj:[],cast:[],tick:[]};
 /* Dựng lại chỉ mục hook mỗi khi bộ nâng cấp đổi. Chạy một lượt qua bảng chứ đừng duyệt cả
    bảng mỗi nhịp — vòng `hit` nổ vài chục lần một giây. */
 function advIndex(){
   ADV_ON={hit:[],kill:[],proj:[],cast:[],tick:[]};
-  if(!ADV||!ADV.ups) return;
-  for(const id of Object.keys(ADV.ups)){
-    const U=ADV_BY_ID[id]; if(!U||!ADV.ups[id]) continue;
-    for(const k of ['hit','kill','proj','cast','tick']) if(U[k]) ADV_ON[k].push(U);
+  if(!ADV) return;
+  for(const book of [ADV.ups,ADV.relics]){
+    if(!book) continue;
+    for(const id of Object.keys(book)){
+      const U=ADV_BY_ID[id]; if(!U||!book[id]) continue;
+      for(const k of ['hit','kill','proj','cast','tick']) if(U[k]) ADV_ON[k].push(U);
+    }
   }
 }
 function advGive(id){
   if(!ADV||!ADV_BY_ID[id]) return false;
   const U=ADV_BY_ID[id];
-  ADV.ups=ADV.ups||{};
-  ADV.ups[id]=Math.min(U.max||1,(ADV.ups[id]|0)+1);
+  const book=U.relic?(ADV.relics=ADV.relics||{}):(ADV.ups=ADV.ups||{});
+  book[id]=Math.min(U.max||1,(book[id]|0)+1);
   if(U.excl){ ADV.lock=ADV.lock||{}; ADV.lock[U.excl]=id; }   // chọn nhánh này thì nhánh kia khoá
+  if(U.awake) ADV.awake=id;                                   // §13: chỉ được MỘT hướng thức tỉnh
   if(U.on) U.on(ADV);                                          // hiệu ứng một lần (mở chiêu, +máu…)
   advIndex();
   return true;
@@ -6702,6 +6751,9 @@ function advOnCast(f,slot){
 }
 function advOnTick(f,dt){
   if(!advOn()||f.team!==0||f.summon) return;
+  /* Dựng lại từ 1 mỗi nhịp rồi mới để thẻ nâng lên — đúng lối `statusTick`. Không đặt lại
+     thì hệ số cứ tích mãi và đòn thường nhanh vô hạn. */
+  f.advBaRate=1;
   /* Nhận ra "vừa tung một chiêu" bằng cách soi ô hồi chiêu vừa NHẢY LÊN từ gần 0 — cách
      này không phải cắm móc vào `think()` của mười hai nhân vật. */
   if(ADV_ON.cast.length){
@@ -6948,7 +7000,550 @@ const ADV_UP=[
           en:`<b>+${ADV_FOC*300}%</b> cooldown rate per stack.`},
     on:A=>{ A.st.foc=(A.st.foc|0)+3; } }
 ];
+/* ==================== RELIC (§26) và RELIC BỊ NGUYỀN (§27) ====================
+   Relic là passive chạy SUỐT RUN. Nó dùng đúng năm cửa của thẻ nâng cấp, chỉ khác chỗ rơi
+   ra: kho báu · cửa hàng · tinh nhuệ · boss, chứ không rơi ra từ lên cấp.
+
+   Relic bị nguyền (`curse:true`) rất mạnh nhưng có giá phải trả — §27 muốn người chơi phải
+   CÂN NHẮC chứ không phải nhặt tất. Vì vậy chúng KHÔNG bao giờ tự rơi ra từ kho báu; chỉ
+   hiện ở cửa hàng và ở mấy sự kiện có nói rõ cái giá. */
+const ADV_RELIC=[
+  { id:'r_scroll', relic:true, rar:'rare', tags:['BASIC_ATTACK','COOLDOWN'], max:1,
+    name:{vi:'Cuộn Thư Ninja',en:'Ninja Scroll'},
+    desc:{vi:'Mỗi đòn thường trúng <b>giảm 0.35s</b> hồi chiêu của ô <b>K</b>.',
+          en:'Each basic hit cuts <b>0.35s</b> off the <b>K</b> cooldown.'},
+    hit(o){ if(o.kind==='dot'||o.kind==='big'||o.kind==='ult') return; advCut(o.src,.175,['s2']); } },
+  { id:'r_clock', relic:true, rar:'epic', tags:['COOLDOWN'], max:1,
+    name:{vi:'Đồng Hồ Vỡ',en:'Broken Clock'},
+    desc:{vi:'Cứ <b>10 giây</b> thì <b>một ô chiêu ngẫu nhiên hồi xong ngay</b>.',
+          en:'Every <b>10s</b>, a <b>random skill cooldown resets</b>.'},
+    tick(f,dt){
+      f.advClock=(f.advClock||0)+dt;
+      if(f.advClock<gs(10)) return;
+      f.advClock=0;
+      const on=['s2','s3','s4'].filter(k=>f.cds[k]>0);
+      if(!on.length) return;
+      f.cds[on[Math.random()*on.length|0]]=0;
+      pop(f.x,f.y,'RESET!','#4DE2FF',false);
+    } },
+  { id:'r_crystal', relic:true, rar:'rare', tags:['ULTIMATE','COOLDOWN'], max:1,
+    name:{vi:'Tinh Thể Năng Lượng',en:'Energy Crystal'},
+    desc:{vi:'Ô <b>U</b> hồi nhanh hơn <b>35%</b>.',
+          en:'The <b>U</b> slot cools down <b>35%</b> faster.'},
+    tick(f,dt){ if(f.cds.s4>0) f.cds.s4=Math.max(0,f.cds.s4-dt*.35); } },
+  { id:'r_badge', relic:true, rar:'rare', tags:['ELITE'], max:2,
+    name:{vi:'Huy Hiệu Thợ Săn',en:'Hunter’s Badge'},
+    desc:{vi:'<b>+30%</b> sát thương lên <b>tinh nhuệ và boss</b> mỗi bậc.',
+          en:'<b>+30%</b> damage to <b>elites and bosses</b> per stack.'},
+    hit(o,n){ if(!o.t.mob&&!o.t.summon) o.mul*=1+.3*n; } },
+  { id:'r_lens', relic:true, rar:'epic', tags:['MARK'], max:1,
+    name:{vi:'Kính Soi Yếu Điểm',en:'Weakpoint Lens'},
+    desc:{vi:'Kẻ địch <b>vừa vào sân</b> đã mang sẵn <b>dấu</b>.',
+          en:'Enemies <b>start each battle</b> already <b>Marked</b>.'},
+    tick(f,dt){
+      if(f.advLens) return; f.advLens=1;
+      for(const o of G.fighters) if(o.alive&&o.team!==f.team&&!(o.summon&&!o.ally)) advMark(o,f);
+    } },
+  { id:'r_anvil', relic:true, rar:'common', tags:['STAT'], max:3,
+    name:{vi:'Đe Sắt',en:'Iron Anvil'},
+    desc:{vi:'<b>+45 máu tối đa</b> mỗi bậc.',en:'<b>+45 max HP</b> per stack.'},
+    on:A=>{ A.st.vit=(A.st.vit|0)+Math.round(45/ADV_VIT); } },
+  { id:'r_feather', relic:true, rar:'common', tags:['STAT'], max:3,
+    name:{vi:'Lông Vũ',en:'Light Feather'},
+    desc:{vi:'<b>+8% tốc chạy</b> mỗi bậc.',en:'<b>+8% move speed</b> per stack.'},
+    on:A=>{ A.st.agi=(A.st.agi|0)+Math.round(.08/ADV_AGI); } },
+
+  /* ---------- bị nguyền: mạnh hẳn, và trả giá hẳn ---------- */
+  { id:'r_forbidden', relic:true, curse:true, rar:'legend', tags:['COOLDOWN','CURSE'], max:1,
+    name:{vi:'Cuộn Thư Cấm',en:'Forbidden Scroll'},
+    desc:{vi:'Hồi chiêu <b>−35%</b>… đổi lại <b>máu tối đa −25%</b>.',
+          en:'<b>−35%</b> cooldowns… but <b>−25% max HP</b>.'},
+    on:A=>{ A.curseHp=(A.curseHp||0)+.25; },
+    tick(f,dt){ for(const k of ['s2','s3','s4']) if(f.cds[k]>0) f.cds[k]=Math.max(0,f.cds[k]-dt*.35); } },
+  { id:'r_glass', relic:true, curse:true, rar:'legend', tags:['CURSE'], max:1,
+    name:{vi:'Tim Thuỷ Tinh',en:'Glass Heart'},
+    desc:{vi:'Sát thương <b>+50%</b>… đổi lại <b>máu tối đa −30%</b>.',
+          en:'<b>+50%</b> damage… but <b>−30% max HP</b>.'},
+    on:A=>{ A.curseHp=(A.curseHp||0)+.30; },
+    hit(o){ o.mul*=1.5; } },
+  { id:'r_blood', relic:true, curse:true, rar:'epic', tags:['HEAL','CURSE'], max:1,
+    name:{vi:'Khế Ước Máu',en:'Blood Contract'},
+    desc:{vi:'Hạ được địch thì hồi <b>12% máu tối đa</b>… nhưng <b>mất dần máu</b> khi không hạ được ai.',
+          en:'Kills heal <b>12% max HP</b>… but you <b>bleed</b> while nothing dies.'},
+    kill(o){ const f=o.src; if(!f||!f.alive)return;
+      f.advBloodT=0;
+      const h=Math.round(f.maxHp*.12); f.hp=Math.min(f.maxHp,f.hp+h); pop(f.x,f.y,'+'+h,'#6BE39A',false); },
+    tick(f,dt){
+      f.advBloodT=(f.advBloodT||0)+dt;
+      if(f.advBloodT<gs(4)) return;
+      f.advBloodT=0;
+      if(f.hp>f.maxHp*.12) f.hp=Math.max(1,f.hp-Math.round(f.maxHp*.03));
+    } }
+];
+/* ==================== THẺ RIÊNG CỦA TỪNG NHÂN VẬT (§39) ====================
+   §39 muốn ~70% thẻ là của riêng nhân vật. Mỗi người bốn thẻ: ba thẻ thường và một thẻ
+   TIẾN HOÁ (`evo:true`) — thẻ tiến hoá chỉ mở được bằng LÕI của boss (§12), nên nó được
+   phép mạnh hẳn.
+
+   > **CẤM SỬA HẰNG SỐ CHUNG.** `SHIKA.bindT`, `GN.beamN`, `DORA.slCd`… là hằng dùng cho MỌI
+   > chế độ — sửa chúng là phá cân bằng của đấu tay đôi, hỗn chiến và giải đấu, đúng cái §64
+   > cấm. Vì vậy mọi thẻ dưới đây chỉ đụng vào **trạng thái của riêng một fighter** (`f.rage`,
+   > `f.critBonus`, `f.chakra`, `f.cds`…) hoặc đi qua năm cửa chung. Thêm thẻ mới thì giữ
+   > đúng luật này.
+
+   `gnSoul||key` chứ không phải `key`: sau cú CHANGE của Ginyu thì chiêu đi theo HỒN, nên thẻ
+   cũng phải đi theo hồn. */
+const advSoulOf=f=>f?(f.gnSoul||f.key):null;
+const advMine=(f,k)=>advSoulOf(f)===k;
+const FX=(key,id,rar,tags,vi,en,dvi,den,fn,extra)=>Object.assign(
+  {id:'f_'+key+'_'+id, fighter:key, rar, tags, max:1,
+   name:{vi,en}, desc:{vi:dvi,en:den}}, fn||{}, extra||{});
+
+const ADV_FIGHTER=[
+  /* ---------- Konohamaru: nộ khí và kunai ---------- */
+  FX('kono','rage','rare',['ULTIMATE'],'Khí Thế Dâng Trào','Rising Spirit',
+     'Mỗi đòn trúng cộng thêm <b>1 nộ khí</b> — Rasengan tới sớm hơn hẳn.',
+     'Every hit grants <b>1 extra Rage</b> — Rasengan comes around far sooner.',
+     {hit(o){ if(advMine(o.src,'kono')) o.src.rage=Math.min(40,(o.src.rage|0)+1); }}),
+  FX('kono','boom','epic',['AOE','PROJECTILE'],'Kunai Dây Chuyền','Chain Kunai',
+     'Đạn của cậu <b>nổ một vùng</b> ở chỗ nó tan, và <b>xuyên thêm một người</b>.',
+     'His projectiles <b>burst</b> where they end and <b>pierce one more</b> enemy.',
+     {proj(p){ if(!advMine(p.owner,'kono'))return; p.advBoom=Math.max(p.advBoom|0,1); p.advPierce=(p.advPierce|0)+1; }}),
+  FX('kono','clone','rare',['COOLDOWN'],'Phân Thân Liên Hoàn','Endless Clones',
+     'Hạ được địch thì <b>Kage Bunshin hồi xong ngay</b>.',
+     'A kill <b>instantly refreshes Kage Bunshin</b>.',
+     {kill(o){ if(advMine(o.src,'kono')) o.src.cds.s2=0; }}),
+  FX('kono','evo','legend',['ULTIMATE','AOE'],'TIẾN HOÁ · Rasengan Bão Tố','EVOLUTION · Storm Rasengan',
+     'Nộ khí <b>tự dâng theo thời gian</b>, và mỗi đòn trúng còn <b>nổ nhỏ</b> quanh mục tiêu.',
+     'Rage <b>builds on its own</b>, and every hit also <b>bursts</b> around the target.',
+     {tick(f,dt){ if(!advMine(f,'kono'))return; f.advRageT=(f.advRageT||0)+dt;
+        if(f.advRageT>=gs(2)){ f.advRageT=0; f.rage=Math.min(40,(f.rage|0)+1); } },
+      hit(o){ if(!advMine(o.src,'kono')||o.kind==='dot')return;
+        const t=o.t,s2=o.src; later(0,()=>advBoom(t.x,t.y,62,14,s2,'#63B4FF'),false); }},
+     {evo:true}),
+
+  /* ---------- ChiChi: chí mạng và cú lao ---------- */
+  FX('chichi','crit','rare',[],'Máu Nóng Nhà Son','Housewife’s Temper',
+     'Chí mạng <b>+3%</b> mỗi lần trúng đòn, tích suốt trận.',
+     '<b>+3%</b> crit per hit landed, stacking all battle.',
+     {hit(o){ if(advMine(o.src,'chichi')&&o.kind!=='dot') o.src.critBonus=(o.src.critBonus||0)+.03; }}),
+  FX('chichi','dash','rare',['COOLDOWN'],'Chân Không Nghỉ','Restless Feet',
+     '<b>Flying Kick hồi nhanh gấp đôi.</b>',
+     '<b>Flying Kick cools down twice as fast.</b>',
+     {tick(f,dt){ if(advMine(f,'chichi')&&f.dashCd>0) f.dashCd=Math.max(0,f.dashCd-dt); }}),
+  FX('chichi','scold','epic',['CC'],'Mắng Xối Xả','Endless Scolding',
+     'Câu mắng <b>hồi nhanh hơn 40%</b> và đòn tay <b>đẩy lùi</b> kẻ địch.',
+     'Scolding <b>cools 40% faster</b> and basics <b>knock back</b>.',
+     {tick(f,dt){ if(advMine(f,'chichi')&&f.cds.s2>0) f.cds.s2=Math.max(0,f.cds.s2-dt*.4); },
+      hit(o){ if(!advMine(o.src,'chichi')||o.kind!==undefined)return;
+        const t=o.t,f=o.src,d=Math.hypot(t.x-f.x,t.y-f.y)||1;
+        later(0,()=>knock(t,(t.x-f.x)/d,(t.y-f.y)/d,W*.05*6),false); }}),
+  FX('chichi','evo','legend',['EXECUTE'],'TIẾN HOÁ · Chảo Gang Định Mệnh','EVOLUTION · Fated Skillet',
+     'Đòn <b>chí mạng</b> giờ <b>giảm 1.5s mọi hồi chiêu</b> và <b>gỡ dấu để nổ</b>.',
+     '<b>Crits</b> now cut <b>1.5s from all cooldowns</b> and <b>detonate Marks</b>.',
+     {hit(o){ if(!advMine(o.src,'chichi')||!o.crit)return; advCut(o.src,.75);
+        if(advEatMark(o.t)){ const t=o.t,s2=o.src; later(0,()=>advBoom(t.x,t.y,92,30,s2,'#FF4D6D'),false); } }},
+     {evo:true}),
+
+  /* ---------- Tsubasa: bàn thắng và bóng ---------- */
+  FX('tsubasa','goal','rare',['ULTIMATE'],'Cảm Giác Ghi Bàn','Striker’s Instinct',
+     'Hạ được địch thì <b>+1 bàn thắng</b> — Twin Shot tới sớm hơn.',
+     'A kill grants <b>+1 Goal</b> — Twin Shot arrives sooner.',
+     {kill(o){ if(advMine(o.src,'tsubasa')) o.src.goals=Math.min(GOAL_MAX,(o.src.goals|0)+1); }}),
+  FX('tsubasa','ball','rare',['PROJECTILE'],'Bóng Xoáy','Curling Shot',
+     'Bóng <b>bay nhanh hơn 30%</b> và <b>xuyên thêm một người</b>.',
+     'Balls fly <b>30% faster</b> and <b>pierce one more</b> enemy.',
+     {proj(p){ if(!advMine(p.owner,'tsubasa'))return; p.vx*=1.3; p.vy*=1.3; p.advPierce=(p.advPierce|0)+1; }}),
+  FX('tsubasa','drive','epic',['COOLDOWN'],'Nhịp Không Ngừng','Relentless Tempo',
+     'Mỗi cú sút trúng <b>giảm 0.4s</b> hồi chiêu Drive Shot.',
+     'Each shot landed cuts <b>0.4s</b> off Drive Shot.',
+     {hit(o){ if(advMine(o.src,'tsubasa')) advCut(o.src,.2,['s2']); }}),
+  FX('tsubasa','evo','legend',['ULTIMATE'],'TIẾN HOÁ · Đại Bàng Không Mỏi','EVOLUTION · Tireless Eagle',
+     'Bàn thắng <b>tự lên theo thời gian</b>, và Twin Shot <b>không tiêu hết</b> số bàn nữa.',
+     'Goals <b>tick up on their own</b>, and Twin Shot <b>no longer spends them all</b>.',
+     {tick(f,dt){ if(!advMine(f,'tsubasa'))return; f.advGoalT=(f.advGoalT||0)+dt;
+        if(f.advGoalT>=gs(6)){ f.advGoalT=0; f.goals=Math.min(GOAL_MAX,(f.goals|0)+1); } }},
+     {evo:true}),
+
+  /* ---------- Shikamaru: chakra và bóng ---------- */
+  FX('shika','chakra','rare',[],'Tính Trước Mười Nước','Ten Moves Ahead',
+     'Chakra tích <b>nhanh gấp đôi</b>.',
+     'Chakra builds <b>twice as fast</b>.',
+     {tick(f,dt){ if(advMine(f,'shika')&&!f.weak) f.chakra=(f.chakra||0)+dt*RT*(f.awake?4:12); }}),
+  FX('shika','bleed','rare',['MARK'],'Phi Tiêu Tẩm Độc','Tainted Shuriken',
+     'Phi tiêu của anh <b>đánh dấu</b> mục tiêu.',
+     'His shuriken <b>Mark</b> whatever they hit.',
+     {hit(o){ if(advMine(o.src,'shika')&&o.kind===undefined) advMark(o.t,o.src); }}),
+  FX('shika','bind','epic',['CC','COOLDOWN'],'Bóng Không Dứt','Unbroken Shadow',
+     'Shadow-Neck Bind <b>hồi nhanh hơn 45%</b>.',
+     'Shadow-Neck Bind <b>cools 45% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'shika')&&f.cds.s2>0) f.cds.s2=Math.max(0,f.cds.s2-dt*.45); }}),
+  FX('shika','evo','legend',['CC'],'TIẾN HOÁ · Lãnh Địa Bất Tận','EVOLUTION · Endless Domain',
+     'Mỗi kẻ địch gục <b>cộng thẳng 150 chakra</b>, và chakra <b>tự tích gấp ba</b>.',
+     'Each kill grants <b>150 chakra outright</b>, and chakra builds <b>three times as fast</b>.',
+     {kill(o){ if(advMine(o.src,'shika')) o.src.chakra=(o.src.chakra||0)+150; },
+      tick(f,dt){ if(advMine(f,'shika')&&!f.weak) f.chakra=(f.chakra||0)+dt*RT*24; }},
+     {evo:true}),
+
+  /* ---------- Horikita: điểm lớp và quyết định ---------- */
+  FX('suzune','cp','rare',[],'Học Nhanh','Fast Learner',
+     'Mỗi đòn trúng cộng thêm <b>6 điểm lớp</b>.',
+     'Every hit grants <b>6 extra Class Points</b>.',
+     {hit(o){ if(advMine(o.src,'suzune')&&typeof suzCp==='function') suzCp(o.src,6); }}),
+  FX('suzune','dec','epic',['COOLDOWN'],'Quyết Đoán','Decisive',
+     'Decision Making <b>hồi nhanh hơn 40%</b>.',
+     'Decision Making <b>cools 40% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'suzune')&&f.cds.s2>0) f.cds.s2=Math.max(0,f.cds.s2-dt*.4); }}),
+  FX('suzune','heal','rare',['HEAL'],'Bình Tĩnh Lạ Thường','Unshaken',
+     'Mỗi đòn trúng hồi <b>2% máu tối đa</b>.',
+     'Every hit heals <b>2% max HP</b>.',
+     {hit(o){ const f=o.src; if(!advMine(f,'suzune')||o.kind==='dot')return;
+        later(0,()=>{ if(f.alive) f.hp=Math.min(f.maxHp,f.hp+Math.round(f.maxHp*.02)); },false); }}),
+  FX('suzune','evo','legend',['MARK'],'TIẾN HOÁ · Luôn Đúng','EVOLUTION · Always Right',
+     'Quyết định <b>đánh dấu</b> mục tiêu, và <b>điểm lớp lên gấp đôi</b>.',
+     'Decisions <b>Mark</b> the target, and <b>Class Points come twice as fast</b>.',
+     {hit(o){ if(!advMine(o.src,'suzune'))return;
+        advMark(o.t,o.src);
+        if(typeof suzCp==='function') suzCp(o.src,8); }},
+     {evo:true}),
+
+  /* ---------- Ginyu ---------- */
+  FX('ginyu','aura','rare',['COOLDOWN'],'Hào Quang Dồn Dập','Relentless Aura',
+     'Aura <b>hồi nhanh hơn 45%</b>.',
+     'The aura <b>recharges 45% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'ginyu')&&f.gnAura>0&&f.gnAura!==Infinity) f.gnAura=Math.max(0,f.gnAura-dt*.45); }}),
+  FX('ginyu','beam','epic',['PROJECTILE'],'Luồng Khí Dày','Dense Beam',
+     'Luồng khí tím <b>xuyên thêm một người</b> và <b>bay nhanh hơn 35%</b>.',
+     'The purple beams <b>pierce one more</b> and fly <b>35% faster</b>.',
+     {proj(p){ if(!advMine(p.owner,'ginyu')||p.type!=='gbeam')return;
+        p.advPierce=(p.advPierce|0)+1; p.vx*=1.35; p.vy*=1.35; }}),
+  FX('ginyu','flash','rare',['COOLDOWN'],'Chớp Liên Tục','Flash After Flash',
+     'Ginyu’s Flash <b>hồi nhanh hơn 40%</b>.',
+     'Ginyu’s Flash <b>cools 40% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'ginyu')&&f.cds.s3>0) f.cds.s3=Math.max(0,f.cds.s3-dt*.4); }}),
+  FX('ginyu','evo','legend',['CC'],'TIẾN HOÁ · Ép Thế','EVOLUTION · Overwhelm',
+     'Mọi đòn của anh <b>bào thanh vỡ thế gấp ba</b>, và kẻ <b>vỡ thế</b> ăn thêm <b>50%</b>.',
+     'Every hit <b>drains break bars three times as fast</b>; <b>broken</b> foes take <b>+50%</b>.',
+     {hit(o){ if(!advMine(o.src,'ginyu'))return;
+        if(o.t.advBreakDown>0) o.mul*=1.5;
+        if(o.t.advBreakMax>0) advBreakHit(o.t,o.amt*1.2,o.src); }},
+     {evo:true}),
+
+  /* ---------- Doraemon ---------- */
+  FX('dora','gadget','rare',['COOLDOWN'],'Túi Không Đáy','Bottomless Pocket',
+     'Air Cannon và Small Light <b>hồi nhanh hơn 35%</b>.',
+     'Air Cannon and Small Light <b>cool 35% faster</b>.',
+     {tick(f,dt){ if(!advMine(f,'dora'))return;
+        for(const k of ['s2','s3']) if(f.cds[k]>0) f.cds[k]=Math.max(0,f.cds[k]-dt*.35); }}),
+  FX('dora','door','rare',['COOLDOWN'],'Cửa Mở Liên Tục','Door Always Open',
+     'Emergency Door <b>hồi nhanh gấp đôi</b>.',
+     'Emergency Door <b>recharges twice as fast</b>.',
+     {tick(f,dt){ if(advMine(f,'dora')&&f.edCd>0) f.edCd=Math.max(0,f.edCd-dt); }}),
+  FX('dora','copter','epic',['PROJECTILE'],'Chong Chóng Không Nghỉ','Endless Copter',
+     'Take-copter <b>hồi nhanh gấp đôi</b> và vòng khí <b>xuyên thêm một người</b>.',
+     'Take-copter <b>recharges twice as fast</b>; the air ring <b>pierces one more</b>.',
+     {tick(f,dt){ if(advMine(f,'dora')&&f.copCd>0) f.copCd=Math.max(0,f.copCd-dt); },
+      proj(p){ if(advMine(p.owner,'dora')&&p.type==='aircan') p.advPierce=(p.advPierce|0)+1; }}),
+  FX('dora','evo','legend',['AOE','CC'],'TIẾN HOÁ · Cả Túi Đổ Ra','EVOLUTION · Empty the Pocket',
+     'Hạ được địch thì <b>một bảo bối hồi xong ngay</b> và <b>nổ một vùng</b> tại chỗ.',
+     'A kill <b>instantly refreshes one gadget</b> and <b>bursts</b> on the spot.',
+     {kill(o){ const f=o.src; if(!advMine(f,'dora'))return;
+        const on=['s2','s3'].filter(k=>f.cds[k]>0);
+        if(on.length) f.cds[on[Math.random()*on.length|0]]=0;
+        later(.05,()=>advBoom(o.x,o.y,110,26,f,'#2B9BE8'),false); }},
+     {evo:true}),
+
+  /* ---------- Superman ---------- */
+  FX('superman','heat','rare',['PROJECTILE','COOLDOWN'],'Mắt Không Nguội','Eyes Never Cool',
+     'Heat Vision <b>hồi nhanh hơn 40%</b>.',
+     'Heat Vision <b>cools 40% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'superman')&&f.cds.s2>0) f.cds.s2=Math.max(0,f.cds.s2-dt*.4); }}),
+  FX('superman','fly','rare',[],'Không Bao Giờ Chạm Đất','Never Grounded',
+     'Kryptonian Flight <b>hồi nhanh gấp đôi</b>.',
+     'Kryptonian Flight <b>recharges twice as fast</b>.',
+     {tick(f,dt){ if(advMine(f,'superman')&&f.supFlyCd>0) f.supFlyCd=Math.max(0,f.supFlyCd-dt); }}),
+  FX('superman','meteor','epic',['AOE','CC'],'Thiên Thạch Dồn','Meteor Barrage',
+     'Meteor Strike <b>hồi nhanh hơn 45%</b> và mọi đòn <b>bào thanh vỡ thế gấp đôi</b>.',
+     'Meteor Strike <b>cools 45% faster</b>; every hit <b>drains break bars twice as fast</b>.',
+     {tick(f,dt){ if(advMine(f,'superman')&&f.cds.s4>0) f.cds.s4=Math.max(0,f.cds.s4-dt*.45); },
+      hit(o){ if(advMine(o.src,'superman')&&o.t.advBreakMax>0) advBreakHit(o.t,o.amt*.5,o.src); }}),
+  FX('superman','evo','legend',['AOE'],'TIẾN HOÁ · Mặt Trời Nhỏ','EVOLUTION · Little Sun',
+     'Mỗi đòn trúng <b>nổ một vùng</b>, và Freeze Breath <b>hồi nhanh gấp đôi</b>.',
+     'Every hit <b>bursts</b>, and Freeze Breath <b>recharges twice as fast</b>.',
+     {hit(o){ if(!advMine(o.src,'superman')||o.kind==='dot')return;
+        const t=o.t,f=o.src; later(0,()=>advBoom(t.x,t.y,70,16,f,'#FFC542'),false); },
+      tick(f,dt){ if(advMine(f,'superman')&&f.cds.s3>0) f.cds.s3=Math.max(0,f.cds.s3-dt); }},
+     {evo:true}),
+
+  /* ---------- Beatrice ---------- */
+  FX('beatrice','minya','rare',['PROJECTILE'],'Mũi Tinh Thể Sắc','Honed Crystal',
+     'Mũi tinh thể <b>xuyên thêm một người</b> và <b>bay nhanh hơn 30%</b>.',
+     'Crystal darts <b>pierce one more</b> and fly <b>30% faster</b>.',
+     {proj(p){ if(!advMine(p.owner,'beatrice'))return; p.advPierce=(p.advPierce|0)+1; p.vx*=1.3; p.vy*=1.3; }}),
+  FX('beatrice','emt','epic',[],'Kết Giới Dày','Thicker Barrier',
+     'E.M.T <b>hồi nhanh hơn 40%</b>.',
+     'E.M.T <b>recharges 40% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'beatrice')&&f.cds.s5>0) f.cds.s5=Math.max(0,f.cds.s5-dt*.4); }}),
+  FX('beatrice','shamac','rare',['CC','COOLDOWN'],'Không Gian Méo','Warped Space',
+     'Al Shamac <b>hồi nhanh hơn 45%</b>.',
+     'Al Shamac <b>cools 45% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'beatrice')&&f.cds.s2>0) f.cds.s2=Math.max(0,f.cds.s2-dt*.45); }}),
+  FX('beatrice','evo','legend',['MARK','AOE'],'TIẾN HOÁ · Thư Viện Mở','EVOLUTION · Open Library',
+     'Mũi tinh thể <b>đánh dấu</b>, và El Minya <b>hồi nhanh gấp đôi</b>.',
+     'Crystal darts <b>Mark</b>, and El Minya <b>recharges twice as fast</b>.',
+     {hit(o){ if(advMine(o.src,'beatrice')&&o.kind!=='dot') advMark(o.t,o.src); },
+      tick(f,dt){ if(advMine(f,'beatrice')&&f.cds.s4>0) f.cds.s4=Math.max(0,f.cds.s4-dt); }},
+     {evo:true}),
+
+  /* ---------- Tanjiro ---------- */
+  FX('tanjiro','thread','rare',['MARK'],'Sợi Chỉ Nhạy','Keen Thread',
+     'Đòn kiếm của cậu <b>đánh dấu</b> mục tiêu.',
+     'His blade <b>Marks</b> what it cuts.',
+     {hit(o){ if(advMine(o.src,'tanjiro')&&o.kind!=='dot') advMark(o.t,o.src); }}),
+  FX('tanjiro','form','epic',['COOLDOWN'],'Nước Chảy Không Ngừng','Water Never Stops',
+     'Ba thế kiếm <b>hồi nhanh hơn 35%</b>.',
+     'All three Breathing Forms <b>cool 35% faster</b>.',
+     {tick(f,dt){ if(!advMine(f,'tanjiro'))return;
+        for(const k of ['s1','s2','s3']) if(f.cds[k]>0) f.cds[k]=Math.max(0,f.cds[k]-dt*.35); }}),
+  FX('tanjiro','rhythm','rare',['BASIC_ATTACK'],'Nhịp Hơi Thở','Breathing Rhythm',
+     'Đòn thường <b>nhanh hơn 25%</b>.',
+     'Basics come out <b>25% faster</b>.',
+     {tick(f){ if(advMine(f,'tanjiro')) f.advBaRate=Math.max(f.advBaRate||1,1.25); }}),
+  FX('tanjiro','evo','legend',['CHAIN'],'TIẾN HOÁ · Mặt Trời Lên','EVOLUTION · Sun Rises',
+     'Mỗi đòn kiếm <b>dội sang</b> một kẻ gần đó, và tuyệt chiêu <b>hồi nhanh gấp đôi</b>.',
+     'Every cut <b>arcs</b> to a nearby foe, and the Ultimate <b>recharges twice as fast</b>.',
+     {hit(o){ if(!advMine(o.src,'tanjiro')||o.kind==='dot')return;
+        const src=o.src,t=o.t,dmg=Math.round(o.amt*.45);
+        const near=G.fighters.filter(x=>x.alive&&x!==t&&x.team!==src.team&&!(x.summon&&!x.ally)
+          &&Math.hypot(x.x-t.x,x.y-t.y)<170)[0];
+        if(near&&dmg>0) later(.04,()=>{ if(near.alive){ ctxBolt(t,near); advHurt2(near,dmg,src,false,'big'); } },false); },
+      tick(f,dt){ if(advMine(f,'tanjiro')&&f.cds.s4>0) f.cds.s4=Math.max(0,f.cds.s4-dt); }},
+     {evo:true}),
+
+  /* ---------- Gojo ---------- */
+  FX('gojo','infinity','rare',[],'Vô Hạn Dày','Deeper Infinity',
+     'Infinity <b>nạp lại nhanh gấp đôi</b>.',
+     'Infinity charges <b>recharge twice as fast</b>.',
+     {tick(f,dt){ if(advMine(f,'gojo')&&f.infinityTick>0) f.infinityTick=Math.max(0,f.infinityTick-dt); }}),
+  FX('gojo','red','epic',['PROJECTILE'],'Đỏ Nặng Hơn','Heavier Red',
+     'Đạn của anh <b>xuyên thêm một người</b> và <b>bay nhanh hơn 30%</b>.',
+     'His projectiles <b>pierce one more</b> and fly <b>30% faster</b>.',
+     {proj(p){ if(!advMine(p.owner,'gojo'))return; p.advPierce=(p.advPierce|0)+1; p.vx*=1.3; p.vy*=1.3; }}),
+  FX('gojo','domain','epic',['COOLDOWN','ULTIMATE'],'Lãnh Vực Sớm','Early Domain',
+     'Unlimited Void <b>hồi nhanh hơn 45%</b>.',
+     'Unlimited Void <b>cools 45% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'gojo')&&f.cds.s4>0) f.cds.s4=Math.max(0,f.cds.s4-dt*.45); }}),
+  FX('gojo','evo','legend',['MARK','AOE'],'TIẾN HOÁ · Sáu Mắt Mở Hết','EVOLUTION · Six Eyes Wide',
+     'Mọi đòn <b>đánh dấu</b> và <b>nổ một vùng</b> quanh mục tiêu.',
+     'Every hit <b>Marks</b> and <b>bursts</b> around the target.',
+     {hit(o){ if(!advMine(o.src,'gojo')||o.kind==='dot')return;
+        advMark(o.t,o.src);
+        const t=o.t,f=o.src; later(0,()=>advBoom(t.x,t.y,76,18,f,'#78D9FF'),false); }},
+     {evo:true}),
+
+  /* ---------- Conan ---------- */
+  FX('conan','clue','rare',[],'Suy Luận Nhanh','Quick Deduction',
+     'Mỗi đòn trúng còn <b>cộng thêm một Clue</b> lên chính mục tiêu đó.',
+     'Every hit also grants <b>one extra Clue</b> on that target.',
+     {hit(o){ if(advMine(o.src,'conan')&&typeof conanAddClue==='function')
+        try{ conanAddClue(o.src,o.t); }catch(_){} }}),
+  FX('conan','ball','epic',['CC','COOLDOWN'],'Giày Tăng Lực','Charged Shoes',
+     'Soccer Ball Shot <b>hồi nhanh hơn 45%</b>.',
+     'Soccer Ball Shot <b>cools 45% faster</b>.',
+     {tick(f,dt){ if(advMine(f,'conan')&&f.cds.s1>0) f.cds.s1=Math.max(0,f.cds.s1-dt*.45); }}),
+  FX('conan','skate','rare',[],'Ván Trượt Liên Tục','Nonstop Skateboard',
+     'Skateboard <b>hồi nhanh gấp đôi</b>.',
+     'The skateboard <b>recharges twice as fast</b>.',
+     {tick(f,dt){ if(advMine(f,'conan')&&f.cds.s3>0) f.cds.s3=Math.max(0,f.cds.s3-dt); }}),
+  FX('conan','evo','legend',['EXECUTE','MARK'],'TIẾN HOÁ · Một Sự Thật Duy Nhất','EVOLUTION · One Truth',
+     'Kẻ địch <b>vào sân đã mang sẵn dấu</b>, và <b>+50% sát thương</b> lên kẻ bị đánh dấu.',
+     'Foes <b>start Marked</b>, and you deal <b>+50%</b> to Marked foes.',
+     {tick(f){ if(!advMine(f,'conan')||f.advTruth)return; f.advTruth=1;
+        for(const o of G.fighters) if(o.alive&&o.team!==f.team&&!(o.summon&&!o.ally)) advMark(o,f); },
+      hit(o){ if(advMine(o.src,'conan')&&o.mark) o.mul*=1.5; }},
+     {evo:true})
+];
+for(const U of ADV_FIGHTER) ADV_UP.push(U);
 for(const U of ADV_UP) ADV_BY_ID[U.id]=U;
+for(const U of ADV_RELIC) ADV_BY_ID[U.id]=U;
+/* Hũ relic: loại hết cái đã đủ bậc; relic bị nguyền chỉ ra khi chỗ gọi CHO PHÉP. */
+function advRelicPool(curse){
+  if(!ADV) return [];
+  return ADV_RELIC.filter(U=>{
+    if(U.curse&&!curse) return false;
+    return advStack(U.id)<(U.max||1);
+  });
+}
+function advRelicPick(n,curse){
+  const pool=advRelicPool(curse).slice(), out=[];
+  while(out.length<n&&pool.length){
+    let tot=0; for(const U of pool) tot+=(ADV_RAR[U.rar]||ADV_RAR.common).w;
+    let r=Math.random()*tot, i=0;
+    for(;i<pool.length;i++){ r-=(ADV_RAR[pool[i].rar]||ADV_RAR.common).w; if(r<=0) break; }
+    out.push(pool.splice(Math.min(i,pool.length-1),1)[0]);
+  }
+  return out;
+}
+/* ==================== BREAK GAUGE (§42 · §43) ====================
+   §42: *"Boss không immune CC hoàn toàn. Thay vào đó Boss có CC Resistance Bar. CC làm giảm
+   bar. Khi bar về 0: Boss bị Break/Stun. Sau đó bar hồi."* — nhờ vậy build khống chế vẫn có
+   giá trị mà KHÔNG stun-lock được boss.
+
+   Chỉ tinh nhuệ và boss mới có thanh này (`f.advBreakMax>0`). Hai thứ bào nó: **mỗi lần bị
+   khống chế** và **sát thương nặng**. Bào hết thì VỠ THẾ: đứng hình `ADV_BRK_T` và ăn thêm
+   sát thương; hết vỡ thế thì thanh hồi đầy lại và có một quãng MIỄN (`advBreakHold`) để
+   không bị khoá liên tục. */
+const ADV_BRK_T=gs(2.2), ADV_BRK_HOLD=gs(6), ADV_BRK_BONUS=1.4;
+function advBreakSetup(f,depth){
+  f.advBreakMax=Math.round(90+depth*26);
+  f.advBreak=f.advBreakMax;
+  f.advBreakDown=0; f.advBreakHold=0;
+}
+/* Bào thanh. `amt` là "lượng bào", không phải sát thương — chỗ gọi tự quy đổi. */
+function advBreakHit(f,amt,src){
+  if(!f||!(f.advBreakMax>0)||f.advBreakDown>0||f.advBreakHold>0) return;
+  f.advBreak=Math.max(0,(f.advBreak||0)-amt);
+  if(f.advBreak>0) return;
+  /* VỠ THẾ. Dùng `stunFx` như mọi cú choáng khác để mọi lớp kháng hiệu ứng vẫn được tính,
+     nhưng quãng vỡ thế thì cố định — đây là phần thưởng cho build khống chế. */
+  f.advBreakDown=ADV_BRK_T;
+  stunFx(f,ADV_BRK_T,'spark');
+  ring(f.x,f.y,150,'#FFC542',.55);
+  G.floats.push({x:f.x,y:f.y-120,txt:'BREAK!',color:'#FFC542',life:1.4,ml:1.4,
+                 banner:true,gold:true,focus:true,tilt:rnd(-.05,.05)});
+  sfx('stun');
+}
+function advBreakTick(f,dt){
+  if(!advOn()||!(f.advBreakMax>0)) return;
+  if(f.advBreakDown>0){
+    f.advBreakDown=Math.max(0,f.advBreakDown-dt);
+    if(f.advBreakDown<=0){ f.advBreak=f.advBreakMax; f.advBreakHold=ADV_BRK_HOLD; }
+    return;
+  }
+  if(f.advBreakHold>0) f.advBreakHold=Math.max(0,f.advBreakHold-dt);
+  /* Thanh tự hồi chầm chậm nếu không bị bào — không thì mọi boss đều vỡ thế sớm muộn. */
+  else if(f.advBreak<f.advBreakMax) f.advBreak=Math.min(f.advBreakMax,f.advBreak+dt*f.advBreakMax*.07);
+}
+
+/* ==================== BOSS NHIỀU PHA (§23) ====================
+   §23: *"Boss không được chỉ là fighter có nhiều HP. Boss có Phase, Telegraph, Unique
+   mechanics."* Ba mốc máu 70% · 40% · 15%, mỗi lần xuống một mốc thì đóng băng một nhịp
+   (telegraph) rồi bung một thứ khác nhau. */
+const ADV_PHASE=[.70,.40,.15];
+function advPhaseTick(f,dt){
+  if(!advOn()||!f.advBossPhase) return;
+  const P=f.advBossPhase;
+  if(P.cine>0){ P.cine=Math.max(0,P.cine-dt); return; }
+  const pct=f.hp/f.maxHp;
+  while(P.i<ADV_PHASE.length&&pct<=ADV_PHASE[P.i]){
+    P.i++;
+    advPhaseEnter(f,P.i);
+  }
+}
+function advPhaseEnter(f,n){
+  const P=f.advBossPhase;
+  P.cine=gs(.45);
+  G.freeze=Math.max(G.freeze,gs(.45)); G.freezeAt=f;
+  G.flashScreen=Math.max(G.flashScreen,.35);
+  ring(f.x,f.y,190,'#FF4FA3',.6);
+  G.callBanner={txt:'PHASE '+(n+1),color:'#FF4FA3',life:CALL_BANNER_LIFE,ml:CALL_BANNER_LIFE};
+  sfx('stun');
+  if(n===1){
+    /* Pha 2 — nhanh tay hẳn lên. */
+    f.advBossFast=1.35;
+    say(`${f.name} đổi thế — ra đòn nhanh hẳn lên!`,'m');
+  }else if(n===2){
+    /* Pha 3 — gọi thêm quân (§23 "Summon"). */
+    f.advBossFast=1.5;
+    advBossAdds(f,2);
+    say(`${f.name} gọi thêm quân!`,'m');
+  }else{
+    /* Pha cuối — nổi điên: nhanh và nặng đòn hẳn, nhưng cũng dễ vỡ thế hơn. */
+    f.advBossFast=1.7; f.advBossRage=1.3;
+    if(f.advBreakMax>0){ f.advBreakMax=Math.round(f.advBreakMax*.6); f.advBreak=Math.min(f.advBreak,f.advBreakMax); }
+    say(`${f.name} nổi điên — nhưng thế thủ cũng hở ra!`,'m');
+  }
+}
+/* Gọi thêm quái cho boss. Dùng đúng `mkChar` nên chúng đi qua mọi đường có sẵn. */
+function advBossAdds(f,n){
+  const R=advReg(), d=advDepth();
+  for(let i=0;i<n;i++){
+    const key=R.tier[i%R.tier.length];
+    const a=Math.PI*2*(i/n)+rnd(-.3,.3);
+    const m=mkChar(key,f.team,clamp(f.x+Math.cos(a)*110,PAD+30,W-PAD-30),
+                              clamp(f.y+Math.sin(a)*80,PAD+70,H-PAD-40),0);
+    const M=MOBS[m.mobKind];
+    m.maxHp=Math.max(1,Math.round(M.hp*advMobHp(d)*.8)); m.hp=m.maxHp;
+    m.mobDmg=Math.max(1,Math.round(M.dmg*advMobDmg(d)));
+    G.fighters.push(m);
+    ring(m.x,m.y,80,'#FF4FA3',.4);
+  }
+}
+
+/* ==================== AWAKENING (§13) và EVOLUTION CORE (§12) ====================
+   §13: *"Player chọn 1 trong 2 hoặc 1 trong 3 Awakening. Không thể lấy tất cả. Awakening
+   phải thay đổi hướng build rõ rệt. Không chỉ: +20% damage."*
+
+   Ba hướng dưới đây dùng chung cho mọi nhân vật và **loại trừ nhau** (`excl:'awake'`), mở ra
+   sau khi hạ boss region 2. Mỗi hướng kéo build đi một ngả hẳn: một bên là combo hồi chiêu,
+   một bên là khống chế + phá giáp, một bên là lì đòn + phản damage. */
+const ADV_AWAKE=[
+  { id:'aw_blitz', awake:true, relic:true, rar:'legend', tags:['COOLDOWN','BASIC_ATTACK'], max:1, excl:'awake',
+    name:{vi:'THỨC TỈNH · Bão Đòn',en:'AWAKENING · Blitz'},
+    desc:{vi:'Đòn thường <b>nhanh thêm 35%</b>; mỗi đòn trúng <b>giảm 0.25s</b> mọi hồi chiêu; '+
+             'hạ được địch thì <b>một ô chiêu hồi xong ngay</b>.',
+          en:'Basics <b>35% faster</b>; every hit cuts <b>0.25s</b> from all cooldowns; '+
+             'a kill <b>fully resets one skill</b>.'},
+    tick(f){ f.advBaRate=Math.max(f.advBaRate||1,1.35); },
+    hit(o){ if(o.kind==='dot'||o.kind==='big'||o.kind==='ult') return; advCut(o.src,.125); },
+    kill(o){ const f=o.src; if(!f||!f.cds)return;
+      const on=['s2','s3','s4'].filter(k=>f.cds[k]>0);
+      if(on.length){ f.cds[on[Math.random()*on.length|0]]=0; pop(f.x,f.y,'RESET!','#4DE2FF',false); } } },
+  { id:'aw_breaker', awake:true, relic:true, rar:'legend', tags:['CC','MARK','ELITE'], max:1, excl:'awake',
+    name:{vi:'THỨC TỈNH · Kẻ Phá Thế',en:'AWAKENING · Breaker'},
+    desc:{vi:'Mọi đòn <b>bào thanh choáng</b> của tinh nhuệ / boss nhanh gấp đôi, và '+
+             '<b>+45% sát thương</b> lên kẻ đang bị <b>choáng hoặc vỡ thế</b>.',
+          en:'Every hit <b>drains the break bar</b> twice as fast, and deals '+
+             '<b>+45% damage</b> to <b>stunned or broken</b> foes.'},
+    hit(o){
+      if(o.t.advBreakDown>0||o.t.stun>0) o.mul*=1.45;
+      if(o.t.advBreakMax>0) advBreakHit(o.t,o.amt*.5,o.src);
+    } },
+  { id:'aw_bulwark', awake:true, relic:true, rar:'legend', tags:['HEAL','CURSE'], max:1, excl:'awake',
+    name:{vi:'THỨC TỈNH · Thành Trì',en:'AWAKENING · Bulwark'},
+    desc:{vi:'<b>Giảm 22% sát thương nhận</b>, <b>+30% máu tối đa</b>, và <b>dội ngược 25%</b> '+
+             'chỗ vừa chịu về kẻ đánh mình.',
+          en:'<b>−22% damage taken</b>, <b>+30% max HP</b>, and <b>reflect 25%</b> of what you take.'},
+    on:A=>{ A.curseHp=(A.curseHp||0)-.30; } }      // lời nguyền ÂM = cộng máu
+];
+for(const U of ADV_AWAKE) ADV_BY_ID[U.id]=U;
+
+/* ---------- EVOLUTION CORE ----------
+   §12: *"Evolution Core không dùng để cộng stat bình thường. Nó mở Major Skill Evolution."*
+   Boss rơi một lõi; tiêu lõi thì mở một thẻ TIẾN HOÁ — mấy thẻ nặng ký nhất trong bảng,
+   có `evo:true` nên chúng KHÔNG bao giờ rơi ra từ lên cấp thường. */
+const advEvoPool=()=>ADV_UP.filter(U=>U.evo&&advStack(U.id)<(U.max||1)
+  &&(!U.fighter||U.fighter===ADV.key)&&(!U.req||U.req(ADV)));
+function advEvoOffer(){
+  const pool=advEvoPool();
+  if(!pool.length) return false;
+  const out=[];
+  while(out.length<3&&pool.length) out.push(pool.splice(Math.random()*pool.length|0,1)[0]);
+  advCards=out; advCardPaint();
+  const b=document.getElementById('advCard'); if(b) b.classList.remove('off');
+  sfx('ui_go');
+  return true;
+}
+
+/* Mở màn chọn RELIC — dùng lại y nguyên lớp phủ chọn thẻ. */
+function advRelicOffer(n,curse){
+  const three=advRelicPick(n||3,curse);
+  if(!three.length) return false;
+  advCards=three; advCardPaint();
+  const b=document.getElementById('advCard'); if(b) b.classList.remove('off');
+  sfx('ui_board');
+  return true;
+}
 /* Có thẻ nào GẮN mark chưa — mấy thẻ ăn theo mark chỉ hiện ra sau khi đã có nguồn mark,
    không thì người chơi bốc phải một thẻ chết. */
 const advAnyMark=A=>advHas('mark_basic')||advHas('mark_skill');
@@ -6963,6 +7558,7 @@ function advPool(){
   if(!ADV) return [];
   const lock=ADV.lock||{};
   return ADV_UP.filter(U=>{
+    if(U.evo) return false;            // §12: thẻ TIẾN HOÁ chỉ mở bằng LÕI của boss
     if(U.fighter&&U.fighter!==ADV.key) return false;
     if(advStack(U.id)>=(U.max||1)) return false;                 // §68
     if(U.excl&&lock[U.excl]&&lock[U.excl]!==U.id) return false;  // nhánh loại trừ
@@ -7013,15 +7609,34 @@ function advTake(U){
    TRẬN. Lên cấp GIỮA TRẬN là chuyện thường (exp rơi ra từ mỗi con vừa hạ) nên chỗ này bắt
    buộc phải dừng được trận đang chạy. */
 let advCards=null;
+/* Hàng chờ CHỌN — bốn nguồn, xét theo thứ tự: lên cấp · lõi tiến hoá · thức tỉnh · relic.
+   Chỉ mở MỘT màn một lúc; chọn xong thì `advTake` gọi lại hàm này để xử nốt phần còn chờ. */
 function advLevelCheck(){
   if(!advOn()||advCards) return;
-  if((ADV.pending|0)<=0) return;
-  ADV.pending--;
-  advCards=advPick3();
-  if(!advCards.length){ advCards=null; return; }      // hết thẻ để bốc thì thôi
-  advCardPaint();
-  const b=document.getElementById('advCard'); if(b) b.classList.remove('off');
-  sfx('ui_board');
+  if((ADV.pending|0)>0){
+    ADV.pending--;
+    advCards=advPick3();
+    if(!advCards.length){ advCards=null; }
+    else{
+      advCardPaint();
+      const b=document.getElementById('advCard'); if(b) b.classList.remove('off');
+      sfx('ui_board');
+      return;
+    }
+  }
+  if((ADV.cores|0)>0){ ADV.cores--; if(advEvoOffer()) return; }
+  if(ADV.awakeWant&&!ADV.awake){
+    ADV.awakeWant=false;
+    advCards=ADV_AWAKE.filter(U=>!advHas(U.id));
+    if(advCards.length){
+      advCardPaint();
+      const b=document.getElementById('advCard'); if(b) b.classList.remove('off');
+      sfx('ui_go');
+      return;
+    }
+    advCards=null;
+  }
+  if((ADV.relicOffer|0)>0){ ADV.relicOffer--; if(advRelicOffer(3,false)) return; }
 }
 function advCardClose(){
   advCards=null;
@@ -7029,14 +7644,22 @@ function advCardClose(){
 }
 function advCardPaint(){
   const box=document.getElementById('advCardList'); if(!box||!advCards) return;
-  const sub=document.getElementById('advCardSub');
-  if(sub) sub.textContent=tf('advCardSub',{lv:ADV.lv});
+  /* Một lớp phủ dùng cho BỐN loại chọn, nên tiêu đề phải nói rõ đang chọn cái gì. */
+  const kind=advCards[0]&&advCards[0].awake?'awake':advCards[0]&&advCards[0].evo?'evo'
+            :advCards[0]&&advCards[0].relic?'relic':'card';
   const ttl=document.getElementById('advCardTitle');
-  if(ttl) ttl.textContent=t('advCardTitle');
+  if(ttl) ttl.textContent=t({card:'advCardTitle',relic:'advRelicTitle',
+                             evo:'advEvoTitle',awake:'advAwakeTitle'}[kind]);
+  const sub=document.getElementById('advCardSub');
+  if(sub) sub.textContent=kind==='card'?tf('advCardSub',{lv:ADV.lv}):t('advPickOne');
+  /* Bốc lại chỉ có ở màn chọn THẺ — relic / tiến hoá / thức tỉnh là phần thưởng một lần. */
+  const rrBox=document.getElementById('advReroll');
+  if(rrBox) rrBox.style.display=kind==='card'?'':'none';
   box.innerHTML=advCards.map((U,i)=>{
     const R=ADV_RAR[U.rar]||ADV_RAR.common;
     const have=advStack(U.id), mx=U.max||1;
-    return `<button class="upCard r-${U.rar}" data-i="${i}" type="button" style="--rc:${R.c}">`+
+    return `<button class="upCard r-${U.rar}${U.evo?' evo':''}${U.awake?' awake':''}" `+
+      `data-i="${i}" type="button" style="--rc:${R.c}">`+
       `<i class="upRar">${tr(ADV_RARN[U.rar])}</i>`+
       `<b class="upName">${tr(U.name)}</b>`+
       `<p class="upDesc">${tr(U.desc)}</p>`+
@@ -7090,6 +7713,11 @@ function advShopStock(){
     seen[U.id]=1; pick.push(U);
   }
   const out=pick.map(U=>({kind:'card', up:U, cost:price(U.rar==='legend'?150:U.rar==='epic'?110:U.rar==='rare'?80:52)}));
+  /* Cửa hàng là chỗ DUY NHẤT bán relic BỊ NGUYỀN: ở đây người chơi đọc được cái giá rồi mới
+     quyết, đúng tinh thần §27 (risk/reward) — chứ không phải bị nhét vào tay. */
+  const rp=advRelicPick(1,Math.random()<.4);
+  if(rp.length) out.push({kind:'relic', up:rp[0],
+    cost:price(rp[0].curse?60:rp[0].rar==='legend'?170:rp[0].rar==='epic'?125:85)});
   out.push({kind:'heal', cost:price(45)});
   out.push({kind:'rr',   cost:price(38)});
   if((ADV.rev|0)<1) out.push({kind:'rev', cost:price(140)});
@@ -7099,7 +7727,7 @@ function advShopBuy(it){
   if(!ADV||!it||it.bought) return false;
   if((ADV.gold|0)<it.cost) return false;
   ADV.gold-=it.cost; it.bought=1;
-  if(it.kind==='card'){ advTake(it.up); padBuild(); }
+  if(it.kind==='card'||it.kind==='relic'){ advTake(it.up); padBuild(); }
   else if(it.kind==='heal') advHeal(ADV_SHOP_HEAL);
   else if(it.kind==='rr') ADV.rr=(ADV.rr|0)+1;
   else if(it.kind==='rev') ADV.rev=(ADV.rev|0)+1;
@@ -7185,7 +7813,8 @@ function advNodePaint(){
     U.stock.forEach((it,i)=>{
       const can=!it.bought&&(ADV.gold|0)>=it.cost;
       let nm,ds;
-      if(it.kind==='card'){ nm=tr(it.up.name); ds=tr(it.up.desc); }
+      if(it.kind==='card'||it.kind==='relic'){
+        nm=(it.kind==='relic'?(it.up.curse?'☠ ':'⬥ '):'')+tr(it.up.name); ds=tr(it.up.desc); }
       else if(it.kind==='heal'){ nm=t('advBuyHeal'); ds=tf('advBuyHealD',{n:Math.round(ADV_SHOP_HEAL*100)}); }
       else if(it.kind==='rr'){ nm=t('advBuyRr'); ds=t('advBuyRrD'); }
       else { nm=t('advBuyRev'); ds=t('advBuyRevD'); }
@@ -7204,15 +7833,19 @@ function advNodePaint(){
   }else if(U.t==='treasure'){
     if(!U.got){
       const roll=Math.random();
-      if(roll<.45){ const g=40+Math.round(Math.random()*55); ADV.gold=(ADV.gold|0)+g;
+      if(roll<.34){ const g=40+Math.round(Math.random()*55); ADV.gold=(ADV.gold|0)+g;
         U.got={vi:`Trong hòm có ${g} vàng.`,en:`${g} gold in the chest.`}; }
-      else if(roll<.8){ ADV.pending=(ADV.pending|0)+1;
+      else if(roll<.62){ ADV.pending=(ADV.pending|0)+1;
         U.got={vi:'Một cuộn giấy cũ — bạn học được một thứ mới.',en:'An old scroll — you learn something new.'}; }
-      else { ADV.rr=(ADV.rr|0)+2;
+      else if(roll<.8){ ADV.rr=(ADV.rr|0)+2;
         U.got={vi:'Hai đồng xu lạ: hai lượt bốc lại.',en:'Two odd coins: two rerolls.'}; }
+      else { U.relic=1;    // kho báu KHÔNG bao giờ ra relic bị nguyền — §27 cần thấy rõ cái giá
+        U.got={vi:'Một món đồ cổ nằm dưới đáy hòm.',en:'An old artifact rests at the bottom.'}; }
       advSave();
     }
     h+=`<p class="advNote">${tr(U.got)}</p>`;
+    if(U.relic&&!U.took) h+=`<div class="advList"><div class="advRow"><div><b>${t('advRelicPick')}</b></div>`+
+      `<div class="advVal"></div><button class="advBuy" data-relic="1" type="button">+</button></div></div>`;
   }else{
     const E=U.ev;
     h+=`<p class="advNote">${tr({vi:E.vi,en:E.en})}</p>`;
@@ -7228,6 +7861,8 @@ function advNodePaint(){
     }
   }
   box.innerHTML=h;
+  for(const b of box.querySelectorAll('[data-relic]'))
+    b.addEventListener('click',()=>{ U.took=1; advNodeClose(); if(!advRelicOffer(3,false)) advNodeDone(); });
   for(const b of box.querySelectorAll('[data-buy]'))
     b.addEventListener('click',()=>{ if(advShopBuy(U.stock[+b.dataset.buy])){ sfx('ui_tap'); advNodePaint(); } });
   for(const b of box.querySelectorAll('[data-rest]'))
@@ -12171,6 +12806,8 @@ function step(dt){
     statusTick(f,dt);
     advStatTick(f);            // phải nhân SAU statusTick: hàm đó dựng lại hệ số từ đầu
     advOnTick(f,dt);
+    advBreakTick(f,dt);
+    advPhaseTick(f,dt);
     /* SAU `statusTick`: hàm đó DỰNG LẠI `moveMul` từ đầu mỗi nhịp, nhân trước là mất trắng. */
     if(f.key==='tsubasa'&&!f.summon&&!f.swapAs) tsuPinTick(f,dt);
     if(f.key==='shika'&&!f.summon&&f.alive&&!f.swapAs){ shikaPassive(f,dt); bindTick(f,dt); domainTick(f,dt); }
@@ -14375,6 +15012,18 @@ function drawBars(f){
   if(f.beaHide)return;                          // Beatrice còn ở trong Forbidden Library
   if(f.drHide)return;                          // Doraemon còn trong lòng Anywhere Door
   if(f.supHide)return;                         // Superman còn là bóng người trên cao
+  /* THANH VỠ THẾ của tinh nhuệ / boss — vẽ ngay dưới thanh máu. Vàng là còn thủ, đỏ nhấp
+     nháy là ĐANG VỠ THẾ (lúc đó nó ăn thêm sát thương). */
+  if(f.advBreakMax>0&&f.alive){
+    const w=112,x=clamp(f.x-w/2,12,W-w-12),y=f.y+30+26;
+    const down=f.advBreakDown>0;
+    ctx.save();
+    ctx.fillStyle='rgba(8,6,20,.72)'; ctx.fillRect(x,y,w,5);
+    ctx.fillStyle=down?'#FF4D6D':'#FFC542';
+    ctx.globalAlpha=down?.55+Math.sin(G.t*14)*.35:1;
+    ctx.fillRect(x,y,w*clamp((f.advBreak||0)/f.advBreakMax,0,1),5);
+    ctx.restore();
+  }
   /* Dấu của Phiêu lưu: một vòng hồng nhấp nháy dưới chân, để người chơi biết đòn nào sẽ
      kích nổ. Vẽ trong drawBars vì nó đi cùng thanh máu và luôn nằm trên mặt sàn. */
   if((f.advMark||0)>0){
@@ -18603,7 +19252,8 @@ function advPaint(){
         <span>EXP ${ADV.exp}${need?' / '+need:''}</span>
         <span>${t('advRr')} <b style="color:var(--cyan)">${ADV.rr|0}</b></span>
         <span>${t('advGold')} <b style="color:var(--gold)">${ADV.gold|0}</b></span>
-        <span>${t('advRev')} <b style="color:#FF7A7A">${ADV.rev|0}</b></span>
+        <span>${t('advRev')} <b style="color:#FF7A7A">${ADV.rev|0}</b></span>`+
+        ((ADV.cores|0)>0?`<span>${t('advCore')} <b style="color:var(--mag)">${ADV.cores|0}</b></span>`:'')+`
         <span>${t('advKills')} ${ADV.kills}</span>
       </div>
     </div>
@@ -18619,6 +19269,19 @@ function advPaint(){
              `<i></i>${tr(U.name)}${mx>1?`<u>×${n}</u>`:''}</span>`;
     }).join('')+`</div>`
     :`<div class="advNote">${t('advNoUp')}</div>`;
+
+  // ---- relic đang mang ----
+  const rel=Object.keys(ADV.relics||{}).filter(k=>ADV.relics[k]>0);
+  if(rel.length||ADV.awake){
+    h+=`<div class="advH">${t('advRelics')} <span class="advPts">${tf('advOwnN',{n:rel.length})}</span></div>`;
+    h+=`<div class="upOwn">`+rel.map(id=>{
+      const U=ADV_BY_ID[id]; if(!U) return '';
+      const R=ADV_RAR[U.rar]||ADV_RAR.common, n=ADV.relics[id], mx=U.max||1;
+      return `<span class="upChip${U.curse?' curse':''}" style="--rc:${R.c}" `+
+             `title="${tr(U.desc).replace(/<[^>]+>/g,'')}">`+
+             `<i></i>${U.curse?'☠ ':U.awake?'✦ ':'⬥ '}${tr(U.name)}${mx>1?`<u>×${n}</u>`:''}</span>`;
+    }).join('')+`</div>`;
+  }
 
   // ---- ba ô chiêu ----
   h+=`<div class="advH">${t('advSkills')}</div><div class="advList">`;
@@ -19144,7 +19807,11 @@ el('cselGo').addEventListener('click',()=>{
      (từ khi có màn VS) còn chớp ra cặp đấu của trận TRƯỚC còn sót trong `G.fighters` —
      người dùng quay được đúng cảnh đó: bấm "Khai mạc giải" mà hiện ra Captain Ginyu vs
      ChiChi trong khi trận đầu của giải là ChiChi vs Konohamaru. */
-  if(ARCADE){ cselPage=cselSteps()[0]; cselPaint(); if(!compOn()) arcFight(); }
+  /* PHIÊU LƯU cũng vậy: `startPicked()` mở BẢNG HÀNH TRÌNH rồi return, người chơi bấm một
+     NODE trên bản đồ thì mới vào trận. Gọi `arcFight()` ở đây là bật màn VS và cho trận chạy
+     ngầm sau lưng cái bảng — đúng cái lỗi đã ghi ngay trên, chỉ khác chế độ. Đo được: G.t
+     đứng nguyên 0 vì `vsOn` bật, mà bảng hành trình thì vẫn đang mở. */
+  if(ARCADE){ cselPage=cselSteps()[0]; cselPaint(); if(!compOn()&&PMODE!=='adv') arcFight(); }
 });
 el('cselBack').addEventListener('click',()=>{
   sfx('ui_back');
