@@ -2849,16 +2849,16 @@ const CONAN={
 const ISAGI={
   visionMax:100, visionStart:15, visionPerSec:30, visionLock:gs(1.5), observeRange:460,
   metaT:gs(4), metaMove:1.40, metaUltWait:gs(2), metaRecalc:gs(.25),
-  basicDmg:14, basicCd:gs(1.1), basicStagger:gs(.15), basicSpeed:500, basicRange:355, basicVision:5,
-  firstDmg:38, firstT:gs(2), firstSpeed:610, firstVision:10, firstKb:245,
+  basicDmg:12, basicCd:gs(2.8), basicStagger:gs(.15), basicSpeed:BALL_SPD*1.02, basicRange:355, basicVision:5,
+  firstDmg:34, firstT:gs(2), firstSpeed:BALL_SPD*1.05, firstVision:10, firstKb:245,
   blindCd:gs(6), blindT:gs(1), blindMove:2.20, blindTake:.60, blindVision:8,
-  directDmg:72, directPerfect:96, directCd:gs(7), directWind:gs(.6), directSpeed:650,
+  directDmg:66, directPerfect:86, directCd:gs(7), directWind:gs(.6), directSpeed:BIC_SPD,
   directRange:390, directVision:12, directStagger:gs(.45), directDown:gs(.8), directKb:330,
   puzzleCd:gs(9), puzzleT:gs(1), puzzleMove:.60, puzzleVision:30, analyzedT:gs(6), analyzedBonus:8, analyzedBonusMax:2,
   allyVision:6, allyVisionCd:gs(1.5),
   ballReturn:gs(.35),
-  ultRange:500, ultWind:gs(1.1), ultArmor:gs(.35), ultDmg:160, ultDevour:190, ultPierce:.20,
-  ultDown:gs(1.2), ultDevourDown:gs(1.5), ultSpeed:760, ultKb:560,
+  ultRange:500, ultWind:gs(1.1), ultArmor:gs(.35), ultDmg:145, ultDevour:170, ultPierce:.20,
+  ultDown:gs(1.2), ultDevourDown:gs(1.5), ultSpeed:BIC_SPD*1.03, ultKb:560,
   midMin:170, midMax:285
 };
 
@@ -2869,7 +2869,7 @@ const CHARS={
     skills:[
       `<b>Passive · Spatial Awareness</b> Vision Gauge starts at ${ISAGI.visionStart}/${ISAGI.visionMax} and never fills by time alone. Controlled Shot +${ISAGI.basicVision}, observed enemy Active Skill +10, a successful read/dodge +8, Direct Shot +${ISAGI.directVision}, Puzzle Pieces +${ISAGI.puzzleVision}, ally-created control +${ISAGI.allyVision}. Vision gain is capped at ${ISAGI.visionPerSec} per second.`,
       `<b>100 Vision · Metavision</b> Up to ${rts(ISAGI.metaT)}s: +40% movement, tactical target selection, a visible Goal Route and Critical Space, and the first eligible direct attack can be read and sidestepped. It never auto-dodges ultimates, area attacks or damage already on the ground.`,
-      `<b>Basic · Controlled Shot</b> ${ISAGI.basicDmg} damage every ${rts(ISAGI.basicCd)}s, slight tracking, light ${rts(ISAGI.basicStagger)}s hit-stagger and +${ISAGI.basicVision} Vision. Blind Spot Run upgrades the next basic for ${rts(ISAGI.firstT)}s into <b>First-Touch Shot</b>: ${ISAGI.firstDmg} damage, +${ISAGI.firstVision} Vision and light knockback.`,
+      `<b>Basic · Controlled Shot</b> ${ISAGI.basicDmg} damage every ${rts(ISAGI.basicCd)}s on a fixed football trajectory that can miss moving targets, with light ${rts(ISAGI.basicStagger)}s hit-stagger and +${ISAGI.basicVision} Vision. Blind Spot Run upgrades the next basic for ${rts(ISAGI.firstT)}s into <b>First-Touch Shot</b>: ${ISAGI.firstDmg} damage, +${ISAGI.firstVision} Vision and light knockback.`,
       `<b>1 · Blind Spot Run</b> ${rts(ISAGI.blindCd)}s cooldown · a real ${rts(ISAGI.blindT)}s flank run, no teleport: +120% movement, −40% damage taken, ignores slow but not stun/freeze/knockdown. A successful missed attack during the run feeds his read and primes First-Touch Shot.`,
       `<b>2 · Direct Shot</b> ${ISAGI.directDmg} damage · ${rts(ISAGI.directCd)}s cooldown · ${rts(ISAGI.directWind)}s wind-up · +${ISAGI.directVision} Vision on hit. Recovery, stun/knockdown, facing away or a recent miss creates <b>Perfect Timing</b>: ${ISAGI.directPerfect} damage, faster ball and ${rts(ISAGI.directDown)}s knockdown.`,
       `<b>3 · Puzzle Pieces</b> ${rts(ISAGI.puzzleCd)}s cooldown · analyzes for ${rts(ISAGI.puzzleT)}s while moving at 60%, then +${ISAGI.puzzleVision} Vision and <b>Analyzed</b> for ${rts(ISAGI.analyzedT)}s. The next two Active Skills from that target feed +${ISAGI.analyzedBonus} extra Vision, and the first eligible straight attack can be sidestepped.`,
@@ -3482,16 +3482,16 @@ const pwAvg=k=>{const p=(DEX[k]||{}).pw||{};
 
 const DEX={
   isagi:{ role:{vi:'Tactical Finisher · Adaptive Striker',en:'Tactical Finisher · Adaptive Striker'}, st:{pow:4,spd:4,rng:4,def:2},
-    pw:{dmg:72,dur:42,mob:88,as:68,rng:76,cc:58,uti:96,con:74,cmb:38},
+    pw:{dmg:64,dur:42,mob:88,as:54,rng:74,cc:56,uti:92,con:70,cmb:34},
     bio:{vi:'Reads the field, builds Vision, finds Critical Space and converts one opening into a goal.',
          en:'Reads the field, builds Vision, finds Critical Space and converts one opening into a goal.'},
     skills:[
       {tag:'P',name:'Spatial Awareness',vi:'Vision comes from information, not time. Gain is capped at 30 per second and stops while hard-controlled.',en:'Vision comes from information, not time. Gain is capped at 30 per second and stops while hard-controlled.'},
       {tag:'100',name:'Metavision',vi:'At 100 Vision, reveals Critical Space, speeds movement and reads the first eligible direct attack before the finish.',en:'At 100 Vision, reveals Critical Space, speeds movement and reads the first eligible direct attack before the finish.'},
       {tag:'1',name:'Blind Spot Run',vi:'A real flank run with damage reduction and slow immunity; primes First-Touch Shot.',en:'A real flank run with damage reduction and slow immunity; primes First-Touch Shot.'},
-      {tag:'2',name:'Direct Shot',vi:'72 damage. Perfect Timing turns a genuine opening into 96 damage and a knockdown.',en:'72 damage. Perfect Timing turns a genuine opening into 96 damage and a knockdown.'},
+      {tag:'2',name:'Direct Shot',vi:'66 damage. Perfect Timing improves accuracy and turns a genuine opening into 86 damage and a knockdown, but the shot can still miss.',en:'66 damage. Perfect Timing improves accuracy and turns a genuine opening into 86 damage and a knockdown, but the shot can still miss.'},
       {tag:'3',name:'Puzzle Pieces',vi:'Analyze for 1s, gain 30 Vision and mark the target Analyzed for 6s.',en:'Analyze for 1s, gain 30 Vision and mark the target Analyzed for 6s.'},
-      {tag:'U',name:'Two-Gun Volley',vi:'Metavision finisher: 160 with 20% defense penetration, or 190 as Devoured Opportunity.',en:'Metavision finisher: 160 with 20% defense penetration, or 190 as Devoured Opportunity.'}
+      {tag:'U',name:'Two-Gun Volley',vi:'Metavision finisher: 145 with 20% defense penetration, or 170 as Devoured Opportunity. It is highly accurate, not guaranteed.',en:'Metavision finisher: 145 with 20% defense penetration, or 170 as Devoured Opportunity. It is highly accurate, not guaranteed.'}
     ]},
   kono:{ role:{vi:'Ninja · Đánh xa',en:'Ninja · Ranged'}, st:{pow:3,spd:4,rng:5,def:2},
     pw:{dmg:62,dur:38,mob:46,as:72,rng:88,cc:60,uti:44,con:66,cmb:40},
@@ -12795,11 +12795,23 @@ function isagiCriticalSpace(f,t){
 function isagiBallReturn(f){
   f.isagiShot=null; f.isagiBallReturn=ISAGI.ballReturn;
 }
+function isagiShotSpread(f,kind,opt={}){
+  let center=.28,min=.14,max=.30;
+  if(kind==='first'){ center=.38; min=.10; max=.24; }
+  else if(kind==='direct'&&opt.perfect){ center=.68; min=.025; max=.09; }
+  else if(kind==='direct'){ center=.48; min=.07; max=.19; }
+  else if(kind==='ult'&&opt.devoured){ center=.72; min=.02; max=.075; }
+  else if(kind==='ult'){ center=.58; min=.04; max=.13; }
+  if(f.isagiMeta>0)center=Math.min(.78,center+.05);
+  if(chance(center))return rnd(-.025,.025);
+  return (chance(.5)?1:-1)*rnd(min,max);
+}
 function isagiFireBall(f,kind,t,opt={}){
   if(!isagiBallReady(f)||!t||!t.alive)return false;
-  const srcY=f.y-20,base=Math.atan2((t.y-20)-srcY,t.x-f.x),spread=(f.isagiMeta>0||kind==='ult')?0:rnd(-.035,.035),a=base+spread;
+  const srcY=f.y-20,base=Math.atan2((t.y-20)-srcY,t.x-f.x),spread=isagiShotSpread(f,kind,opt),a=base+spread;
   const sp=opt.speed||ISAGI.basicSpeed;
-  f.isagiShot={kind,target:t,x:f.x+Math.cos(a)*24,y:srcY+Math.sin(a)*24,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:12,life:gs(2.4),age:0,perfect:!!opt.perfect,devoured:!!opt.devoured,adjusted:false};
+  const r=kind==='ult'?13:((kind==='direct'||kind==='first')?12:11);
+  f.isagiShot={kind,target:t,x:f.x+Math.cos(a)*24,y:srcY+Math.sin(a)*24,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r,life:gs(2.4),age:0,spin:rnd(0,6.28),bounce:0,perfect:!!opt.perfect,devoured:!!opt.devoured};
   setPose(f,'kick',.28); sfx('hit'); return true;
 }
 function isagiBasic(f,e){
@@ -12856,13 +12868,7 @@ function isagiTeamWatch(f){
 function isagiShotsTick(f,dt){
   const p=f.isagiShot; if(!p)return;
   p.age+=dt; p.life-=dt;
-  if(p.kind==='controlled'&&p.target&&p.target.alive){
-    const sp=Math.hypot(p.vx,p.vy)||1,want=Math.atan2((p.target.y-20)-p.y,p.target.x-p.x),cur=Math.atan2(p.vy,p.vx),diff=Math.atan2(Math.sin(want-cur),Math.cos(want-cur));
-    const tr=clamp(diff,-.75*dt,.75*dt); p.vx=Math.cos(cur+tr)*sp; p.vy=Math.sin(cur+tr)*sp;
-  }
-  if(p.kind==='ult'&&!p.adjusted&&p.age>=gs(.18)&&p.target&&p.target.alive){
-    const sp=Math.hypot(p.vx,p.vy)||ISAGI.ultSpeed,a=Math.atan2((p.target.y-20)-p.y,p.target.x-p.x); p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;p.adjusted=true;
-  }
+  p.spin=(p.spin||0)+dt*(Math.hypot(p.vx,p.vy)||1)/42;
   p.x+=p.vx*dt; p.y+=p.vy*dt;
   if(p.life<=0||p.x<PAD-35||p.x>W-PAD+35||p.y<PAD-30||p.y>H-PAD+30){ isagiBallReturn(f); return; }
   for(const o of G.fighters){
@@ -12959,11 +12965,17 @@ function drawIsagiFx(){
   for(const f of G.fighters){
     if(!f||f.key!=='isagi'||!f.alive||f.swapAs)continue;
     if(isagiBallReady(f)){
-      ctx.save();ctx.translate(f.x+f.face*16,f.y+15);ctx.fillStyle='#F7FBFF';ctx.strokeStyle='#162435';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,7,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#162435';ctx.beginPath();ctx.arc(0,0,2.4,0,7);ctx.fill();ctx.restore();
+      ctx.save(); ctx.translate(f.x+f.face*17,f.y+15); ballShape(8,G.t*2.2); ctx.restore();
     }
     const p=f.isagiShot;
     if(p){
-      ctx.save();ctx.globalAlpha=.35;ctx.strokeStyle='#5DEBFF';ctx.lineWidth=p.kind==='ult'?5:2.5;ctx.beginPath();ctx.moveTo(p.x-p.vx*.035,p.y-p.vy*.035);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle='#F7FBFF';ctx.strokeStyle='#16344C';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(p.x,p.y,p.kind==='ult'?10:8,0,7);ctx.fill();ctx.stroke();ctx.restore();
+      ctx.save(); ctx.translate(p.x,p.y);
+      const sp=Math.hypot(p.vx,p.vy)||1,ang=Math.atan2(p.vy,p.vx);
+      ctx.save(); ctx.rotate(ang); ctx.globalAlpha=.35; ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=p.kind==='ult'?4:3; ctx.lineCap='round';
+      for(let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(-p.r-6,i*p.r*.55); ctx.lineTo(-p.r-24,i*p.r*.75); ctx.stroke(); }
+      ctx.restore();
+      ballShape(p.r,p.spin*(sp/300));
+      ctx.restore();
     }
     if(f.isagiPuzzlePulse>0||f.isagiMeta>0){
       ctx.save();ctx.strokeStyle='#66EFFF';ctx.fillStyle='rgba(22,199,255,.18)';ctx.lineWidth=1.5;
