@@ -1968,13 +1968,13 @@ let vsOn=false, vsTimer=0;
 const keys={};
 
 /* ---------- sprite slots ---------- */
-const SPR={stages:{},kono:{},chichi:{},tsubasa:{},shika:{},suzune:{},ginyu:{},dora:{},superman:{},beatrice:{},tanjiro:{},gojo:{},isagi:{},conan:{},ayanokouji:{},nara:{},garden:{},goku:{},gohan:{},hyuga:{},misaki:{},wakabayashi:{},ishizaki:{}};
-const COLORS={kono:'#63B4FF',chichi:'#FF4D6D',tsubasa:'#2ED573',shika:'#9B8CFF',suzune:'#7FC8FF',ginyu:'#A05CFF',dora:'#2B9BE8',superman:'#2E5BD8',beatrice:'#C77DFF',tanjiro:'#39B87F',gojo:'#78D9FF',conan:'#4B8BFF',isagi:'#16C7FF'};
+const SPR={stages:{},kono:{},chichi:{},tsubasa:{},shika:{},suzune:{},ginyu:{},dora:{},superman:{},beatrice:{},tanjiro:{},gojo:{},isagi:{},conan:{},sakura:{},ayanokouji:{},nara:{},garden:{},goku:{},gohan:{},hyuga:{},misaki:{},wakabayashi:{},ishizaki:{}};
+const COLORS={kono:'#63B4FF',chichi:'#FF4D6D',tsubasa:'#2ED573',shika:'#9B8CFF',suzune:'#7FC8FF',ginyu:'#A05CFF',dora:'#2B9BE8',superman:'#2E5BD8',beatrice:'#C77DFF',tanjiro:'#39B87F',gojo:'#78D9FF',conan:'#4B8BFF',isagi:'#16C7FF',sakura:'#FF6FA5'};
 /* Superman đứng riêng ở 800 máu — cả bộ chiêu của anh cân theo đúng thanh máu đó. */
 /* Máu chuẩn của cả bảng. Người chơi chỉnh thoải mái ở màn chọn nhân vật (ô HP_MIN..HP_MAX),
    nút "Chuẩn" đưa mọi người về đúng con số này. */
 const HP_STD=800, HP_MIN=100, HP_MAX=9999;
-const HP={kono:800,chichi:800,tsubasa:800,shika:800,suzune:800,ginyu:800,dora:800,superman:800,beatrice:800,tanjiro:HP_STD,gojo:HP_STD,conan:HP_STD,isagi:HP_STD};
+const HP={kono:800,chichi:800,tsubasa:800,shika:800,suzune:800,ginyu:800,dora:800,superman:800,beatrice:800,tanjiro:HP_STD,gojo:HP_STD,conan:HP_STD,isagi:HP_STD,sakura:HP_STD};
 const CAST={mul:1.8};
 const cm=v=>v*CAST.mul;
 /* ---------- ngôn ngữ ----------
@@ -2267,6 +2267,7 @@ const stageOf=k=>STAGES.find(s=>s.key===(k||STAGE))||STAGES[0];
 let STAGE='dojo';                  // màn đang chọn, lưu chung khoá cfg_picks
 
 const SETS=[
+  {key:'sakura', name:'Haruno Sakura', poses:[['idle','Thủ thế'],['atk1','Ném shuriken'],['punch','Đấm chakra'],['kick','Đá chakra'],['burst','Cherry Blossom Burst (đập đất)'],['charge','Chakra-Enhanced Punch (lao tới)'],['heal','Medical Ninjutsu (kết ấn)'],['seal','Strength of a Hundred Seal'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)'],['win','Ăn mừng'],['down','Gục ngã']]},
   {key:'kono', name:'Konohamaru', poses:[['idle','Thủ thế'],['atk1','Phi tiêu'],['atk2','Kết ấn phân thân'],['clone','Phân thân (bay ra)'],['skill','Sexy Jutsu'],['ulti','Rasengan'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)']]},
   {key:'chichi', name:'ChiChi', poses:[['idle','Thủ thế'],['atk1','Đấm đá'],['atk2','Mắng'],['skill','Hăng máu'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)'],['wounded','Chấn thương (lúc gọi)'],['call','Dáng gọi viện binh']]},
   {key:'tsubasa', name:'Ozora Tsubasa', poses:[['idle','Thủ thế'],['atk1','Sút bóng'],['bicycle','Overhead kick'],['atk2','Drive shot'],['wings','Đôi cánh đại bàng'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)'],['wounded','Chấn thương (lúc kích hoạt nội tại)']]},
@@ -2862,7 +2863,124 @@ const ISAGI={
   midMin:170, midMax:285
 };
 
+/* ---------- Haruno Sakura ----------
+   Combat Medic / Crowd-Control Bruiser. Maximum HP deliberately stays OUT of this object:
+   mkChar() reads HP.sakura so the shared Maximum HP setting keeps working, same rule as
+   Tanjiro / Gojo / Conan / Isagi. Every timing here is written in PLAYER seconds and wrapped
+   in gs(), the lối of every fighter added after Shikamaru.
+
+   Tầm đánh đo bằng HẰNG SỐ `SAK_BODY_R`, KHÔNG đọc `f.r` — Small Light của Doraemon bóp
+   `f.r` nhỏ đi 15%, mà khoảng chuyển đổi xa/gần thì không được đổi theo. Cùng luật với R
+   của Beatrice ở CLAUDE.md. */
+const SAK_BODY_R=26;                      // bán kính thân lúc đứng bình thường (mk() r:26)
+const SAK={
+  /* Passive — Medical Expertise. Chỉ rút NGẮN thời gian, không đụng tới dmg mỗi tick. */
+  res:.70, stunRes:.30, resFloor:gs(.25),
+
+  /* Basic — ném xa / đánh gần, đổi qua lại theo khoảng cách có ĐỘ TRỄ (hysteresis) nên
+     đứng đúng ranh giới cũng không nhấp nháy hai animation. */
+  shurMul:.80,                            // 80% dmg shuriken của Konohamaru — đọc qua SHURIKEN_DMG
+  shurFast:1.15,                          // ném nhanh hơn Konohamaru 15%
+  shurSpd:285,                            // tốc bay bằng Konohamaru
+  shurRange:430,
+  slowOdds:.30, slowAmt:.25, slowT:gs(2.5),
+  meleeIn:1.5*2*SAK_BODY_R,               // vào 1.5 lần ĐƯỜNG KÍNH thân thì đấm/đá  = 78
+  meleeOut:1.8*2*SAK_BODY_R,              // ra quá 1.8 lần mới ném lại               = 93.6
+  hitDmg:15, hitCd:gs(1.2),
+  ibOdds:.25, ibDps:3*RT, ibT:gs(5),      // dots[].dps tính theo giây TRONG TRẬN nên phải nhân RT
+  hitKb:.15,                              // đẩy lùi 15% chiều rộng sàn
+
+  /* 1 — Cherry Blossom Burst */
+  cbDmg:25, cbStun:gs(3), cbCd:gs(9), cbCast:gs(.75), cbBreakCd:gs(4),
+  cbSpd:520, cbWide:1.25*2*SAK_BODY_R, cbRange:470, cbLift:16,
+
+  /* 2 — Chakra-Enhanced Punch */
+  cpDmg:30, cpStun:gs(3.5), cpCd:gs(12), cpDash:gs(.55), cpSteer:gs(.15),
+  cpSpd:384,                              // 120% tốc lao của ChiChi (320)
+  cpIbDps:5*RT, cpIbT:gs(5), cpKb:.18,
+  cdMove:.50, cdCast:.40, cdT:gs(6),      // Chakra Disruption sau khi hết choáng
+  cpRange:360,
+
+  /* 3 — Medical Ninjutsu */
+  mnCast:gs(1), mnGap:gs(.5), mnT:gs(2.5), mnTicks:5, mnCd:gs(9), mnBreakCd:gs(4),
+  mnSolo:.05, mnShare:.025,               // 5% máu ĐANG THIẾU mỗi tick, chia đôi khi có đồng đội
+  mnSelfHp:.55, mnAllyHp:.45, mnIdleHp:.85,
+
+  /* Ultimate — Strength of a Hundred Seal */
+  sealHp:.12, sealT:gs(10), sealAnim:gs(1.2), sealCine:gs(1.2), sealRes:.35,
+  sealMove:2.00, sealCast:2.75,           // +175% cast = 275% tốc thi triển
+  /* Hồi phục tính theo GIÂY NGƯỜI CHƠI nên phải nhân RT — cùng luật với `dots[].dps`
+     ở mục 1 của CLAUDE.md. Quên RT thì nhịp hồi chỉ còn một nửa: đo được 11.92 máu
+     mỗi giây người chơi thay vì 24. */
+  katsuyu:.02*RT, byakugo:.02*RT,         // Katsuyu theo máu TỐI ĐA · Byakugo theo máu ĐANG THIẾU
+
+  want:250, midMin:190, midMax:300
+};
+/* Mấy con số dẫn xuất — viết một lần ở đây để bảng kỹ năng, DEX và thân chiêu cùng đọc
+   một chỗ. Shuriken của Sakura luôn bám 80% của Konohamaru, nên chỉnh SHURIKEN_DMG là
+   con số này tự đi theo, đúng yêu cầu người dùng. */
+const sakShurDmg=()=>Math.round(SHURIKEN_DMG*SAK.shurMul);
+const sakShurCd=()=>cm(1.35)/SAK.shurFast;
+
 const CHARS={
+  sakura:{
+    name:'Haruno Sakura', short:'Sakura', tag:'Combat Medic · Crowd-Control Bruiser', emoji:'\u{1F338}',
+    color:'#FF6FA5', alt:'#FFC2D8', role:'ranged', want:SAK.want, speed:101, dodge:.62, male:false, spriteH:116,
+    skills:[
+      `<b>Passive · Medical Expertise</b> Status Resistance <b>${Math.round(SAK.res*100)}%</b> — Burning, Bleeding, Poison, Internal Bleeding, Exhausted, Slowed, Weakened, Silence, Root, Freeze, Sleep, Confusion, Fear and every other timed debuff runs out ${Math.round(SAK.res*100)}% sooner. Stun Resistance <b>${Math.round(SAK.stunRes*100)}%</b>. It only shortens duration — each damage tick still hits full — and never touches knockback, pull, forced teleport, direct damage or defense penetration. No reduced effect ever drops under ${rts(SAK.resFloor)}s.`,
+      `<b>Basic · Shuriken Throw</b> ${sakShurDmg()} damage at range, 80% of Konohamaru's shuriken but thrown 15% faster. <b>${Math.round(SAK.slowOdds*100)}%</b> chance to apply <b>Hampered</b>: −${Math.round(SAK.slowAmt*100)}% movement for ${rts(SAK.slowT)}s, no stacking, refreshes instead.`,
+      `<b>Basic · Chakra Strike</b> Inside ${Math.round(SAK.meleeIn)}px she punches and kicks instead: ${SAK.hitDmg} damage every ${rts(SAK.hitCd)}s. <b>${Math.round(SAK.ibOdds*100)}%</b> chance of <b>Internal Bleeding</b> (${SAK.ibDps/RT} dmg/s for ${rts(SAK.ibT)}s) — and only then does it knock the target back ${Math.round(SAK.hitKb*100)}% of the arena.`,
+      `<b>1 · Cherry Blossom Burst</b> ${rts(SAK.cbCd)}s cooldown · ${rts(SAK.cbCast)}s wind-up, then she slams the ground and a locked-direction fissure races out: ${SAK.cbDmg} damage and <b>${rts(SAK.cbStun)}s Stun</b> to everyone along it, once each per cast. Stunned or knocked down during the wind-up cancels it for only ${rts(SAK.cbBreakCd)}s.`,
+      `<b>2 · Chakra-Enhanced Punch</b> ${rts(SAK.cpCd)}s cooldown · a real ${rts(SAK.cpDash)}s charge at 120% of ChiChi's dash speed, steerable for ${rts(SAK.cpSteer)}s then locked, first target only, <b>no CC immunity</b>. On hit: ${SAK.cpDmg} damage, <b>${rts(SAK.cpStun)}s Stun</b>, <b>Internal Bleeding</b> ${SAK.cpIbDps/RT} dmg/s for ${rts(SAK.cpIbT)}s, and once the stun ends <b>Chakra Disruption</b> −${Math.round(SAK.cdMove*100)}% movement / −${Math.round(SAK.cdCast*100)}% cast speed for ${rts(SAK.cdT)}s.`,
+      `<b>3 · Medical Ninjutsu</b> ${rts(SAK.mnCd)}s cooldown · rooted ${rts(SAK.mnCast)}s, interruptible. Then ${SAK.mnTicks} ticks over ${rts(SAK.mnT)}s heal <b>${Math.round(SAK.mnSolo*100)}% of missing HP</b> each (${Math.round(SAK.mnSolo*SAK.mnTicks*100)}% total), snapshot when the cast lands. With an ally alive it splits ${Math.round(SAK.mnShare*100)}% / ${Math.round(SAK.mnShare*100)}% between herself and the lowest-HP ally. She may move and fight while it ticks.`,
+      `<b>Ultimate · Strength of a Hundred Seal</b> Automatic, once per battle, the first time lethal damage lands: HP is set to <b>${Math.round(SAK.sealHp*100)}% Maximum HP</b> and <b>Byakugo</b> runs ${rts(SAK.sealT)}s — −${Math.round(SAK.sealRes*100)}% damage taken, total crowd-control and debuff immunity, ${Math.round(SAK.sealMove*100)}% movement, ${Math.round(SAK.sealCast*100)}% cast speed, <b>Katsuyu</b> healing ${Math.round(SAK.katsuyu/RT*100)}% Maximum HP/s to her and every living ally, plus <b>Byakugo Regeneration</b> ${Math.round(SAK.byakugo/RT*100)}% of her missing HP/s. <b>There is no invulnerability afterwards</b> — the very next hit of a multi-hit combo can still finish her.`
+    ],
+    init(f){
+      f.cds={s1:gs(2),s2:gs(3),s3:gs(1.5),basic:0};
+      f.sakMelee=false;                 // đang ở thế cận chiến hay chưa (có độ trễ hai mốc)
+      f.sakAct=null;                    // chiêu đang gồng: {kind,t,...}
+      f.sakCrack=null;                  // đường nứt đang lan
+      f.sakDisrupt=0; f.sakHamper=0; f.sakIb=0;
+      f.sakSeal=0; f.sakSealDone=false; f.sakSealAnim=0;
+      f.sakHeal=null; f.katsuyu=0; f.katsuyuOwner=null;
+    },
+    think(f,e,d,auto){
+      /* Đang gồng chiêu, đang lao, hay đang trong animation mở dấu ấn thì không quyết định
+         gì thêm — sakuraTick() lo phần chạy tiếp. */
+      if(f.sakAct||f.sakSealAnim>0)return;
+      e=aimTarget(f)||e; if(!e)return; d=dist(f,e);
+      const use=k=>auto||keys[k];
+      const seal=f.sakSeal>0;
+
+      /* 1–2 · Medical Ninjutsu. Ngưỡng của bản thân đi trước, rồi mới tới đồng đội.
+         Không bao giờ tung khi cả cô lẫn đồng đội đều trên 85% máu, và không tung khi
+         đối thủ đang gồng sẵn một đòn chắc chắn cắt được cast. */
+      if(f.cds.s3<=0&&use('u')&&sakHealWanted(f,auto)){
+        f.cds.s3=SAK.mnCd; sakMedical(f); return;
+      }
+      /* 3 · Chakra-Enhanced Punch — chỉ khi dash với tới được. Trong Byakugo thì chủ động
+         lao vào chứ không giữ khoảng cách. */
+      if(f.cds.s2<=0&&d<=SAK.cpRange&&use('l')){
+        f.cds.s2=SAK.cpCd; sakPunch(f,e); return;
+      }
+      /* 4 · Cherry Blossom Burst — địch ở tầm trung, hoặc đang chạy thẳng về phía cô.
+         Trong Byakugo thì bung ngay khi có đường đánh hợp lệ. */
+      if(f.cds.s1<=0&&d<=SAK.cbRange&&use('k')&&(seal||d>=SAK.meleeIn*.8||sakClosing(f,e))){
+        f.cds.s1=SAK.cbCd; sakBurst(f,e); return;
+      }
+      /* 5–6 · Đòn thường: gần thì Chakra Strike, xa thì Shuriken Throw. Mốc đổi thế nằm
+         trong sakMode() nên hai animation không bao giờ nhấp nháy ở đúng ranh giới. */
+      if(f.cds.basic<=0&&use('j')){
+        if(sakMode(f,d)){ if(d<f.r+e.r+meleeReach(f)){ f.cds.basic=SAK.hitCd; sakStrike(f,e); } }
+        else if(d<=SAK.shurRange){ f.cds.basic=sakShurCd(); sakShuriken(f,e); }
+      }
+    },
+    gauge:f=>{
+      if(f.sakSeal>0) return {pct:clamp(f.sakSeal/SAK.sealT,0,1),fill:'#B07CFF',txt:`BYAKUGO · ${(f.sakSeal*RT).toFixed(1)}s`};
+      if(f.sakSealDone) return {pct:0,fill:'#B07CFF',txt:'Hundred Seal: Spent'};
+      return {pct:1,fill:'#FF6FA5',txt:'Hundred Seal: Ready'};
+    }
+  },
   isagi:{
     name:'Isagi Yoichi', short:'Isagi', tag:'Tactical Finisher · Adaptive Striker', emoji:'🧩', color:'#16C7FF', alt:'#EAFBFF',
     role:'ranged', want:225, speed:102, dodge:.68, male:true, spriteH:116,
@@ -3481,6 +3599,32 @@ const pwAvg=k=>{const p=(DEX[k]||{}).pw||{};
   return Math.round(PW_AXES.reduce((a,x)=>a+(p[x.key]||0),0)/PW_AXES.length);};
 
 const DEX={
+  sakura:{ role:{vi:'Combat Medic · Crowd-Control Bruiser',en:'Combat Medic · Crowd-Control Bruiser'}, st:{pow:2,spd:2,rng:4,def:4},
+    /* Chấm tay, không đo tự động (mục 2g). Sát thương thô THẤP — cô thắng bằng kháng hiệu
+       ứng, khống chế nặng và hồi máu, nên dmg 40 mà cc 88 / uti 92 / dur 86. */
+    pw:{dmg:40,dur:86,mob:44,as:46,rng:70,cc:88,uti:92,con:78,cmb:82},
+    bio:{vi:'Ninja y thuật: kháng gần hết mọi hiệu ứng bất lợi, khống chế nặng tay, tự hồi máu và sống sót qua đòn chí tử đầu tiên.',
+         en:'A medical ninja who shrugs off almost every debuff, lands heavy control, heals through a fight and survives the first lethal blow.'},
+    skills:[
+      {tag:'P',name:'Medical Expertise',
+       vi:'Giảm 70% thời gian mọi debuff và 30% thời gian choáng. Chỉ rút ngắn thời gian, không giảm dmg mỗi tick.',
+       en:'70% shorter debuffs and 30% shorter stuns. It only cuts duration — each damage tick still lands in full.'},
+      {tag:'1',name:'Shuriken Throw / Chakra Strike',
+       vi:`Xa thì ném shuriken ${sakShurDmg()} dmg, 30% dính Hampered. Gần thì đấm ${SAK.hitDmg} dmg, 25% gây Internal Bleeding kèm hất lùi.`,
+       en:`Shuriken for ${sakShurDmg()} at range with a 30% Hampered slow; up close a ${SAK.hitDmg} chakra strike with a 25% Internal Bleeding and knockback.`},
+      {tag:'2',name:'Cherry Blossom Burst',
+       vi:`Đập đất, đường nứt lan thẳng: ${SAK.cbDmg} dmg và choáng ${rts(SAK.cbStun)}s cho mọi người trên đường đi.`,
+       en:`A ground fissure races out for ${SAK.cbDmg} damage and a ${rts(SAK.cbStun)}s stun to everyone in its path.`},
+      {tag:'3',name:'Chakra-Enhanced Punch',
+       vi:`Lao tới ${SAK.cpDmg} dmg, choáng ${rts(SAK.cpStun)}s, Internal Bleeding, rồi Chakra Disruption −50% chạy / −40% cast.`,
+       en:`A charge for ${SAK.cpDmg} damage, a ${rts(SAK.cpStun)}s stun, Internal Bleeding, then Chakra Disruption −50% move / −40% cast.`},
+      {tag:'3',name:'Medical Ninjutsu',
+       vi:'Đứng yên 1s rồi hồi 25% lượng máu đã mất qua 5 nhịp; có đồng đội thì chia đôi cho cả hai.',
+       en:'A 1s rooted cast, then 25% of missing HP healed over 5 ticks — split with the lowest-HP ally when one is alive.'},
+      {tag:'U',name:'Strength of a Hundred Seal',
+       vi:'Đòn chí tử đầu tiên không giết được cô: máu về 12%, 10 giây miễn khống chế, −35% dmg nhận, Katsuyu hồi cho cả đội. Sau đó KHÔNG có bất tử.',
+       en:'The first lethal hit is refused: HP resets to 12% and Byakugo runs 10s — CC immune, −35% damage taken, Katsuyu healing the team. No invulnerability follows.'}
+    ]},
   isagi:{ role:{vi:'Tactical Finisher · Adaptive Striker',en:'Tactical Finisher · Adaptive Striker'}, st:{pow:4,spd:4,rng:4,def:2},
     pw:{dmg:72,dur:42,mob:88,as:68,rng:76,cc:58,uti:96,con:74,cmb:38},
     bio:{vi:'Reads the field, builds Vision, finds Critical Space and converts one opening into a goal.',
@@ -4025,7 +4169,8 @@ const SFX_GROUPS={
   crit:'Chung', throw:'Konohamaru', punch:'ChiChi', kick:'Ozora Tsubasa',
   shika_lazy:'Shikamaru', suz_think:'Horikita Suzune', aya_appear:'Ayanokouji',
   ginyu_fly:'Captain Ginyu', dora_door:'Doraemon', sup_enter:'Superman',
-  bea_door:'Beatrice', gojo_entry:'Satoru Gojo', ui_start:'Giao diện'
+  bea_door:'Beatrice', gojo_entry:'Satoru Gojo', sak_shuriken:'Haruno Sakura',
+  ui_start:'Giao diện'
 };
 const SFX_EVENTS=[
   ['crit','Chí mạng'],['stun','Choáng'],['charm','Bị mê hoặc'],['shock','Bị điện giật'],['burn','Bị thiêu đốt'],
@@ -4116,6 +4261,18 @@ const SFX_EVENTS=[
   ['gojo_overload','Information Overload'],
   ['gojo_win','Satoru Gojo victory'],
   ['gojo_down','Satoru Gojo defeat'],
+
+  ['sak_shuriken','Sakura ném shuriken'],
+  ['sak_bleed','Internal Bleeding bùng lên'],
+  ['sak_focus','Sakura dồn chakra vào nắm đấm'],
+  ['sak_quake','Nắm đấm đập xuống mặt đất'],
+  ['sak_crack','Đường nứt chạy tới nơi'],
+  ['sak_dash','Chakra-Enhanced Punch lao đi'],
+  ['sak_impact','Cú đấm chakra chạm người'],
+  ['sak_heal','Medical Ninjutsu kết ấn'],
+  ['sak_tick','Một nhịp hồi máu'],
+  ['sak_seal','Strength of a Hundred Seal mở ra'],
+  ['sak_katsuyu','Katsuyu hiện ra'],
 
   /* Ô của GIAO DIỆN, không phải của trận đấu: tiếng bấm nút, tiếng lật bước, tiếng màn VS
      và tiếng bảng xếp hạng. Chín ô này chỉ kêu lúc người chơi bấm tay nên đừng để chúng
@@ -4512,6 +4669,30 @@ function synth(name,c,g){
     case 'gojo_win':  [659.25,783.99,987.77,1318.5].forEach((f,i)=>tone(c,g,{type:'triangle',f0:f,f1:f,dur:i===3?.7:.14,vol:.14,delay:i*.13})); break;
     case 'gojo_down': tone(c,g,{type:'sine',f0:620,f1:90,dur:.9,vol:.18});
                       noise(c,g,{dur:.5,f0:1200,f1:180,vol:.1,type:'lowpass'}); break;
+    /* ---- Haruno Sakura ----
+       Tiếng của cô chia làm ba nhóm: shuriken xé gió gọn và nhẹ, cú đấm / đập đất thì
+       TRẦM và NẶNG (nội lực chứ không phải năng lượng), còn y thuật thì trong và êm. */
+    case 'sak_shuriken': noise(c,g,{dur:.14,f0:3400,f1:820,vol:.20,q:.9}); break;
+    case 'sak_bleed':   tone(c,g,{type:'sine',f0:150,f1:54,dur:.34,vol:.20});
+                        noise(c,g,{dur:.2,f0:420,f1:120,vol:.10,type:'lowpass'}); break;
+    case 'sak_focus':   tone(c,g,{type:'sawtooth',f0:70,f1:190,dur:.55,vol:.16});
+                        noise(c,g,{dur:.5,f0:300,f1:1500,vol:.09,q:1.6}); break;
+    case 'sak_quake':   tone(c,g,{type:'sine',f0:135,f1:28,dur:.72,vol:.42});
+                        noise(c,g,{dur:.6,f0:1400,f1:90,vol:.30,q:.55,type:'lowpass'}); break;
+    case 'sak_crack':   noise(c,g,{dur:.26,f0:1900,f1:260,vol:.20,type:'lowpass'});
+                        tone(c,g,{type:'square',f0:210,f1:62,dur:.2,vol:.14}); break;
+    case 'sak_dash':    noise(c,g,{dur:.24,f0:700,f1:2600,vol:.18,q:1.3});
+                        tone(c,g,{type:'triangle',f0:120,f1:330,dur:.26,vol:.16}); break;
+    case 'sak_impact':  tone(c,g,{type:'triangle',f0:230,f1:46,dur:.3,vol:.40});
+                        noise(c,g,{dur:.22,f0:2600,f1:300,vol:.28});
+                        tone(c,g,{type:'sine',f0:90,f1:34,dur:.5,vol:.24,delay:.04}); break;
+    case 'sak_heal':    [0,.11,.22].forEach((d,i)=>tone(c,g,{type:'sine',f0:523+i*165,f1:659+i*186,dur:.4,vol:.13,delay:d})); break;
+    case 'sak_tick':    tone(c,g,{type:'sine',f0:988,f1:1319,dur:.14,vol:.09}); break;
+    case 'sak_seal':    [0,.09,.18,.27].forEach((d,i)=>tone(c,g,{type:'triangle',f0:262+i*196,f1:392+i*226,dur:.85,vol:.15,delay:d}));
+                        noise(c,g,{dur:1.1,f0:260,f1:3800,vol:.13,q:1.8});
+                        tone(c,g,{type:'sine',f0:60,f1:150,dur:.9,vol:.22}); break;
+    case 'sak_katsuyu': tone(c,g,{type:'sine',f0:420,f1:250,dur:.5,vol:.13});
+                        noise(c,g,{dur:.45,f0:900,f1:300,vol:.10,type:'lowpass'}); break;
     /* ---- giao diện ----
        Tiếng bấm nút thì phải GỌN và NHẸ: người chơi bấm cả chục lần trong một lượt chọn
        nhân vật, để dài hay để to là nghe nhức đầu ngay. Cả chín ô đều dưới .2 âm lượng
@@ -5117,6 +5298,7 @@ const BULK_CHAR={
   gojo:['satoru gojo','gojo','satoru'],
   conan:['conan edogawa','conan','edogawa','detective conan'],
   isagi:['isagi yoichi','isagi','yoichi','blue lock'],
+  sakura:['haruno sakura','sakura','haruno'],
   ayanokouji:['ayanokouji','kiyotaka','aya'], nara:['nara','con nai','deer','nai'],
   garden:['garden','khu rung','phong canh','background'],
   goku:['goku'], gohan:['gohan'], hyuga:['hyuga'], misaki:['misaki'],
@@ -5654,6 +5836,11 @@ function mk(o){
     miniPress:0, miniCd:0,             // Konohamaru: đồng hồ bị vây và hồi chiêu Mini Rasengan
     /* Superman: Frozen / Chilled / làm chậm của vùng chấn động và trần khống chế cứng
        là thứ anh dán lên NGƯỜI KHÁC, nên khai chung ở đây với giá trị trung tính. */
+    /* Haruno Sakura: Hampered, Chakra Disruption và Katsuyu là thứ cô dán lên NGƯỜI
+       KHÁC, nên khai chung ở đây với giá trị trung tính — cùng lối Disoriented của
+       Doraemon và Frozen của Superman. */
+    sakHamper:0, sakDisrupt:0, sakDisruptAfter:0, sakLift:0, sakSeal:0, sakSealDone:false,
+    sakSealAnim:0, sakHealAcc:0, katsuyu:0, katsuyuOwner:null,
     frozen:0, frozenDmg:0, chill:0, chillAfter:0, hvSlowT:0, supSlow:0, supQuake:0,
     supCcAcc:0, supCcT:0, supCcFree:0,
     supEntry:null, supHide:false, supAir:0, supCone:null, supLog:null,
@@ -5848,7 +6035,7 @@ function teamLabel(team){
   return names.join(' + ');
 }
 function newGame(){
-  G={t:0,proj:[],waves:[],fx:[],floats:[],conf:[],timers:[],logs:[],over:null,winner:null,winTeam:null,endT:0,announced:false,cam:{x:W/2,y:H/2,z:1},freeze:0,freezeAt:null,callBanner:null,kos:[],fighters:[],mates:[],flashback:null,flashScreen:0};
+  G={t:0,proj:[],waves:[],fx:[],floats:[],conf:[],timers:[],logs:[],over:null,winner:null,winTeam:null,endT:0,announced:false,cam:{x:W/2,y:H/2,z:1,shake:0},freeze:0,freezeAt:null,callBanner:null,kos:[],fighters:[],mates:[],flashback:null,flashScreen:0};
   G.timeWarp=null;
   G.mode=PMODE;
   const roster=buildRoster(), spots=spawnSpots(roster), seen={};
@@ -5914,12 +6101,20 @@ function stunFx(f,dur,kind){
       life:.9,ml:.9,banner:true,gold:true,sc:.6,tilt:rnd(-.05,.05)});
     return false;
   }
+  if(f.key==='sakura'&&!f.swapAs&&f.sakSeal>0){  // Byakugo: miễn khống chế 100%
+    G.floats.push({x:f.x,y:f.y-104,txt:'CC IMMUNE',color:'#B07CFF',
+      life:.9,ml:.9,banner:true,gold:true,sc:.6,tilt:rnd(-.05,.05)});
+    return false;
+  }
   if(f.eagle){                                   // bảo hộ: lúc này miễn khống chế
     G.floats.push({x:f.x,y:f.y-104,txt:'CC IMMUNE',color:'#FFE9A8',
       life:.9,ml:.9,banner:true,gold:true,sc:.6,tilt:rnd(-.05,.05)});
     return false;
   }
   if(f.prewing) dur*=PREWING_STUN;               // Pre-Wings: gồng được, choáng ngắn lại
+  /* Medical Expertise: riêng Stunned chỉ giảm 30% chứ không phải 70% — cô không được
+     phép áp đảo hẳn mấy nhân vật chuyên gây choáng. Đi qua cùng sàn resFloor. */
+  if(f.key==='sakura'&&!f.swapAs) dur=sakCut(dur,SAK.stunRes);
   if(f.ccRes>0) dur*=(1-f.ccRes);                // Horikita form 3: kháng hiệu ứng, choáng ngắn lại
   if(f.gnCcRes>0) dur*=(1-f.gnCcRes);            // Ginyu đang ở thế thăm dò: kháng hiệu ứng
   if(f.drCcRes>0) dur*=(1-f.drCcRes);            // Doraemon đang mang Future Knowledge
@@ -6064,6 +6259,7 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
   if(t.key==='tanjiro'&&t.tanUlt) amt*=dm(TAN.ultTake);
   if(t.key==='conan'&&!t.swapAs&&t.conanSkate) amt*=CONAN.skateTake;
   if(t.key==='isagi'&&!t.swapAs&&t.isagiBlind) amt*=ISAGI.blindTake;
+  if(t.key==='sakura'&&!t.swapAs&&t.sakSeal>0) amt*=dm(1-SAK.sealRes);   // Byakugo Active
   /* Sổ sát thương gây ra — Small Light chọn mục tiêu theo nó, và giải đấu lấy nó làm
      hiệu số. Hai luật:
        · VIỆN BINH ghi công cho CHỦ (`src.master`). Goku / Gohan / Ayanokouji là người
@@ -6126,6 +6322,11 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
      ngã xuống và bắn tia hoán đổi thân xác. Chỉ đúng một lần, và chỉ khi hồn anh còn
      nằm trong thân xác của chính mình. */
   if(t.hp<=0&&!t.summon&&gnCanChange(t)){ ginyuChange(t); return true; }
+  /* Ultimate — Strength of a Hundred Seal. Chặn ĐÚNG MỘT instance lethal damage, rồi
+     thôi: không invuln, không khung bất tử, không chặn lần hai. Vì vậy hit KẾ TIẾP của
+     một combo nhiều hit vẫn giết được cô — đó là yêu cầu cân bằng nêu thẳng trong bản
+     mô tả, đừng "sửa" thành miễn thương. */
+  if(t.hp<=0&&!t.summon&&sakCanSeal(t)){ sakSealOn(t); return true; }
   if(t.hp<=0&&!t.summon){ defeat(t,src); }
   return true;                              // đòn đã trúng: chỗ gọi được phép gắn thêm choáng / duy trì
 }
@@ -10246,7 +10447,7 @@ const drCanTime=f=>!!f&&f.key==='dora'&&!f.summon&&!f.swapAs&&!f.tmDone&&!f.tm;
 /* beaStatus() chạy CUỐI: gnStatus GÁN ĐÈ mấy hệ số nên phải nằm sau nó, và Murak
    Protection thì phải có tiếng nói cuối cùng — miễn khống chế 100% nghĩa là gạt sạch mọi
    thứ làm chậm mà mấy hàm trên vừa nhân vào. */
-function statusTick(f,dt){ gnStatus(f,dt); summonStatus(f,dt); drStatus(f,dt); supStatus(f,dt); beaStatus(f,dt); tanStatus(f,dt); gojoStatus(f,dt); conanStatus(f,dt); }
+function statusTick(f,dt){ gnStatus(f,dt); summonStatus(f,dt); drStatus(f,dt); supStatus(f,dt); beaStatus(f,dt); tanStatus(f,dt); gojoStatus(f,dt); conanStatus(f,dt); sakStatus(f,dt); }
 function gojoStatus(f,dt){
   let overloadEnded=false;
   if(f.infoOverload>0){
@@ -10480,6 +10681,7 @@ function drEscapeTick(f,dt){
        Shrunk, vì đó là một lần biến hình chứ không phải một lớp làm chậm. */
     f.dis=0; f.gnSlow=0; f.gnSlowAfter=0; f.gnDaze=0; f.gnTired=0; f.exhaust=0;
     f.kameSlow=0; f.kameAfter=0; f.msSlow=0; f.msStack=0;
+    f.sakHamper=0; f.sakDisrupt=0; f.sakDisruptAfter=0;
     f.edSpeed=DORA.edSpeedT;
     sfx('dora_escape');
     ring(f.x,f.y,90,'#FF9AD5',.4);
@@ -10806,6 +11008,7 @@ function drTimeBack(f){
   f.gnDaze=0; f.gnRage=0; f.gnTired=0; f.gnSlow=0; f.gnSlowAfter=0;
   f.kameSlow=0; f.kameAfter=0; f.msSlow=0; f.msStack=0;
   f.exhaust=0; f.vuln=0; f.outCut=0; f.lock=0; f.kbx=0; f.kby=0;
+  f.sakHamper=0; f.sakDisrupt=0; f.sakDisruptAfter=0; f.sakLift=0;
   f.hitMul=1; f.reachMul=1; f.kbTake=1;
   if(f.r0!==undefined){ f.r=f.r0; f.r0=undefined; }
   for(const o of G.fighters) if(o.bind&&o.bind.e===f){ o.bind=null; o.lock=0; }
@@ -11814,6 +12017,7 @@ function beaCleanse(f){
   f.gnDaze=0; f.gnRage=0; f.gnTired=0; f.gnSlow=0; f.gnSlowAfter=0;
   f.kameSlow=0; f.kameAfter=0; f.msSlow=0; f.msStack=0;
   f.beaSlow=0;
+  f.sakHamper=0; f.sakDisrupt=0; f.sakDisruptAfter=0; f.sakLift=0;
   f.kbx=0; f.kby=0; f.dvx=0; f.dvy=0;                 // quật ngã / hất tung: cắt luôn đà bị hất
   f.supCcT=0; f.supCcAcc=0;
   /* Dải bóng của Shikamaru trói chân — nó nằm trên NGƯỜI KẾT ẤN chứ không nằm trên nạn
@@ -13035,6 +13239,674 @@ function dodgeVec(f){
   }
   return {x:dx,y:dy};
 }
+/* ================= Haruno Sakura =================
+   Combat Medic / Crowd-Control Bruiser. Sát thương thô thấp; cô thắng bằng kháng hiệu ứng,
+   khống chế nặng, hồi máu và sống sót qua đòn chí tử đầu tiên. */
+
+/* Thân xác này có đang thật sự là Sakura không. Cùng lối `!f.swapAs` của Conan / Isagi:
+   sau cú CHANGE của Ginyu thì nội tại bám vào THÂN XÁC nên tắt hết. */
+const sakOn=f=>!!f&&f.key==='sakura'&&!f.summon&&!f.swapAs&&f.alive;
+
+/* ---------- Passive · Medical Expertise ----------
+   MỘT CỬA DUY NHẤT cho toàn bộ phần kháng hiệu ứng. Đây là chỗ tự quyết quan trọng nhất
+   của nhân vật này, nên nói rõ vì sao:
+
+   Engine KHÔNG có một hàm chung nào để "dán một debuff có thời gian" — mỗi nhân vật tự
+   gán thẳng vào trường của mình (`exhaust`, `dis`, `chill`, `gnSlow`, `beaSlow`…), rải ra
+   hơn bốn chục chỗ. Bọc từng chỗ gọi thì (a) sửa hơn bốn chục điểm, (b) nhân vật thêm về
+   sau sẽ lọt lưới — đúng cái bẫy `gnHeal()` đã ghi ở CLAUDE.md.
+
+   Vì vậy cửa này SOI THEO TRƯỜNG chứ không bọc theo chỗ gọi: mỗi nhịp so giá trị hiện tại
+   với giá trị nhịp trước; trường nào VỌT LÊN nghĩa là vừa có người dán debuff mới, và
+   chính con số vọt lên đó là thời lượng vừa dán (mọi chỗ trong engine đều dùng
+   `Math.max(cũ, mới)`). Cắt đúng một lần ngay tại đó rồi ghi lại mốc.
+
+   Hai điều bắt buộc khi đụng vào đây:
+     · `SAK_DEBUFFS` là DANH SÁCH TRẮNG, không phải quét bừa — `invuln`, `gnRage`, `castBuff`
+       là BUFF, quét nhầm là cô tự cắt buff của chính mình.
+     · `stun` KHÔNG nằm trong danh sách: choáng chỉ giảm 30% và đi qua `stunFx()`.
+   Thêm debuff mới cho nhân vật khác thì thêm tên trường vào đây là cô kháng được ngay. */
+const SAK_DEBUFFS=[
+  'exhaust','vuln','dis','shrunk','regenSupp',
+  'chill','chillAfter','frozen','hvSlowT','supSlow','supQuake',
+  'gnSlow','gnSlowAfter','gnDaze','gnTired',
+  'kameSlow','kameAfter','msSlow',
+  'beaSlow','beaWeak',
+  'infoOverload','overwhelmed','conanSleep','conanDaze',
+  'sakDisrupt','sakHamper'
+];
+/* Rút ngắn một thời lượng. Sàn `resFloor` để hiệu ứng không bao giờ ngắn tới mức vô nghĩa,
+   nhưng KHÔNG BAO GIỜ kéo dài thêm một hiệu ứng vốn đã ngắn hơn sàn. */
+function sakCut(d,res){
+  if(!(d>0))return d;
+  const r=res===undefined?SAK.res:res;
+  return Math.max(d*(1-r),Math.min(d,SAK.resFloor));
+}
+function sakResTick(f,dt){
+  if(!sakOn(f))return;
+  const prev=f._sakPrev||(f._sakPrev={});
+  /* Byakugo: miễn hoàn toàn mọi khống chế và debuff MỚI. Rũ sạch mỗi nhịp thay vì cắt. */
+  const immune=f.sakSeal>0;
+  for(const k of SAK_DEBUFFS){
+    const cur=f[k]||0;
+    if(immune){ if(cur>0) f[k]=0; prev[k]=0; continue; }
+    const was=prev[k]||0;
+    if(cur>was+1e-9) f[k]=Math.max(was,sakCut(cur));   // làm mới không bao giờ tụt dưới phần đang còn
+    prev[k]=f[k]||0;
+  }
+  /* Sát thương duy trì: chỉ cắt SỐ NHỊP (`left`), tuyệt đối không đụng `dps` — người dùng
+     chốt rõ "mỗi tick vẫn gây đủ damage, chỉ số lượng tick giảm đi". */
+  for(const d of f.dots){
+    if(!d||d._sakCut)continue;
+    d._sakCut=true;
+    if(immune) d.left=0; else d.left=sakCut(d.left);
+  }
+  if(immune){ for(let i=f.dots.length-1;i>=0;i--) if(f.dots[i]&&f.dots[i].left<=0) f.dots.splice(i,1); }
+}
+
+/* ---------- Trạng thái cô DÁN LÊN NGƯỜI KHÁC, cộng hệ số của chính cô ----------
+   Chạy CUỐI trong statusTick vì `gnStatus` GÁN đè `moveMul`/`castMul` — nhân trước nó là
+   mất trắng (đúng cái bẫy của `tsuPinTick` ở CLAUDE.md). */
+function sakStatus(f,dt){
+  if(f.sakHamper>0){ f.sakHamper=Math.max(0,f.sakHamper-dt); f.moveMul*=(1-SAK.slowAmt); }
+  if(f.sakDisrupt>0){
+    f.sakDisrupt=Math.max(0,f.sakDisrupt-dt);
+    f.moveMul*=(1-SAK.cdMove); f.castMul*=(1-SAK.cdCast);
+  }
+  /* Chakra Disruption chỉ BẮT ĐẦU khi choáng thật sự kết thúc (hoặc bị giải sớm) — xếp
+     hàng qua `sakDisruptAfter`, đúng lối luồng sáng của Ginyu và ghì chân của Kamehameha. */
+  if(f.sakDisruptAfter>0&&f.stun<=0){
+    f.sakDisrupt=Math.max(f.sakDisrupt,f.sakDisruptAfter); f.sakDisruptAfter=0;
+    G.floats.push({x:f.x,y:f.y-118,txt:`CHAKRA DISRUPTION −${Math.round(SAK.cdMove*100)}% MOVE / −${Math.round(SAK.cdCast*100)}% CAST ${rts(SAK.cdT)}s`,
+      color:'#7FE8C8',life:1.5,ml:1.5,banner:true,gold:true,sc:.56,tilt:rnd(-.05,.05)});
+  }
+  if(f.katsuyu>0) f.katsuyu=Math.max(0,f.katsuyu-dt);
+  sakRegenTick(f,dt);
+  if(!sakOn(f))return;
+  if(f.sakSeal>0){
+    /* Byakugo: gạt sạch mọi hệ số làm chậm mà mấy status khác vừa nhân vào, rồi mới nhân
+       phần của mình. Giữ nguyên quãng khoá của CHÍNH chiêu cô đang tung (Medical Ninjutsu
+       trói chân 1 giây) — không thì chiêu tự cắt ngang mình, đúng lối Murak của Beatrice. */
+    const own=f.sakAct&&f.sakAct.kind==='heal'?f.lock:0;
+    f.moveMul=Math.max(f.moveMul,1); f.castMul=Math.max(f.castMul,1);
+    f.lock=own;
+    f.moveMul*=SAK.sealMove;
+  }
+}
+/* Tốc thi triển của Byakugo ăn vào QUÃNG GỒNG của chính cô, KHÔNG ăn vào `castMul`.
+   Người dùng chốt: "Cast Speed không ảnh hưởng cooldown" — mà trong engine này `castMul`
+   chính là nhịp trôi hồi chiêu, nên nhét vào đó là sai hẳn yêu cầu. */
+const sakCastMul=f=>(f&&f.sakSeal>0)?1/SAK.sealCast:1;
+
+/* Internal Bleeding — hai bản, KHÔNG cộng dồn. Bản mạnh ghi đè bản yếu; bản yếu rơi vào
+   lúc bản mạnh đang chạy thì chỉ làm mới thời gian chứ không kéo tụt sát thương xuống. */
+function sakIbOn(t,src,dps,dur){
+  if(!t||t.summon)return;
+  let cur=null;
+  for(let i=t.dots.length-1;i>=0;i--) if(t.dots[i]&&t.dots[i].sakIb){ cur=t.dots[i]; t.dots.splice(i,1); }
+  const keep=cur&&cur.dps>dps;
+  t.dots.push({dps:keep?cur.dps:dps,left:keep?Math.max(cur.left,dur):dur,acc:0,src,tint:'#8E1023',sakIb:true});
+  G.floats.push({x:t.x,y:t.y-118,txt:`INTERNAL BLEEDING ${Math.round((keep?cur.dps:dps)/RT)} DMG/s ${rts(dur)}s`,
+    color:'#C7304A',life:1.4,ml:1.4,banner:true,gold:true,sc:.56,tilt:rnd(-.05,.05)});
+  t.flash=Math.max(t.flash,.22);
+  sfx('sak_bleed');
+}
+/* Hampered — chỉ giảm tốc CHẠY. Không đụng tốc thi triển, không chặn dash. Không cộng
+   dồn: viên sau chỉ làm mới đồng hồ. */
+function sakHamperOn(t,src){
+  if(!t||t.summon)return;
+  t.sakHamper=Math.max(t.sakHamper||0,gnCc(src,SAK.slowT));
+  G.floats.push({x:t.x,y:t.y-104,txt:`HAMPERED −${Math.round(SAK.slowAmt*100)}% MOVE ${rts(SAK.slowT)}s`,
+    color:'#FFA8C8',life:1.2,ml:1.2,banner:true,sc:.52});
+}
+
+/* ---------- Basic · hai thế đánh, đổi theo khoảng cách CÓ ĐỘ TRỄ ----------
+   Vào trong `meleeIn` thì chuyển sang đấm; phải ra quá `meleeOut` mới ném lại. Khoảng
+   chênh giữa hai mốc chính là thứ giữ cho hai animation không nhấp nháy khi đối thủ đứng
+   đúng ranh giới. Hai mốc đo bằng HẰNG SỐ thân người, không đọc `f.r`. */
+/* Địch có đang CHẠY THẲNG VỀ PHÍA cô không. Dùng cho cửa Cherry Blossom Burst: đường nứt
+   khoá hướng ngay lúc tay chạm đất, nên nó ăn nhất vào người đang lao tới chứ không phải
+   người đang lượn ngang. Đọc `vx/vy` — vận tốc đã làm mượt mà `step()` ghi ra mỗi nhịp. */
+function sakClosing(f,e){
+  if(!f||!e)return false;
+  const sp=Math.hypot(e.vx||0,e.vy||0);
+  if(sp<12)return false;                       // đứng yên hoặc nhích nhẹ thì không tính
+  const d=dist(f,e)||1;
+  return ((f.x-e.x)/d*(e.vx||0)+(f.y-e.y)/d*(e.vy||0))/sp>.45;   // lệch dưới ~63°
+}
+function sakMode(f,d){
+  if(f.sakMelee){ if(d>SAK.meleeOut) f.sakMelee=false; }
+  else if(d<=SAK.meleeIn) f.sakMelee=true;
+  return f.sakMelee;
+}
+function sakShuriken(f,e){
+  setPose(f,'atk1',cm(.42)*sakCastMul(f)); aim(f,e,1);
+  later(cm(.16)*sakCastMul(f),()=>{
+    if(!f.alive||G.over||G.freeze>0)return;
+    sfx('sak_shuriken');
+    /* Ngắm tương đối chính xác nhưng KHÔNG tự bẻ hướng mạnh: cả hai cùng chạy thì lệch
+       hơn, nên mục tiêu đổi hướng gấp là trượt được. */
+    const both=f.moving&&e.moving;
+    const a=Math.atan2(e.y-f.y,e.x-f.x)+(both?rnd(-.10,.10):rnd(-.03,.03))+(f.aimOff?rnd(-f.aimOff,f.aimOff):0);
+    G.proj.push({type:'shuriken',team:f.team,owner:f,x:f.x+Math.cos(a)*24,y:f.y+Math.sin(a)*24,
+      vx:Math.cos(a)*SAK.shurSpd,vy:Math.sin(a)*SAK.shurSpd,r:9,dmg:sakShurDmg(),life:2.6,spin:0,sakSlow:true});
+  });
+}
+/* Chakra Strike — chậm và nặng, KHÔNG gây choáng. Hất lùi CHỈ xảy ra khi Internal
+   Bleeding kích hoạt, đúng như bản mô tả. */
+function sakStrike(f,e){
+  const kick=chance(.5);
+  setPose(f,kick?'kick':'punch',cm(.34)*sakCastMul(f)); aim(f,e,.9); sfx('punch');
+  const landed=hurt(e,SAK.hitDmg,f);
+  G.fx.push({type:'punch',x:(f.x+e.x)/2,y:(f.y+e.y)/2,life:.18,ml:.18});
+  if(!landed)return false;
+  if(chance(SAK.ibOdds)){
+    sakIbOn(e,f,SAK.ibDps,gnCc(f,SAK.ibT));
+    const d=dist(f,e)||1;
+    knock(e,(e.x-f.x)/d,(e.y-f.y)/d,W*SAK.hitKb*6);   // lực tắt dần exp(-6t) ⇒ quãng đi = power/6
+    ring(e.x,e.y,74,'#C7304A',.3);
+  }
+  return true;
+}
+
+/* ---------- 1 · Cherry Blossom Burst ----------
+   Đứng vững tại chỗ, dồn chakra vào nắm đấm rồi đập xuống đất. Đường nứt chạy thẳng từ
+   CHỖ CÔ ĐẤM về phía mục tiêu, hướng KHOÁ ngay lúc tay chạm đất — mục tiêu đổi hướng sau
+   đó thì chiêu trượt. Không bẻ cong đuổi theo ai. */
+function sakBurst(f,e){
+  setPose(f,'burst',SAK.cbCast*sakCastMul(f)+gs(.35));
+  aim(f,e,.4);
+  f.sakAct={kind:'burst',t:SAK.cbCast*sakCastMul(f),e};
+  f.lock=Math.max(f.lock,f.sakAct.t);
+  sfx('sak_focus');
+  G.floats.push({x:f.x,y:f.y-104,txt:'CHERRY BLOSSOM BURST',color:f.color,life:1.3,ml:1.3,
+    banner:true,bubble:true,gold:true,big:true,tilt:rnd(-.06,.06)});
+}
+function sakBurstGo(f){
+  const e=f.sakAct&&f.sakAct.e;
+  const tg=(e&&e.alive)?e:(aimTarget(f)||foeOf(f));
+  const ang=tg?Math.atan2(tg.y-f.y,tg.x-f.x):(f.face>=0?0:Math.PI);
+  f.sakAct=null; f.lock=0;
+  setPose(f,'burst',gs(.4));
+  sfx('sak_quake'); sfx('boom');
+  G.flashScreen=Math.max(G.flashScreen,.12);
+  G.cam.shake=Math.max(G.cam.shake||0,7);
+  ring(f.x,f.y,96,'#C9A98B',.45);
+  /* Đường nứt: một đầu lan chạy thẳng, mỗi kẻ địch chỉ ăn ĐÚNG MỘT LẦN mỗi lượt dùng. */
+  f.sakCrack={x:f.x,y:f.y,ox:f.x,oy:f.y,ang,d:0,hit:[],life:gs(1.6),rock:0};
+}
+function sakCrackTick(f,dt){
+  const C=f.sakCrack; if(!C)return;
+  C.life-=dt;
+  const step=SAK.cbSpd*dt;
+  C.d+=step;
+  C.x=C.ox+Math.cos(C.ang)*C.d; C.y=C.oy+Math.sin(C.ang)*C.d;
+  C.rock-=dt;
+  if(C.rock<=0){ C.rock=.05; for(let i=0;i<2;i++) G.fx.push({type:'dust',x:C.x+rnd(-18,18),y:C.y+rnd(-8,8),life:.4,ml:.4}); }
+  const half=SAK.cbWide/2;
+  for(const o of G.fighters){
+    if(!o||!o.alive||o.team===f.team||o.summon&&!o.ally)continue;
+    if(offField(o)||C.hit.indexOf(o)>=0)continue;
+    if(Math.hypot(o.x-C.x,o.y-C.y)>half+o.r)continue;
+    C.hit.push(o);
+    const landed=hurt(o,SAK.cbDmg,f,'CHERRY BLOSSOM BURST!');
+    if(!landed)continue;
+    /* Hất nhẹ lên khỏi mặt đất rồi rơi xuống gần chỗ trúng đòn — không phải cú hất văng
+       ngang, nên KHÔNG gọi knock(). */
+    o.sakLift=Math.max(o.sakLift||0,SAK.cbStun);
+    const st=stunFx(o,gnCc(f,SAK.cbStun),'spin');
+    if(st) G.floats.push({x:o.x,y:o.y-104,txt:`STUNNED ${rts(SAK.cbStun)}s`,color:'#7FD0FF',life:1.2,ml:1.2,banner:true,sc:.6});
+    ring(o.x,o.y,84,'#C9A98B',.3);
+    sfx('sak_crack');
+  }
+  // dừng lại ở rìa sàn hoặc khi hết tuổi thọ
+  if(C.life<=0||C.d>SAK.cbRange||C.x<PAD||C.x>W-PAD||C.y<PAD+40||C.y>H-PAD) f.sakCrack=null;
+}
+
+/* ---------- 2 · Chakra-Enhanced Punch ----------
+   Cú lao THẬT, có animation chạy, không phải teleport. KHÔNG miễn khống chế: một cú choáng
+   là cắt đứt được — vì vậy `f.dash` ở đây tuyệt đối KHÔNG mang cờ `guard`. */
+function sakPunch(f,e){
+  setPose(f,'charge',SAK.cpDash+gs(.3)); aim(f,e,1.4); sfx('sak_dash');
+  f.dash={t:SAK.cpDash,hit:false,kind:'sakcharge',spd:SAK.cpSpd,pose:'charge',steer:SAK.cpSteer};
+  G.floats.push({x:f.x,y:f.y-104,txt:'CHAKRA-ENHANCED PUNCH',color:f.color,life:1.3,ml:1.3,
+    banner:true,bubble:true,gold:true,big:true,tilt:rnd(-.06,.06)});
+  ring(f.x,f.y,80,f.color,.4);
+}
+function sakChargeHit(f,e){
+  if(!e||!e.alive)return;
+  G.flashScreen=Math.max(G.flashScreen,.14);
+  G.cam.shake=Math.max(G.cam.shake||0,6);
+  ring(e.x,e.y,132,'#FF6FA5',.5); ring(e.x,e.y,86,'#FFFFFF',.34);
+  sfx('sak_impact');
+  const landed=hurt(e,SAK.cpDmg,f,'CHAKRA-ENHANCED PUNCH!');
+  if(!landed){ say('Sakura lao tới nhưng cú đấm bị né mất.','m'); return; }
+  const st=stunFx(e,gnCc(f,SAK.cpStun),'spin');
+  if(st) G.floats.push({x:e.x,y:e.y-104,txt:`STUNNED ${rts(SAK.cpStun)}s`,color:'#7FD0FF',life:1.2,ml:1.2,banner:true,sc:.6});
+  sakIbOn(e,f,SAK.cpIbDps,gnCc(f,SAK.cpIbT));
+  /* Chakra Disruption xếp hàng, chỉ mở ra khi choáng thật sự hết (hoặc bị giải sớm). */
+  e.sakDisruptAfter=Math.max(e.sakDisruptAfter||0,gnCc(f,SAK.cdT));
+  const d=dist(f,e)||1;
+  knock(e,(e.x-f.x)/d,(e.y-f.y)/d,W*SAK.cpKb*6);
+  say(`Sakura đấm trúng — ${SAK.cpDmg} dmg, choáng ${rts(SAK.cpStun)}s, Internal Bleeding rồi Chakra Disruption.`,'c');
+}
+
+/* ---------- 3 · Medical Ninjutsu ----------
+   Đứng yên 1 giây kết ấn — vẫn ăn đòn, vẫn bị khống chế, và bị cắt ngang là mất chiêu.
+   Xong cast rồi thì hồi máu cứ chạy, cô đi lại và đánh nhau bình thường. */
+function sakHealWanted(f,auto){
+  if(!auto)return true;                                  // người chơi tự bấm thì cứ cho bấm
+  if(f.sakHeal)return false;
+  const self=f.hp/f.maxHp;
+  const ally=sakLowAlly(f);
+  const allyR=ally?ally.hp/ally.maxHp:1;
+  if(self>=SAK.mnIdleHp&&allyR>=SAK.mnIdleHp)return false;   // cả hai đều trên 85%: không có gì để hồi
+  if(self<SAK.mnSelfHp)return true;
+  if(ally&&allyR<SAK.mnAllyHp)return true;
+  return false;
+}
+/* Đồng đội còn sống có TỈ LỆ máu thấp nhất, và phải đang thiếu máu thật. Viện binh thuần
+   (Goku / Gohan / phân thân) không có thanh máu nên không tính — cùng cờ `summon&&!ally`
+   mà drawBars() dùng. */
+function sakLowAlly(f){
+  let best=null,br=2;
+  for(const o of G.fighters){
+    if(!o||o===f||!o.alive||o.hp<=0||o.team!==f.team)continue;
+    if(o.summon&&!o.ally)continue;
+    if(o.hp>=o.maxHp)continue;
+    const r=o.hp/o.maxHp;
+    if(r<br){ br=r; best=o; }
+  }
+  return best;
+}
+function sakMedical(f){
+  setPose(f,'heal',SAK.mnCast*sakCastMul(f));
+  f.sakAct={kind:'heal',t:SAK.mnCast*sakCastMul(f)};
+  f.lock=Math.max(f.lock,f.sakAct.t);
+  sfx('sak_heal');
+  G.floats.push({x:f.x,y:f.y-104,txt:'MEDICAL NINJUTSU',color:'#7DEBAB',life:1.2,ml:1.2,
+    banner:true,bubble:true,gold:true,big:true,tilt:rnd(-.05,.05)});
+}
+function sakMedicalGo(f){
+  f.sakAct=null; f.lock=0;
+  /* Lượng máu ĐÃ MẤT chụp lại ĐÚNG LÚC cast xong, không tính lại sau mỗi nhịp. */
+  const ally=sakLowAlly(f);
+  const pct=ally?SAK.mnShare:SAK.mnSolo;
+  f.sakHeal={left:SAK.mnTicks,t:0,gap:SAK.mnGap,
+    self:(f.maxHp-f.hp)*pct, ally, allyAmt:ally?(ally.maxHp-ally.hp)*pct:0};
+  ring(f.x,f.y,92,'#7DEBAB',.4);
+  say(ally
+    ? `Medical Ninjutsu — chia đôi, hồi ${Math.round(SAK.mnShare*SAK.mnTicks*100)}% máu đã mất cho Sakura và ${ally.name}.`
+    : `Medical Ninjutsu — hồi ${Math.round(SAK.mnSolo*SAK.mnTicks*100)}% lượng máu đã mất qua ${SAK.mnTicks} nhịp.`,'g');
+}
+function sakHealTick(f,dt){
+  const M=f.sakHeal; if(!M)return;
+  M.t-=dt;
+  if(M.t>0)return;
+  M.t=M.gap; M.left--;
+  sakHealOne(f,f,M.self);
+  /* Đồng đội chết giữa chừng thì phần của họ MẤT HẲN, không dồn sang ai. */
+  if(M.ally&&M.ally.alive&&M.ally.hp>0) sakHealOne(f,M.ally,M.allyAmt);
+  if(M.left<=0) f.sakHeal=null;
+}
+function sakHealOne(f,t,amt){
+  if(!t||!t.alive||amt<=0)return;
+  const v=Math.min(t.maxHp-t.hp,amt*regenFactor(t)*gnHeal(f,false));   // không bao giờ overheal
+  if(v<=0)return;
+  t.hp+=v;
+  G.floats.push({x:t.x-30,y:t.y-54,txt:'+'+Math.round(v),color:'#7DEBAB',life:.9,ml:.9,sc:.58});
+  for(let i=0;i<3;i++) G.fx.push({type:'heal',x:t.x+rnd(-16,16),y:t.y+rnd(-10,10),life:.5,ml:.5,color:'#7DEBAB'});
+  sfx('sak_tick');
+}
+
+/* ---------- Ultimate · Strength of a Hundred Seal ----------
+   KHÔNG tự bung theo hồi chiêu. Chỉ nổ đúng một lần, đúng lúc một đòn sắp đưa máu về 0. */
+const sakCanSeal=f=>!!f&&f.key==='sakura'&&!f.summon&&!f.swapAs&&!f.sakSealDone&&f.sakSeal<=0;
+function sakSealOn(f){
+  f.sakSealDone=true;
+  f.sakSeal=SAK.sealT;
+  f.sakSealAnim=SAK.sealAnim;
+  /* Máu về ĐÚNG 12% máu tối đa. Math.floor để không rơi cao hơn mốc tơi tả khi máu tối đa
+     là số lẻ — đúng bài học của ginyuPossess() ở CLAUDE.md. */
+  f.hp=Math.max(1,Math.floor(f.maxHp*SAK.sealHp));
+  /* Mọi hiệu ứng bất lợi đang chịu được giải NGAY. Không có invuln: cố ý, vì bản mô tả
+     nói thẳng là đòn kế tiếp của một combo nhiều hit vẫn giết được cô. */
+  f.stun=0; f.lock=0; f.sakAct=null; f.dash=null;
+  for(const k of SAK_DEBUFFS) f[k]=0;
+  f.dots.length=0;
+  if(f._sakPrev) for(const k in f._sakPrev) f._sakPrev[k]=0;
+  setPose(f,'seal',SAK.sealAnim);
+  /* Katsuyu bên cạnh Sakura, và một Katsuyu Fragment bên cạnh MỖI đồng đội còn sống.
+     Không cộng dồn giữa nhiều Sakura: chỉ giữ quãng còn lại DÀI NHẤT. */
+  for(const o of G.fighters){
+    if(!o||!o.alive||o.hp<=0||o.team!==f.team)continue;
+    if(o.summon&&!o.ally&&o!==f)continue;
+    o.katsuyu=Math.max(o.katsuyu||0,SAK.sealT); o.katsuyuOwner=f;
+  }
+  /* PHÂN CẢNH FOCUS — camera lao vào sát mặt cô trong lúc dấu ấn nở ra. Đây là quãng
+     ngắn NHẤT trong cả game (0.6 giây trong trận, đúng con số bản mô tả nêu), nhưng vẫn
+     đủ để người xem thấy rõ cô đổi hình.
+     Đóng băng ở đây KHÔNG cứu cô khỏi combo nhiều hit: hẹn giờ không mang cờ `cine` và
+     đạn đang bay đều DỪNG LẠI rồi chạy tiếp, nên mấy hit còn lại vẫn rơi xuống đủ — luật
+     "hit kế tiếp vẫn giết được" ở mục cân bằng giữ nguyên. */
+  G.freeze=Math.max(G.freeze,SAK.sealCine); G.freezeAt=f;
+  G.flashScreen=Math.max(G.flashScreen,.32);
+  G.cam.shake=Math.max(G.cam.shake||0,6);
+  ring(f.x,f.y,150,'#B07CFF',.55); ring(f.x,f.y,104,'#7DEBAB',.45);
+  ring(f.x,f.y,210,'#7FD8FF',.7);
+  G.callBanner={txt:'STRENGTH OF A HUNDRED SEAL',color:'#B07CFF',life:CALL_BANNER_LIFE,ml:CALL_BANNER_LIFE};
+  sfx('sak_seal'); sfx('sak_katsuyu');
+  say(`${f.name} không gục — dấu ấn Byakugo mở ra, máu về ${Math.round(SAK.sealHp*100)}% và Katsuyu hiện ra bên cạnh cả đội.`,'g');
+}
+/* Hồi phục trong Byakugo: HAI nguồn chạy song song.
+     · Katsuyu  — theo máu TỐI ĐA, cho cả Sakura lẫn đồng đội.
+     · Byakugo  — theo máu ĐANG THIẾU, TÍNH LẠI mỗi nhịp, CHỈ Sakura được. */
+function sakRegenTick(f,dt){
+  if(f.katsuyu>0){
+    const ow=f.katsuyuOwner;
+    if(!ow||!ow.alive||ow.hp<=0||!(ow.sakSeal>0)){ f.katsuyu=0; f.katsuyuOwner=null; }
+    else if(f.alive&&f.hp>0&&f.hp<f.maxHp){
+      const v=Math.min(f.maxHp-f.hp,f.maxHp*SAK.katsuyu*dt*regenFactor(f)*gnHeal(ow,false));
+      if(v>0){ f.hp+=v; f.sakHealAcc=(f.sakHealAcc||0)+v;
+        if(f.sakHealAcc>=8){ G.floats.push({x:f.x-28,y:f.y-58,txt:'+'+Math.round(f.sakHealAcc),color:'#8BE8D8',life:.85,ml:.85,sc:.5}); f.sakHealAcc=0; } }
+    }
+  }
+  if(sakOn(f)&&f.sakSeal>0&&f.hp<f.maxHp){
+    const v=Math.min(f.maxHp-f.hp,(f.maxHp-f.hp)*SAK.byakugo*dt*regenFactor(f)*gnHeal(f,false));
+    if(v>0) f.hp+=v;
+  }
+}
+
+/* ---------- nhịp chạy mỗi bước ----------
+   Gọi trong vòng duyệt fighter, TRƯỚC statusTick, để cửa kháng hiệu ứng nhìn thấy debuff
+   ở đúng giá trị vừa được dán chứ không phải giá trị đã trôi mất một nhịp. */
+function sakuraTick(f,dt){
+  sakResTick(f,dt);
+
+  /* Quãng mở dấu ấn: ngắn, và cố ý KHÔNG đóng băng cả sàn (`G.freeze`). Bản mô tả đòi
+     đòn kế tiếp của một combo nhiều hit vẫn phải giết được cô — đóng băng sàn là hoãn
+     đúng mấy hit đó lại, tức phá luật. */
+  if(f.sakSealAnim>0){
+    f.sakSealAnim=Math.max(0,f.sakSealAnim-dt);
+    if(f.sakSealAnim<=0) setPose(f,'idle',0);
+  }
+  if(f.sakSeal>0){
+    f.sakSeal=Math.max(0,f.sakSeal-dt);
+    if(f.sakSeal<=0){
+      say(`Dấu ấn Byakugo mờ dần — ${f.name} trở lại với kháng hiệu ứng thường.`,'m');
+      G.floats.push({x:f.x,y:f.y-112,txt:'BYAKUGO FADES',color:'#B07CFF',life:1.2,ml:1.2,banner:true,sc:.56});
+    }
+  }
+  /* Bị hất lên khỏi mặt đất bởi chính đường nứt của người khác: chỉ là độ cao hiển thị. */
+  if(f.sakLift>0) f.sakLift=Math.max(0,f.sakLift-dt);
+
+  /* Quãng gồng chiêu. Choáng / đóng băng / ngủ / mất trí trong lúc này là ĐỨT, và chỉ
+     phải chờ một phần hồi chiêu chứ không mất trắng. */
+  if(f.sakAct){
+    if(f.stun>0||f.frozen>0||f.infoOverload>0||f.conanSleep>0){
+      const burst=f.sakAct.kind==='burst';
+      f.sakAct=null; f.lock=0; setPose(f,'hurt',gs(.3));
+      if(burst) f.cds.s1=Math.min(f.cds.s1,SAK.cbBreakCd); else f.cds.s3=Math.min(f.cds.s3,SAK.mnBreakCd);
+      G.floats.push({x:f.x,y:f.y-104,txt:'INTERRUPTED',color:'#FF9090',life:1.1,ml:1.1,banner:true,sc:.56});
+      say(burst?'Cherry Blossom Burst bị cắt ngang.':'Medical Ninjutsu bị cắt ngang.','m');
+    }else{
+      f.sakAct.t-=dt;
+      f.lock=Math.max(f.lock,Math.max(0,f.sakAct.t));
+      if(f.sakAct.t<=0){ if(f.sakAct.kind==='burst') sakBurstGo(f); else sakMedicalGo(f); }
+    }
+  }
+  sakCrackTick(f,dt);
+  sakHealTick(f,dt);
+
+  /* Cú lao: chỉnh hướng nhẹ trong `cpSteer` giây đầu rồi KHÓA hẳn, và chỉ đánh trúng kẻ
+     địch ĐẦU TIÊN va chạm — không xuyên qua ai. Không miễn khống chế: dính choáng là đứt. */
+  const D=f.dash;
+  if(D&&D.kind==='sakcharge'){
+    if(f.stun>0||f.frozen>0){
+      f.dash=null; setPose(f,'hurt',gs(.3));
+      say('Cú lao của Sakura bị chặn đứng giữa chừng.','m');
+    }else{
+      if(D.steer>0){
+        D.steer-=dt;
+        if(D.steer<=0){                       // hết quãng chỉnh hướng: chốt một điểm xa theo hướng đang lao
+          const tg=aimTarget(f)||foeOf(f);
+          const a=tg?Math.atan2(tg.y-f.y,tg.x-f.x):Math.atan2(f.ay,f.ax);
+          D.tx=clamp(f.x+Math.cos(a)*900,PAD,W-PAD); D.ty=clamp(f.y+Math.sin(a)*900,PAD+50,H-PAD-10);
+        }
+      }
+      for(const o of G.fighters){
+        if(!o||!o.alive||o.team===f.team||(o.summon&&!o.ally)||offField(o))continue;
+        if(dist(f,o)>f.r+o.r+8)continue;
+        D.hit=true; f.dash=null; setPose(f,'punch',gs(.4));
+        sakChargeHit(f,o);
+        break;
+      }
+    }
+  }
+
+  /* Quãng cách AI muốn giữ: tầm trung lúc bình thường, xáp hẳn vào lúc Byakugo. Đặt ở đây
+     nên nhánh `ranged` có sẵn của aiVec() lo phần bước chân, khỏi viết lại bộ di chuyển. */
+  f.want=f.sakSeal>0?SAK.meleeIn*.85:SAK.want;
+}
+/* Dải tầm trung, cùng ngôn ngữ waypoint / strafe / jitter với Conan và Gojo. Bị áp sát
+   thì cô KHÔNG bỏ chạy — Chakra Strike và Cherry Blossom Burst mới là thứ gỡ vây. */
+function sakuraVec(f,e){
+  const d=dist(f,e)||1, ux=(e.x-f.x)/d, uy=(e.y-f.y)/d;
+  const wd=Math.hypot(f.wx-f.x,f.wy-f.y)||1;
+  let x=0,y=0;
+  if(f.sakSeal>0){                         // Byakugo: chủ động ép sát, không lùi ra ném shuriken
+    if(d>SAK.meleeIn*.85){ x+=ux*1.05; y+=uy*1.05; }
+    else { x+=-uy*f.strafe*.55; y+=ux*f.strafe*.55; }
+  }else if(d>SAK.midMax){ x+=ux*.80; y+=uy*.80; }
+  else if(d<SAK.midMin){ x-=ux*.42; y-=uy*.42; }   // lùi nhẹ thôi, cô là bruiser chứ không phải pháp sư trốn đòn
+  else { x+=-uy*f.strafe*.60; y+=ux*f.strafe*.60; }
+  x+=(f.wx-f.x)/wd*.48+f.jx*.30; y+=(f.wy-f.y)/wd*.48+f.jy*.30;
+  const dv=dodgeVec(f); x+=dv.x; y+=dv.y;
+  return {x,y};
+}
+
+/* ---------- Haruno Sakura · model vector ----------
+   Bản Shippuden: tóc hồng ngắn, băng trán đỏ, áo đỏ không tay, găng đen, váy hồng sẫm
+   trên quần bó đen, ủng ninja. Dấu ấn Byakugo là một hình thoi TÍM trên trán, chỉ nở
+   rộng ra mặt lúc ultimate bật. Tóc vẽ SAU thân nhưng TRƯỚC mặt nên không che mất mắt. */
+function sakuraVector(f){
+  const P=f.pose||'idle', y=-16, t=G.t*10, sw=f.moving?Math.sin(t)*3:0;
+  const down=P==='down', win=P==='win', seal=f.sakSeal>0||P==='seal';
+  ctx.save();
+  if(down){ ctx.rotate(.70); ctx.translate(0,10); }
+  else if(P==='hurt') ctx.rotate(.12);
+  else if(P==='burst') ctx.translate(0,3);
+
+  /* Pha BIẾN HÌNH: một cột chakra tím-lam dựng lên quanh người, mạnh dần rồi tắt. Chỉ
+     chạy trong quãng `sakSealAnim` nên nó là khoảnh khắc đổi hình, không phải hào quang
+     thường trực. */
+  const tf=f.sakSealAnim>0?clamp(f.sakSealAnim/SAK.sealAnim,0,1):0;
+  if(tf>0&&!down){
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<9;i++){
+      const ph=((G.t*2.2+i*.31)%1);
+      ctx.globalAlpha=(1-ph)*.42*tf;
+      ctx.fillStyle=i%2?'#B07CFF':'#7FD8FF';
+      const rx=(30+i*3)*(1-ph*.45);
+      ctx.beginPath(); ctx.ellipse(0,y+16-ph*70,rx*.42,5.5,0,0,7); ctx.fill();
+    }
+    ctx.globalAlpha=.30*tf; ctx.fillStyle='#FFFFFF';
+    ctx.beginPath(); ctx.ellipse(0,y-6,26*tf,46*tf,0,0,7); ctx.fill();
+    ctx.restore();
+  }
+  /* Byakugo: luồng chakra tím-lam chạy dọc người. Vẽ TRƯỚC thân và bằng phép cộng sáng
+     nên nó ôm lấy model chứ không nuốt mất model — cùng bài học của luồng khí Ginyu. */
+  if(seal&&!down){
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<7;i++){
+      const a=t*.6+i*.9, r=20+Math.sin(a)*5;
+      ctx.globalAlpha=.13+Math.sin(a*1.7)*.05;
+      ctx.fillStyle=i%2?'#B07CFF':'#7FD8FF';
+      ctx.beginPath(); ctx.ellipse(Math.cos(a)*6,y-4+Math.sin(a)*16,r*.5,r,a*.3,0,7); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* chân: quần bó đen rồi tới ủng */
+  ctx.fillStyle='#23222B'; ctx.fillRect(-9,y+16,7,12+sw); ctx.fillRect(3,y+16,7,12-sw);
+  ctx.fillStyle='#2E2C38'; ctx.fillRect(-10,y+27+sw,9,5); ctx.fillRect(2,y+27-sw,9,5);
+  /* váy hồng sẫm, chỉ xoè tới ngang đùi */
+  ctx.fillStyle='#C8437A';
+  ctx.beginPath(); ctx.moveTo(-12,y+10); ctx.lineTo(12,y+10); ctx.lineTo(15,y+20); ctx.lineTo(-15,y+20); ctx.closePath(); ctx.fill();
+  /* áo đỏ không tay + viền trắng */
+  torso(0,y-8,23,20,'#D8354F');
+  ctx.fillStyle='#F2F2F4'; ctx.fillRect(-11.5,y+8,23,3);
+  ctx.fillStyle='#F5CFA8'; ctx.fillRect(-8,y-10,16,4);            // vai để trần
+
+  /* tay — đổi theo dáng. Găng đen ở cẳng tay, nắm đấm phát sáng khi dồn chakra. */
+  const glow=(P==='punch'||P==='charge'||P==='burst');
+  const arm=(ax,ay,w,h,fist)=>{
+    ctx.fillStyle='#F5CFA8'; ctx.fillRect(ax,ay,w,h);
+    ctx.fillStyle='#23222B'; ctx.fillRect(ax-.5,ay+h*.55,w+1,h*.45);
+    if(fist){
+      if(glow){ ctx.save(); ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.55;
+        ctx.fillStyle='#7FD8FF'; ctx.beginPath(); ctx.arc(ax+w/2,ay+h,7.5,0,7); ctx.fill(); ctx.restore(); }
+      ctx.fillStyle='#2A2833'; ctx.beginPath(); ctx.arc(ax+w/2,ay+h,4.2,0,7); ctx.fill();
+    }
+  };
+  if(P==='atk1'){ arm(11,y-9,7,13,false); arm(-19,y-13,7,12,false); }
+  else if(P==='punch'||P==='charge'){ arm(12,y-8,7,15,true); arm(-18,y-4,7,11,true); }
+  else if(P==='kick'){ arm(11,y-6,7,12,true); arm(-18,y-6,7,12,false);
+    ctx.save(); ctx.rotate(-.78); ctx.fillStyle='#23222B'; ctx.fillRect(4,y+16,8,24);
+    ctx.fillStyle='#2E2C38'; ctx.fillRect(3,y+37,11,5); ctx.restore(); }
+  else if(P==='burst'){ arm(9,y+2,7,16,true); arm(-16,y+2,7,16,true); }
+  else if(P==='heal'){                                    // hai tay chắp trước ngực, chakra XANH
+    arm(7,y-6,7,12,false); arm(-14,y-6,7,12,false);
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<3;i++){ ctx.globalAlpha=.30-i*.07; ctx.fillStyle='#7DEBAB';
+      ctx.beginPath(); ctx.arc(0,y+2,8+i*5+Math.sin(t*.9)*1.6,0,7); ctx.fill(); }
+    ctx.restore(); }
+  else if(win){ arm(11,y-16,7,14,false); arm(-18,y-6,7,12,false); }
+  else if(down){ arm(13,y+2,7,12,false); arm(-20,y+2,7,12,false); }
+  else { arm(11,y-6-sw*1.4,7,13,false); arm(-18,y-6+sw*1.4,7,13,false); }
+
+  /* đầu, tóc hồng, băng trán đỏ */
+  head(0,y-22,12.5);
+  ctx.fillStyle=seal?'#FFC0DC':'#F2A7C3';                 // tóc sáng hẳn lên khi dấu ấn mở
+  ctx.beginPath(); ctx.arc(0,y-25,13,Math.PI,2*Math.PI); ctx.fill();
+  /* Byakugo: tóc bị luồng chakra thổi dựng lên — dấu hiệu đổi hình đọc được ngay ở cỡ
+     trong trận, không phải soi mới thấy. */
+  if(seal){
+    for(let i=0;i<6;i++){
+      const hx=-11+i*4.4, lift=9+Math.sin(G.t*5+i)*3.5;
+      ctx.beginPath(); ctx.moveTo(hx,y-30); ctx.lineTo(hx+2.2,y-30-lift); ctx.lineTo(hx+4.4,y-29); ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.beginPath(); ctx.moveTo(-13,y-25); ctx.quadraticCurveTo(-16,y-14,-10,y-11);
+  ctx.lineTo(-7,y-22); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(13,y-25); ctx.quadraticCurveTo(16,y-14,10,y-11);
+  ctx.lineTo(7,y-22); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#C4394F'; ctx.fillRect(-13,y-34,26,5);          // băng trán
+  ctx.fillStyle='#B9C4D6'; ctx.fillRect(-5,y-34,10,5);
+  ctx.fillStyle='#1B1428';
+  if(down){ ctx.lineWidth=1.8; ctx.strokeStyle='#1B1428';
+    ctx.beginPath(); ctx.moveTo(-7,y-25); ctx.lineTo(-2,y-20); ctx.moveTo(-2,y-25); ctx.lineTo(-7,y-20);
+    ctx.moveTo(3,y-25); ctx.lineTo(8,y-20); ctx.moveTo(8,y-25); ctx.lineTo(3,y-20); ctx.stroke(); }
+  else { ctx.fillRect(-6,y-24,3,4); ctx.fillRect(3,y-24,3,4); }
+
+  /* Dấu ấn. Bình thường chỉ là một hình thoi nhỏ giữa trán; lúc Byakugo thì nở ra thành
+     hoa văn chạy xuống hai bên mặt — KHÔNG che kín model, đúng yêu cầu. */
+  if(!down){
+    ctx.fillStyle=seal?'#B07CFF':'#8E4FD0';
+    const dS=seal?4.4:2.6;
+    ctx.beginPath(); ctx.moveTo(0,y-31-dS); ctx.lineTo(dS*.7,y-31); ctx.lineTo(0,y-31+dS); ctx.lineTo(-dS*.7,y-31); ctx.closePath(); ctx.fill();
+    if(seal){
+      ctx.strokeStyle='#B07CFF'; ctx.lineWidth=1.5; ctx.lineCap='round';
+      for(const sgn of [-1,1]){
+        ctx.beginPath(); ctx.moveTo(sgn*2,y-29);
+        ctx.quadraticCurveTo(sgn*9,y-26,sgn*8,y-18);
+        ctx.quadraticCurveTo(sgn*7,y-13,sgn*11,y-9); ctx.stroke();
+        // chạy tiếp xuống vai và cánh tay
+        ctx.beginPath(); ctx.moveTo(sgn*11,y-9);
+        ctx.quadraticCurveTo(sgn*15,y-4,sgn*13,y+3); ctx.stroke();
+      }
+    }
+  }
+  /* tơi tả: xước trên tay, băng vai, váy rách một góc */
+  if(f.injured&&!down){
+    ctx.strokeStyle='#8E1023'; ctx.lineWidth=2.3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-9,y+0); ctx.lineTo(-2,y+7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4,y-4); ctx.lineTo(10,y+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-8,y-22); ctx.lineTo(-1,y-19); ctx.stroke();
+    ctx.fillStyle='#E8E4DE'; ctx.fillRect(-13,y-9,9,5); ctx.fillRect(6,y-6,8,4);
+    ctx.fillStyle='#96305C';
+    ctx.beginPath(); ctx.moveTo(6,y+20); ctx.lineTo(11,y+13); ctx.lineTo(15,y+20); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ---------- lớp hiệu ứng, vẽ SAU nhân vật ----------
+   Đường nứt, Katsuyu và quầng Byakugo. Đúng lối drawSupFreeze / drawDoraLight: nằm ngoài
+   drawFighter nên không bị thân người che mất. */
+function drawSakuraFx(){
+  for(const f of G.fighters){
+    if(!f||f.key!=='sakura'||f.swapAs)continue;
+    const C=f.sakCrack;
+    if(C){
+      /* Mặt đất vỡ từ chỗ cô đấm tới đầu lan: nền nâu xám, vết nứt trắng gãy khúc, đá
+         vụn bắn lên. Đủ rộng để nhìn ra phạm vi, không phải một vụ nổ phủ kín sàn. */
+      ctx.save();
+      const half=SAK.cbWide/2;
+      ctx.translate(C.ox,C.oy); ctx.rotate(C.ang);
+      const grd=ctx.createLinearGradient(0,0,C.d,0);
+      grd.addColorStop(0,'rgba(74,58,48,.72)'); grd.addColorStop(1,'rgba(74,58,48,.18)');
+      ctx.fillStyle=grd;
+      ctx.beginPath(); ctx.moveTo(0,-half*.55);
+      for(let x=0;x<=C.d;x+=16) ctx.lineTo(x,-half*(.55+.45*Math.sin(x*.07)));
+      for(let x=C.d;x>=0;x-=16) ctx.lineTo(x,half*(.55+.45*Math.cos(x*.06)));
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(240,232,224,.85)'; ctx.lineWidth=2.4; ctx.lineJoin='round';
+      ctx.beginPath(); ctx.moveTo(0,0);
+      for(let x=0;x<=C.d;x+=18) ctx.lineTo(x,Math.sin(x*.11)*half*.30);
+      ctx.stroke();
+      ctx.strokeStyle='rgba(200,180,164,.55)'; ctx.lineWidth=1.4;
+      for(let x=24;x<C.d;x+=42){
+        const o=Math.sin(x*.11)*half*.30;
+        ctx.beginPath(); ctx.moveTo(x,o); ctx.lineTo(x+13,o+half*(x%84?.8:-.8)); ctx.stroke();
+      }
+      ctx.restore();
+      // đầu lan: bụi và đá vụn
+      ctx.save(); ctx.globalAlpha=.8; ctx.fillStyle='#6B5A4C';
+      for(let i=0;i<5;i++){ const a=C.ang+rnd(-1.1,1.1), r=rnd(6,26);
+        ctx.beginPath(); ctx.arc(C.x+Math.cos(a)*r,C.y+Math.sin(a)*r-rnd(0,14),rnd(1.6,3.4),0,7); ctx.fill(); }
+      ctx.restore();
+    }
+    /* Quầng Byakugo dưới chân: nhấp nháy nhẹ, không phủ trắng màn hình. */
+    if(f.sakSeal>0){
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      ctx.globalAlpha=.16+Math.sin(G.t*4.2)*.05; ctx.fillStyle='#B07CFF';
+      ctx.beginPath(); ctx.ellipse(f.x,f.y+6,34,12,0,0,7); ctx.fill(); ctx.restore();
+    }
+  }
+  /* Katsuyu — con sên nhỏ xanh lam bên cạnh người được hồi. KHÔNG phải một fighter: không
+     nhắm được, không ăn dmg, không chặn đạn, không đánh ai. Chỉ là hình + đồng hồ hồi máu. */
+  for(const o of G.fighters){
+    if(!o||!(o.katsuyu>0)||!o.alive)continue;
+    const bob=Math.sin(G.t*3+o.x*.05)*2.5;
+    const kx=o.x-o.r-13, ky=o.y-6+bob;
+    ctx.save();
+    ctx.fillStyle='#BFE8F0';
+    ctx.beginPath(); ctx.ellipse(kx,ky,9,6.5,0,0,7); ctx.fill();
+    ctx.fillStyle='#8FD3E8';
+    ctx.beginPath(); ctx.ellipse(kx-2,ky+1.5,7,4.5,0,0,7); ctx.fill();
+    ctx.strokeStyle='#5FA8C4'; ctx.lineWidth=1.4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(kx+5,ky-4); ctx.lineTo(kx+8,ky-9);
+    ctx.moveTo(kx+2,ky-5); ctx.lineTo(kx+3.5,ky-10); ctx.stroke();
+    ctx.fillStyle='#2B3A44';
+    ctx.beginPath(); ctx.arc(kx+8,ky-9.5,1.3,0,7); ctx.arc(kx+3.5,ky-10.5,1.3,0,7); ctx.fill();
+    // hạt sáng bay từ Katsuyu sang người được hồi
+    ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.5; ctx.fillStyle='#8BE8D8';
+    for(let i=0;i<2;i++){ const ph=(G.t*1.6+i*.5)%1;
+      ctx.beginPath(); ctx.arc(kx+(o.x-kx)*ph,ky+(o.y-10-ky)*ph,2.2*(1-ph)+.8,0,7); ctx.fill(); }
+    ctx.restore();
+  }
+}
+
 function aiVec(f,e){
   const d=dist(f,e)||1, ux=(e.x-f.x)/d, uy=(e.y-f.y)/d;
   const wd=Math.hypot(f.wx-f.x,f.wy-f.y)||1, wxu=(f.wx-f.x)/wd, wyu=(f.wy-f.y)/wd;
@@ -13077,6 +13949,7 @@ function aiVec(f,e){
     const gd=dodgeVec(f); x+=gd.x*1.15; y+=gd.y*1.15;
     return {x,y};
   }
+  if(f.key==='sakura'&&!f.summon) return sakuraVec(f,e);
   if(f.key==='isagi'&&!f.summon) return isagiVec(f,e);
   // Superman đang bay: bay là để ĐUỔI, nên nhắm thẳng vào địch chứ không lượn vòng
   if(f.key==='superman'&&!f.summon&&f.supFly>0) return supFlyVec(f,e);
@@ -13134,6 +14007,7 @@ function step(dt){
      binh vào G.fighters giữa chừng. */
   const MAIN=G.fighters.filter(f=>f&&!f.summon);
 
+  if(G.cam.shake>0) G.cam.shake=Math.max(0,G.cam.shake-dt*22);
   if(G.freeze>0 && !G.over){
     G.freeze-=dt;
     const t=G.freezeAt||G.c;
@@ -13160,6 +14034,7 @@ function step(dt){
   }
 
   for(const f of G.fighters){
+    if(f.key==='sakura'&&!f.summon&&f.alive&&!f.swapAs) sakuraTick(f,dt);
     if(f.stun>0)f.stun-=dt;
     if(f.flash>0)f.flash-=dt;
     if(f.poseT>0){ f.poseT-=dt; if(f.poseT<=0&&!f.dash) f.pose = f.ally?'idle':(f.summon&&f.fired?'atk1':(f.summon?'skill':'idle')); }
@@ -13260,7 +14135,7 @@ function step(dt){
       // Doraemon thắng thì ngồi xuống ăn dorayaki chứ không đứng thủ thế
       if(w.alive){
         const wp=w.key==='tanjiro'&&!w.swapAs&&G.endT<.65?'ready'
-          :((w.key==='dora'||w.key==='superman'||w.key==='beatrice'||w.key==='tanjiro'||w.key==='gojo'||w.key==='conan'||w.key==='isagi')&&!w.swapAs?'win':'idle');
+          :((w.key==='dora'||w.key==='superman'||w.key==='beatrice'||w.key==='tanjiro'||w.key==='gojo'||w.key==='conan'||w.key==='isagi'||w.key==='sakura')&&!w.swapAs?'win':'idle');
         setPose(w,wp,0);
       }
       if(w.alive&&w.key==='gojo'&&!w.swapAs&&!w.gojoWonSaid){ w.gojoWonSaid=true; sfx('gojo_win'); }
@@ -13369,6 +14244,8 @@ function step(dt){
           ? (kst?`ChiChi lao tới, cú đá chắc chắn ${CHICHI_KICK_DMG} dmg và choáng ${rts(CHICHI_KICK_STUN)} giây!`
                 :`ChiChi lao tới, cú đá chắc chắn ${CHICHI_KICK_DMG} dmg — nhưng đối thủ miễn nhiễm khống chế.`)
           : 'ChiChi lao tới nhưng cú đá bị né mất.','c');
+      }else if(D.kind==='sakcharge'){            // đã chốt điểm rơi mà không chạm ai: lao hụt
+        say('Sakura lao hụt — đối thủ đã rời khỏi đường lao.','m');
       }else{
         const rasHit=hurt(e,150,f,'RASENGAN!','ult');
         const st=rasHit&&stunFx(e,3,'spin');
@@ -13699,6 +14576,9 @@ function step(dt){
         if(!landed){ dead=true; break; }
         if(p.advPierce>0){ p.advPierce--; sfx('hit'); continue; }
         if(p.bleed) bleedOn(f,p.owner);                  // shuriken của Shikamaru để lại vết cắt
+        /* Hampered bốc RIÊNG cho từng viên và ĐÚNG LÚC nó chạm người — bốc lúc bắn thì
+           viên bị né vẫn làm chậm, đúng cái bẫy của Minya ở CLAUDE.md. */
+        if(p.sakSlow&&chance(SAK.slowOdds)) sakHamperOn(f,p.owner);
         sfx('hit');
         if(p.type==='clone'){
           if(f.invuln<=0){
@@ -14044,6 +14924,15 @@ function groundShadows(){
 function camApply(){
   const c=G.cam;
   ctx.translate(W/2,H/2); ctx.scale(c.z,c.z); ctx.translate(-c.x,-c.y);
+  /* Rung camera — biên độ RẤT NHỎ và tắt rất nhanh. Đông người thì hạ thêm một nấc nữa:
+     bốn năm cú va chạm chồng lên nhau mà rung hết cỡ là không ai nhìn được gì.
+     Rung ở đây, SAU phép dời camera, nên nó chỉ lắc khung nhìn chứ không dời toạ độ thật
+     của ai — mọi phép đo vị trí trong test vẫn đọc ra đúng con số. */
+  if(c.shake>0){
+    const crowd=G.fighters.reduce((n,f)=>n+(f&&f.alive&&!(f.summon&&!f.ally)?1:0),0);
+    const k=c.shake*(crowd>2?.45:1);
+    ctx.translate(Math.sin(G.t*61)*k,Math.cos(G.t*73)*k*.7);
+  }
 }
 function head(x,y,s){ ctx.fillStyle='#F5CFA8'; ctx.beginPath(); ctx.arc(x,y,s,0,7); ctx.fill(); }
 function torso(x,y,w,h,c){ ctx.fillStyle=c; ctx.beginPath(); if(ctx.roundRect)ctx.roundRect(x-w/2,y,w,h,6); else ctx.rect(x-w/2,y,w,h); ctx.fill(); }
@@ -14299,6 +15188,7 @@ function vector(f){
   if(f.key==='tanjiro'){ tanVector(f); return; }
   if(f.key==='gojo'){ gojoVector(f); return; }
   if(f.key==='conan'){ conanVector(f); return; }
+  if(f.key==='sakura'){ sakuraVector(f); return; }
   if(f.key==='kono'){
     ctx.fillStyle='#4C7CE0'; ctx.beginPath(); ctx.moveTo(-4,y-6);
     ctx.quadraticCurveTo(-38,y-16+Math.sin(t)*5,-50,y+2);
@@ -14807,6 +15697,14 @@ function sprite(f){
     else if(f.key==='gojo'&&pk==='win') arr=set.win||set.adjust||set.idle;
     else if(f.key==='gojo'&&pk==='down') arr=set.down||set.injured||set.hurt||set.idle;
     else if(f.key==='conan'&&['board','jump','stop','adjust','basic','kick','watch','skate','ultimate'].includes(pk)) arr=set[pk]||set.idle;
+    /* Sakura: thiếu ảnh thì lùi về ô GẦN NGHĨA nhất — đấm/đá lùi về nhau, hai chiêu
+       nắm đấm lùi về ô đấm, kết ấn và dấu ấn lùi về ô đứng. */
+    else if(f.key==='sakura'&&(pk==='punch'||pk==='kick')) arr=set.punch||set.kick||set.atk1||set.idle;
+    else if(f.key==='sakura'&&(pk==='burst'||pk==='charge')) arr=set[pk]||set.punch||set.atk1||set.idle;
+    else if(f.key==='sakura'&&pk==='heal') arr=set.heal||set.idle;
+    else if(f.key==='sakura'&&pk==='seal') arr=set.seal||set.heal||set.idle;
+    else if(f.key==='sakura'&&pk==='win') arr=set.win||set.idle;
+    else if(f.key==='sakura'&&pk==='down') arr=set.down||set.injured||set.hurt||set.idle;
     else if(f.key==='conan'&&pk==='win') arr=set.win||set.adjust||set.idle;
     else if(f.key==='conan'&&pk==='down') arr=set.down||set.hurt||set.idle;
     else if(pk==='bicycle') arr=set.atk1||set.idle;
@@ -17660,6 +18558,7 @@ function draw(){
   drawGojoFx();
   drawConanFx();
   drawIsagiFx();
+  drawSakuraFx();
   drawTanjiroFx();                         // thread, blade trails, Mark heat and afterimages
   for(const L of G.kos){
     /* Superman gục: chống một gối xuống trước, gượng dậy hai nhịp không nổi, rồi mới
