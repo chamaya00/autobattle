@@ -1,0 +1,39 @@
+name: Isagi balance benchmark
+on:
+  push:
+    branches: [balance/isagi-ball-nerf]
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    if: github.event.head_commit.message == 'Run Isagi balance candidate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Apply candidate and regenerate
+        run: |
+          python3 tools/apply_isagi_balance_candidate_tmp.py
+          python3 tools/mk_play.py
+      - name: Validate candidate
+        run: |
+          node tools/t_conan.js
+          node tools/t_play.js
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess,tempfile,os
+          for f in ['index.html','play.html']:
+              text=Path(f).read_text()
+              for js in re.findall(r'<script[^>]*>(.*?)</script>',text,flags=re.S|re.I):
+                  fd,path=tempfile.mkstemp(suffix='.js'); os.close(fd)
+                  Path(path).write_text(js)
+                  subprocess.run(['node','--check',path],check=True,stdout=subprocess.DEVNULL)
+                  os.unlink(path)
+          PY
+      - name: Run 160-match Isagi simulation
+        run: node tools/t_isagi_balance_tmp.js
