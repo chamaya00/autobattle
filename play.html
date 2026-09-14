@@ -1483,6 +1483,27 @@
   .upChip i{font-style:normal;width:7px;height:7px;border-radius:50%;background:var(--rc)}
   .upChip u{text-decoration:none;font-family:var(--fd);color:var(--gold);font-size:10.5px}
 
+  /* ---------- bản đồ phân nhánh ---------- */
+  .advMap{display:flex;flex-direction:column;gap:9px;padding:10px 4px;border-radius:14px;
+    background:var(--s2);box-shadow:inset 0 0 0 1px var(--line)}
+  .advMapRow{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+  .advNode{display:flex;flex-direction:column;align-items:center;gap:2px;
+    min-width:78px;padding:8px 6px;border:0;border-radius:12px;cursor:default;
+    background:var(--s3);color:#8892A8;box-shadow:inset 0 0 0 1px var(--line);opacity:.45}
+  .advNode i{font-style:normal;font-size:19px;line-height:1}
+  .advNode s{text-decoration:none;font-size:9px;letter-spacing:.03em}
+  .advNode.past{opacity:.7;color:#6BE39A;box-shadow:inset 0 0 0 1px color-mix(in srgb,#6BE39A 40%,var(--line))}
+  .advNode.here{opacity:1;color:#161006;background:var(--gold);
+    box-shadow:inset 0 0 0 1px var(--gold),0 0 16px rgba(255,197,66,.4)}
+  /* Node đi được: sáng hẳn lên và bấm được. Không dùng animation lặp — luật ở mục 2h. */
+  .advNode.can{opacity:1;cursor:pointer;color:#EAF0FF;
+    background:linear-gradient(180deg,var(--s2),var(--s1));
+    box-shadow:inset 0 0 0 2px var(--cyan),0 0 18px rgba(77,226,255,.3)}
+  .advNode.can:hover{box-shadow:inset 0 0 0 2px var(--gold),0 0 22px rgba(255,197,66,.42)}
+  .advNode.can.elite,.advNode.can.boss{box-shadow:inset 0 0 0 2px var(--mag),0 0 20px rgba(255,79,163,.34)}
+  .advNode.boss i{font-size:22px}
+  .advMeter.hp i{background:linear-gradient(90deg,#FF4D6D,#FF9A3C)}
+
   /* ---------- bảng Phiêu lưu ---------- */
   .advTop{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;
     padding:12px;border-radius:14px;background:var(--s2);box-shadow:inset 0 0 0 1px var(--line)}
@@ -1716,6 +1737,19 @@
 
 <!-- MÀN CHỌN THẺ NÂNG CẤP. Hiện giữa trận khi lên cấp; cờ `advCards` chặn thẳng step()
      nên cả sàn đứng yên trong lúc chọn. z-index trên bảng hành trình. -->
+<!-- NODE KHÔNG ĐÁNH NHAU: cửa hàng · kho báu · sự kiện · chỗ nghỉ. Một lớp phủ dùng chung. -->
+<div class="csel off" id="advNode" style="z-index:68">
+  <div class="cselBox" style="max-width:760px">
+    <h2 id="advNodeTitle">NODE</h2>
+    <div class="cselSub" id="advNodeMeta"></div>
+    <div class="cselBody"><div id="advNodeBody"></div></div>
+    <div class="cselBar">
+      <button id="advNodeGo" class="primary" type="button" data-i18n="advLeave">▶ Đi tiếp</button>
+      <button type="button" data-lang-toggle title="Vietnamese / English">🌐 English</button>
+    </div>
+  </div>
+</div>
+
 <div class="csel off" id="advCard" style="z-index:69">
   <div class="cselBox" style="max-width:1000px">
     <h2 id="advCardTitle">LEVEL UP</h2>
@@ -1874,6 +1908,16 @@ const L={
     whoHuman:'Tự cầm tay đánh', whoHumanSub:'WASD + nút chiêu · có chế độ Phiêu lưu',
     mAdv:'Phiêu lưu', mAdvSub:'1 người · farm quái lên cấp',
     subAdv:'Chọn nhân vật để đi phiêu lưu · {n} đấu thủ',
+    advRegN:'Region {n}/{of}', advPickNode:'Chọn đường đi tiếp trên bản đồ',
+    advDead:'Hành trình kết thúc — hết mạng hồi sinh', advGold:'Vàng:', advRev:'Hồi sinh:',
+    advClose:'✕ Đóng bản đồ', advAgain:'↻ Đi lại từ đầu', advLeave:'▶ Đi tiếp',
+    advShopSay:'Hàng hôm nay chỉ có bấy nhiêu. Mua gì thì mua nhanh.',
+    advBuyHeal:'Bình thuốc', advBuyHealD:'Hồi {n}% máu tối đa',
+    advBuyRr:'Đồng xu lạ', advBuyRrD:'Thêm một lượt bốc lại',
+    advBuyRev:'Bùa hộ mệnh', advBuyRevD:'Thêm một mạng hồi sinh',
+    advRestSay:'Một chỗ khuất gió. Nghỉ được một lúc trước khi đi tiếp.',
+    advRestHeal:'Ngủ một giấc', advRestHealD:'Hồi {n}% máu tối đa',
+    advRestTrain:'Tập luyện', advRestTrainD:'Nhận một thẻ nâng cấp',
     advBuild:'BUILD ĐANG CÓ', advOwnN:'{n} thẻ', advNoUp:'Chưa có thẻ nào — lên cấp là được chọn.',
     advRr:'Lượt bốc lại:', advNeedCard:'Chờ thẻ mở khoá (từ cấp {lv})',
     advCardTitle:'LÊN CẤP', advCardSub:'Cấp {lv} — chọn một nâng cấp',
@@ -1966,6 +2010,16 @@ const L={
     whoHuman:'Play it yourself', whoHumanSub:'WASD + skill buttons · unlocks Adventure',
     mAdv:'Adventure', mAdvSub:'1 player · farm monsters, level up',
     subAdv:'Pick a fighter for the run · {n} fighters',
+    advRegN:'Region {n}/{of}', advPickNode:'Pick your route on the map',
+    advDead:'Run over — no revives left', advGold:'Gold:', advRev:'Revives:',
+    advClose:'✕ Close map', advAgain:'↻ Start a new run', advLeave:'▶ Move on',
+    advShopSay:'This is all I carry today. Buy quick.',
+    advBuyHeal:'Potion', advBuyHealD:'Heal {n}% max HP',
+    advBuyRr:'Odd coin', advBuyRrD:'One more reroll',
+    advBuyRev:'Charm', advBuyRevD:'One more revive',
+    advRestSay:'A sheltered spot. Time enough to catch your breath.',
+    advRestHeal:'Sleep', advRestHealD:'Heal {n}% max HP',
+    advRestTrain:'Train', advRestTrainD:'Take an upgrade card',
     advBuild:'CURRENT BUILD', advOwnN:'{n} cards', advNoUp:'No cards yet — level up to pick one.',
     advRr:'Rerolls:', advNeedCard:'Waiting on an unlock card (level {lv}+)',
     advCardTitle:'LEVEL UP', advCardSub:'Level {lv} — pick one upgrade',
@@ -3627,8 +3681,15 @@ async function loadSaved(){
           ADV=Object.assign(advNew(a.key),a);
           ADV.st=Object.assign({pow:0,vit:0,agi:0,foc:0},a.st||{});
           ADV.sk=Object.assign({k:0,l:0,u:0},a.sk||{});
-          ADV.stage=Math.max(1,Math.min(ADV_STAGES,ADV.stage|0||1));
           ADV.lv=Math.max(1,Math.min(ADV_LVMAX,ADV.lv|0||1));
+          /* Bản đồ: hành trình lưu từ bản TRƯỚC (hệ màn thẳng) không có `map`, nên dựng
+             một region mới cho nó thay vì để `advNodeAt()` nổ. */
+          ADV.reg=Math.max(0,Math.min(ADV_REGIONS-1,ADV.reg|0));
+          if(!ADV.map||!ADV.map.rows||!ADV.map.rows.length) ADV.map=advMapNew(ADV.reg);
+          if(ADV.map.at===undefined) ADV.map.at=-1;
+          ADV.map.path=ADV.map.path||[];
+          ADV.gold=ADV.gold|0; ADV.rev=a.rev===undefined?ADV_REV0:(a.rev|0);
+          ADV.hp=ADV.hp>0?ADV.hp:ADV_HP0;
           /* Sổ thẻ và mấy trường đi kèm. Hành trình lưu từ bản TRƯỚC (còn sp/sxp) mở lại
              thì mấy trường này rỗng — cứ để rỗng, người chơi đi tiếp bằng thẻ. */
           ADV.ups=a.ups||{}; ADV.lock=a.lock||{}; ADV.tags=a.tags||{};
@@ -5611,7 +5672,7 @@ function newGame(){
   G.c=G.fighters.find(f=>f.team!==G.k.team)||G.fighters[1]||G.fighters[0];
   /* Phiêu lưu: siết máu người chơi theo cấp và máu / sát thương địch theo số màn, rồi mở
      sổ đếm exp của lượt này. Phải nằm SAU khi G.fighters đã dựng xong. */
-  if(PMODE==='adv'&&ADV){ G.advXp=0; G.advSxp=0; advTune(); }
+  if(PMODE==='adv'&&ADV){ G.advXp=0; G.advSxp=0; ADV_ENC=null; advTune(); }
   syncHuman();                 // ai đang do người chơi cầm, theo ô chế độ
   if(typeof resetSfxPos==='function') resetSfxPos();
   const englishMatch=G.fighters.some(f=>(f.key==='tanjiro'||f.key==='gojo'||f.key==='conan')&&!f.summon);
@@ -6067,12 +6128,12 @@ let compLive=false;              // đang ở TRONG một trận của giải
    "+10% damage / +5% HP", đúng cái người dùng bác. Giờ chỉ số chỉ là mấy thẻ `common`
    nằm chung một hũ với thẻ cơ chế. */
 const ADV_SAVE='cfg_adv';
-const ADV_STAGES=24;                  // 24 màn, cứ màn thứ 4 là một BOSS ⇒ sáu boss
 const ADV_LVMAX=30;
 /* Máu lúc lv1 để THẤP hẳn — người dùng: *"ban đầu nhân vật lv1 và có ít máu"*. Không đọc
    `HP[key]` ở chế độ này: 800 máu thì mấy con quái màn 1 không gãi nổi. */
-const ADV_HP0=260, ADV_HPLV=14;
+const ADV_HP0=260, ADV_HPLV=22;
 const ADV_POW=.02, ADV_VIT=18, ADV_AGI=.015, ADV_FOC=.015;
+const ADV_LVDMG=.07;                  // sát thương gốc tăng theo cấp, xem ghi chú ở advStatTick
 /* Ba ô chiêu mở bằng THẺ NÂNG CẤP. Ô `j` KHÔNG có trong bảng này: với cả mười hai nhân vật
    thì `keys['j']` chính là đòn thường (shuriken của Konohamaru, cú đấm của ChiChi…), nên nó
    luôn có sẵn — đúng câu *"lv1 … ko có skill và chỉ có basic atk"*.
@@ -6083,7 +6144,11 @@ const ADV_SLOTS=[
   {k:'u', n:4, lv:7}
 ];
 const ADV_RANKMAX=5, ADV_RANKCD=.08;   // mỗi bậc: ô chiêu đó hồi nhanh thêm 8%
-const advNeed=lv=>Math.round(30+lv*16+lv*lv*5);           // exp cần để lên cấp kế tiếp
+/* Đường cong exp. ĐO RỒI MỚI CHỐT, đừng đoán: một region có 8 hàng mà chỉ ~5 hàng là đánh
+   nhau, nên đường cong của bản 24-màn-thẳng cũ quá dốc — đo được cả ba nhân vật tới boss
+   region 1 mới lv2~3 với 1~3 thẻ, và chết sạch. Giờ phẳng hơn hẳn: tới boss region 1 là
+   khoảng lv5~6. */
+const advNeed=lv=>Math.round(30+lv*14+lv*lv*2);
 let ADV=null;
 
 const advOn=()=>PMODE==='adv'&&!!ADV;
@@ -6092,64 +6157,215 @@ const advSlot=k=>ADV_SLOTS.find(s=>s.k===k);
 /* Người chơi đang cầm ai. Ở chế độ này chỉ có ĐÚNG MỘT người thuộc phe 0. */
 const advHero=()=>G&&G.fighters.find(f=>f&&!f.summon&&f.team===0)||null;
 function advNew(key){
-  return {key, lv:1, exp:0, st:{pow:0,vit:0,agi:0,foc:0}, sk:{k:0,l:0,u:0},
-          ups:{}, lock:{}, tags:{}, dry:0, rr:ADV_RR0, pending:0, keep:null,
-          stage:1, best:0, kills:0};
+  const A={key, lv:1, exp:0, st:{pow:0,vit:0,agi:0,foc:0}, sk:{k:0,l:0,u:0},
+           ups:{}, lock:{}, tags:{}, dry:0, rr:ADV_RR0, pending:0, keep:null,
+           reg:0, gold:ADV_GOLD0, rev:ADV_REV0, kills:0, best:0, dead:false, done:false,
+           node:null, log:[]};
+  A.map=advMapNew(0);
+  A.hp=ADV_HP0;                       // máu mang theo giữa các node
+  return A;
 }
-const ADV_RR0=2;                      // số lượt bốc lại có sẵn lúc mở hành trình
+const ADV_RR0=2, ADV_GOLD0=60, ADV_REV0=1;
 const advMaxHp=()=>Math.round(ADV_HP0+(ADV.lv-1)*ADV_HPLV+ADV.st.vit*ADV_VIT);
+/* Hồi máu cho người chơi — dùng chung cho chỗ nghỉ, bình máu, phần thưởng. Trả về lượng
+   THẬT SỰ hồi được để chỗ gọi in ra con số đúng. */
+function advHeal(pct){
+  if(!ADV) return 0;
+  const mx=advMaxHp(), was=Math.min(ADV.hp,mx);
+  ADV.hp=Math.min(mx,was+Math.round(mx*pct));
+  const h=advHero(); if(h&&h.team===0&&h.alive) h.hp=Math.min(h.maxHp,ADV.hp);
+  return ADV.hp-was;
+}
+const advHpPct=()=>ADV?Math.max(0,Math.min(1,ADV.hp/advMaxHp())):0;
 function advSave(){ if(ADV) Store.set(ADV_SAVE,JSON.stringify(ADV)); }
 function advWipe(){ ADV=null; Store.del(ADV_SAVE); }
 
-/* ---------- màn đấu ----------
-   Cứ màn thứ 4 là một BOSS — một nhân vật thật trong bảng. Mấy màn còn lại là quái, càng
-   về sau càng đông và càng nặng đòn. */
-const ADV_BOSS=['kono','tsubasa','shika','dora','ginyu','superman'];
-const ADV_TIER=[['m_slime'],['m_slime','m_bat'],['m_slime','m_bat','m_scare'],
-                ['m_bat','m_scare','m_wisp'],['m_scare','m_wisp','m_golem'],['m_wisp','m_golem']];
-const advIsBoss=n=>n%4===0;
-/* Hệ số nhân máu / sát thương của quái theo số màn. Tách ra hàm cho test đo được. */
-const advMobHp =n=>1+.28*(n-1);
-const advMobDmg=n=>1+.16*(n-1);
-/* Boss cũng phải lên dần: boss đầu (màn 4) chỉ còn 45% máu chuẩn, boss cuối thì đủ 100%. */
-const advBossIdx=n=>Math.min(ADV_BOSS.length-1,Math.max(0,Math.floor(n/4)-1));
-function advBossHp(n){ return .45+.11*advBossIdx(n); }
-/* ...và SÁT THƯƠNG của boss cũng phải lên dần theo, đừng chỉ hạ máu.
-   Boss là nhân vật thật nên bộ chiêu của họ cân theo 800 máu, trong khi người chơi ở màn 4
-   mới có ~370 máu — hạ máu boss mà để nguyên sát thương thì họ vẫn ba đòn là xong người
-   chơi. Đo được (`tools/` probe cân bằng): ChiChi thua liền ba boss ở màn 4 · 8 · 12 đúng vì
-   chỗ này. Boss đầu còn 60% sát thương, boss cuối đủ 100%. */
-function advBossDmg(n){ return .6+.08*advBossIdx(n); }
-function advStageDef(n){
-  if(advIsBoss(n)){
-    const i=Math.min(ADV_BOSS.length-1,Math.max(0,Math.floor(n/4)-1));
-    let key=ADV_BOSS[i];
-    if(ADV&&key===ADV.key) key=ADV_BOSS[(i+1)%ADV_BOSS.length];   // đừng bắt đánh với chính mình
-    return {boss:true, enemies:[key]};
+/* ---------- BẢN ĐỒ PHÂN NHÁNH ----------
+   §15: *"Không làm map chỉ là một đường thẳng. Sử dụng Node-Based Adventure Map. Player chọn
+   route. Route ảnh hưởng build."*
+
+   Một run = **ba REGION**, mỗi region **tám HÀNG** node, hàng cuối luôn là BOSS. Tổng vẫn
+   đúng 24 nấc như trước (`ADV_STAGES = 3 × 8`) nên mọi công thức scale theo ĐỘ SÂU giữ
+   nguyên — độ sâu là thứ quyết định địch mạnh tới đâu, còn bản đồ chỉ quyết định ĐI ĐƯỜNG NÀO.
+
+   Mỗi hàng có 2~4 node; mỗi node nối sang 1~2 node ở hàng kế. Người chơi chỉ đi được sang
+   node mà node đang đứng có nối tới, nên chọn nhánh là chọn thật. */
+const ADV_REGIONS=3, ADV_ROWS=8;
+const ADV_STAGES=ADV_REGIONS*ADV_ROWS;          // 24 nấc, đúng bằng con số cũ
+/* Tám loại node của §16. `fight` = có đánh nhau, `panel` = mở một bảng rồi đi tiếp. */
+const ADV_NODES={
+  battle:  {fight:1, ico:'⚔', vi:'Trận thường',  en:'Battle'},
+  hard:    {fight:1, ico:'⚔', vi:'Trận khó',     en:'Hard Battle'},
+  elite:   {fight:1, ico:'☠', vi:'Tinh nhuệ',    en:'Elite'},
+  boss:    {fight:1, ico:'★', vi:'BOSS',         en:'BOSS'},
+  shop:    {panel:1, ico:'🛒', vi:'Cửa hàng',     en:'Shop'},
+  treasure:{panel:1, ico:'🎁', vi:'Kho báu',      en:'Treasure'},
+  event:   {panel:1, ico:'❓', vi:'Sự kiện',      en:'Event'},
+  rest:    {panel:1, ico:'🔥', vi:'Nghỉ chân',    en:'Rest'}
+};
+/* Ba region, mỗi cái một sàn đấu và một tông màu riêng (§17: "Visual của map cần thay đổi
+   rõ rệt giữa từng Region"). `elite`/`boss` là nhân vật thật, mạnh dần qua từng region. */
+const ADV_REG=[
+  {vi:'Sân Tập',        en:'Training Grounds', stage:'dojo',    tint:'#6BE39A',
+   tier:['m_slime','m_bat'],            elite:'kono',  boss:'tsubasa'},
+  {vi:'Phố Đổ Nát',     en:'Ruined City',      stage:'street',  tint:'#FF7A4F',
+   tier:['m_bat','m_scare','m_wisp'],   elite:'shika', boss:'dora'},
+  {vi:'Khe Nứt Không Gian', en:'Dimensional Rift', stage:'space', tint:'#C77DFF',
+   tier:['m_scare','m_wisp','m_golem'], elite:'ginyu', boss:'superman'}
+];
+const advReg=()=>ADV_REG[Math.min(ADV_REGIONS-1,Math.max(0,(ADV&&ADV.reg|0)||0))];
+/* Độ sâu (1..24) của hàng đang đứng — mọi công thức scale đọc con số này. */
+const advDepth=()=>Math.max(1,Math.min(ADV_STAGES,((ADV&&ADV.reg|0)||0)*ADV_ROWS+(((ADV&&ADV.map&&ADV.map.at)|0)+1)));
+
+/* Hệ số nhân máu / sát thương của quái theo ĐỘ SÂU. Tách ra hàm cho test đo được. */
+/* §21: *"Enemy tăng sức mạnh theo Region / Stage / Difficulty. KHÔNG chỉ tăng HP. Tránh
+   biến late game thành: enemy có 10x HP."* Vì vậy đường máu phải PHẲNG: cái làm địch khó
+   dần là LOẠI QUÁI (mỗi region một tier khác hẳn: slime → bat/scare/wisp → wisp/golem) và
+   SỐ LƯỢNG, chứ không phải thanh máu.
+   Đo được bản dốc cũ (×.28/nấc): tới region 2 quái đã 3.2× máu trong khi sát thương gốc của
+   người chơi thì đứng yên — cả bốn nhân vật chết ngay trận đầu region 2. */
+const advMobHp =n=>1+.13*(n-1);
+const advMobDmg=n=>1+.07*(n-1);
+/* Boss và tinh nhuệ là NHÂN VẬT THẬT nên bộ chiêu của họ cân theo 800 máu, trong khi người
+   chơi ở nấc 8 mới có ~380 máu. Vì vậy phải hạ CẢ MÁU LẪN SÁT THƯƠNG, và hạ trơn theo độ
+   sâu chứ đừng bậc thang — xem ghi chú dài ở CLAUDE.md. */
+const advRamp=n=>(Math.max(1,Math.min(ADV_STAGES,n))-1)/(ADV_STAGES-1);
+function advBossHp(n){ return .30+.60*advRamp(n); }
+function advBossDmg(n){ return .46+.46*advRamp(n); }
+/* Tinh nhuệ = một nhân vật thật nhưng nhẹ hơn boss cùng độ sâu. */
+const ADV_ELITE_CUT=.62;
+const advIsBoss=n=>n%ADV_ROWS===0;
+
+/* Sinh bản đồ một region. Hàng 0 luôn là trận thường (vào cho êm), hàng áp chót luôn có chỗ
+   nghỉ, hàng chót là boss một mình. */
+function advMapNew(reg){
+  const rows=[];
+  for(let r=0;r<ADV_ROWS;r++){
+    if(r===ADV_ROWS-1){ rows.push([{t:'boss'}]); continue; }
+    const n=r===0?2:2+(Math.random()*3|0);      // 2~4 node
+    const row=[];
+    /* MẬT ĐỘ TRẬN ĐÁNH — hàng CHẴN bắt buộc toàn node có đánh nhau. Không có luật này thì
+       một đường đi có thể gần như không đánh trận nào: đo được Beatrice tới boss region 1
+       với đúng 2 trận, cấp 1, không thẻ nào — rồi chết chắc. Hàng lẻ vẫn thoải mái cửa
+       hàng / sự kiện / kho báu nên route vẫn có chỗ để chọn. */
+    const mustFight=(r%2===0);
+    for(let i=0;i<n;i++){
+      let ty=advNodeType(r,reg);
+      if(mustFight&&!(ADV_NODES[ty]||{}).fight) ty=Math.random()<.25?'hard':'battle';
+      row.push({t:ty});
+    }
+    /* Hàng áp chót phải có ÍT NHẤT một chỗ nghỉ: đánh boss với thanh máu rách thì không
+       phải là lựa chọn, mà là bị ép. */
+    if(r===ADV_ROWS-2&&!row.some(x=>x.t==='rest')) row[0].t='rest';
+    rows.push(row);
   }
-  const tier=ADV_TIER[Math.min(ADV_TIER.length-1,Math.floor((n-1)/4))];
-  const cnt=Math.min(5,2+Math.floor(n/5));
+  /* Nối cạnh: mỗi node nối sang 1~2 node GẦN NÓ ở hàng kế, và mọi node hàng kế phải có ít
+     nhất một đường vào — không thì sinh ra node chết không ai tới được. */
+  for(let r=0;r<rows.length-1;r++){
+    const a=rows[r], b=rows[r+1];
+    for(let i=0;i<a.length;i++){
+      const mid=Math.round(i/Math.max(1,a.length-1)*(b.length-1));
+      const set=new Set([mid]);
+      if(Math.random()<.55) set.add(Math.max(0,Math.min(b.length-1,mid+(Math.random()<.5?-1:1))));
+      a[i].to=[...set].sort((x,y)=>x-y);
+    }
+    for(let j=0;j<b.length;j++)
+      if(!a.some(x=>x.to.indexOf(j)>=0)){
+        const k=Math.round(j/Math.max(1,b.length-1)*(a.length-1));
+        a[k].to.push(j); a[k].to.sort((x,y)=>x-y);
+      }
+  }
+  return {rows, at:-1, pick:0, path:[]};
+}
+/* Bốc loại node cho một hàng. Hàng càng sâu thì tinh nhuệ / cửa hàng càng dễ ra. */
+function advNodeType(r,reg){
+  if(r===0) return 'battle';
+  const w=[
+    ['battle',   34],
+    ['hard',     r>=3?20:10],
+    ['elite',    r>=2?13:0],
+    ['treasure', 11],
+    ['shop',     r>=2?12:6],
+    ['event',    14],
+    ['rest',     r>=4?10:5]
+  ];
+  let tot=0; for(const x of w) tot+=x[1];
+  let k=Math.random()*tot;
+  for(const x of w){ k-=x[1]; if(k<=0) return x[0]; }
+  return 'battle';
+}
+/* Node đang đứng, và danh sách node đi tiếp được. */
+function advNodeAt(){
+  const M=ADV&&ADV.map; if(!M||M.at<0) return null;
+  return (M.rows[M.at]||[])[M.pick]||null;
+}
+function advNext(){
+  const M=ADV&&ADV.map; if(!M) return [];
+  if(M.at<0) return M.rows[0].map((_,i)=>i);          // chưa vào: hàng đầu mở hết
+  if(M.at>=M.rows.length-1) return [];
+  const cur=M.rows[M.at][M.pick];
+  return (cur&&cur.to)||[];
+}
+const advRunDone=()=>!!ADV&&(ADV.reg>=ADV_REGIONS||ADV.done);
+/* Vàng thưởng theo loại node (§25). Trận khó và tinh nhuệ đáng đi vòng để lấy. */
+const ADV_GOLD_WIN={battle:18,hard:30,elite:52,boss:90};
+const ADV_XP_MUL=2.2;                    // hệ số exp của quái, chốt bằng đo (xem `advNeed`)
+/* Thưởng exp KẾT TRẬN. Tách khỏi exp từng con vì nó dễ chỉnh hơn hẳn: muốn người chơi tới
+   boss ở cấp nào thì vặn đúng bảng này, khỏi đụng tới từng loại quái. */
+const ADV_XP_CLEAR={battle:55,hard:90,elite:150,boss:260};
+
+/* ---------- trận của một node ---------- */
+/* Bộ nhớ đệm theo trận: `advStatTick` gọi hàm này cho TỪNG địch MỖI NHỊP (4 địch × 120
+   nhịp/giây), mà mỗi lượt lại dựng một mảng mới — không đệm là phí vô ích. Xoá đệm ở
+   `newGame()` và mỗi lần bước vào node mới. */
+let ADV_ENC=null;
+function advEncounter(){
+  if(ADV_ENC) return ADV_ENC;
+  ADV_ENC=advEncounterCalc();
+  return ADV_ENC;
+}
+function advEncounterCalc(){
+  const node=advNodeAt(), R=advReg(), n=advDepth();
+  const T=node?node.t:'battle';
+  if(T==='boss'){
+    let key=R.boss;
+    if(ADV&&key===ADV.key) key=ADV_REG[(ADV.reg+1)%ADV_REGIONS].boss;
+    return {kind:'boss', enemies:[key], hp:advBossHp(n), dmg:advBossDmg(n)};
+  }
+  if(T==='elite'){
+    let key=R.elite;
+    if(ADV&&key===ADV.key) key=ADV_REG[(ADV.reg+1)%ADV_REGIONS].elite;
+    return {kind:'elite', enemies:[key],
+            hp:advBossHp(n)*ADV_ELITE_CUT, dmg:advBossDmg(n)*ADV_ELITE_CUT};
+  }
+  const hard=T==='hard';
+  const cnt=Math.min(5,(hard?3:2)+Math.floor(n/7));
   const out=[];
-  for(let i=0;i<cnt;i++) out.push(tier[i%tier.length]);
-  return {boss:false, enemies:out};
+  for(let i=0;i<cnt;i++) out.push(R.tier[i%R.tier.length]);
+  return {kind:hard?'hard':'battle', enemies:out,
+          hp:advMobHp(n)*(hard?1.35:1), dmg:advMobDmg(n)*(hard?1.2:1)};
 }
 function advRoster(){
-  const d=advStageDef(ADV.stage);
-  return [{key:ADV.key,team:0}].concat(d.enemies.map(k=>({key:k,team:1})));
+  return [{key:ADV.key,team:0}].concat(advEncounter().enemies.map(k=>({key:k,team:1})));
 }
-/* Dựng xong đội hình thì siết lại chỉ số: máu người chơi theo cấp, còn máu / sát thương của
-   địch theo số màn. Gọi từ `newGame()` sau khi `G.fighters` đã có. */
+/* Dựng xong đội hình thì siết lại chỉ số. MÁU NGƯỜI CHƠI MANG THEO TỪ NODE TRƯỚC
+   (§30: "Không cho heal full sau mỗi trận. Như vậy route choice mới có ý nghĩa") — chỗ nghỉ,
+   bình máu và cửa hàng mới là đường hồi. */
 function advTune(){
-  const n=ADV.stage, d=advStageDef(n);
+  const E=advEncounter();
   for(const f of G.fighters){
     if(f.summon) continue;
-    if(f.team===0){ f.maxHp=advMaxHp(); f.hp=f.maxHp; continue; }
+    if(f.team===0){
+      f.maxHp=advMaxHp();
+      f.hp=Math.max(1,Math.min(f.maxHp,ADV.hp>0?ADV.hp:f.maxHp));
+      continue;
+    }
     if(f.mob){
       const M=MOBS[f.mobKind];
-      f.maxHp=Math.round(M.hp*advMobHp(n)); f.hp=f.maxHp;
-      f.mobDmg=Math.round(M.dmg*advMobDmg(n));
+      f.maxHp=Math.max(1,Math.round(M.hp*E.hp)); f.hp=f.maxHp;
+      f.mobDmg=Math.max(1,Math.round(M.dmg*E.dmg));
     }else{
-      f.maxHp=Math.round((HP[f.key]||HP_STD)*advBossHp(n)); f.hp=f.maxHp;
+      f.maxHp=Math.max(1,Math.round((HP[f.key]||HP_STD)*E.hp)); f.hp=f.maxHp;
     }
   }
 }
@@ -6164,13 +6380,21 @@ function advStatTick(f){
      Kamehameha 400 dmg mà không cắt thì một phát là xong người chơi ở màn 8. */
   if(f.team!==0){
     const own=f.summon?(f.master||f):f;
-    if(!own.mob&&advIsBoss(ADV.stage)) f.dmgOut*=advBossDmg(ADV.stage);
+    /* Boss / tinh nhuệ: phần cắt sát thương đọc thẳng từ ENCOUNTER, nên nó tự đúng cho cả
+       hai loại và cho mọi độ sâu. Quái thì KHÔNG đi đường này — sát thương của chúng đã
+       scale riêng trong `advTune`, cắt thêm là nhân hai lần. */
+    if(!own.mob) f.dmgOut*=advEncounter().dmg;
     return;
   }
   if(f.summon) return;                 // viện binh của CHÍNH người chơi giữ nguyên
   f.moveMul*=1+ADV.st.agi*ADV_AGI;
   f.castMul*=1+ADV.st.foc*ADV_FOC;
-  f.dmgOut *=1+ADV.st.pow*ADV_POW;
+  /* Một nhịp sát thương theo CẤP, vừa đủ để theo kịp máu quái. Người dùng cấm lấy "+10%
+     damage" làm TRỤC CHÍNH của progression — và nó không phải: trục chính là 29 thẻ cơ chế.
+     Nhưng sát thương gốc mà đứng yên hẳn thì late game thành cào mãi không chết: đo được cả
+     sáu nhân vật thua trận ĐẦU region 2 ở NGUYÊN máu, vì 3 con quái tier mới có tổng 400 máu
+     mà người chơi vẫn đấm đúng con số của lv1. */
+  f.dmgOut *=(1+ADV.st.pow*ADV_POW)*(1+ADV_LVDMG*(ADV.lv-1));
 }
 /* Bậc chiêu ăn vào NHỊP TRÔI hồi chiêu của đúng ô đó. Vòng trừ hồi chiêu trong `step()` là
    một chỗ duy nhất cho mọi người nên chỉ phải cắm ở đây; không đụng vào `think()` của ai. */
@@ -6193,7 +6417,9 @@ function advLockKeys(){
 function advGain(t){
   if(!advOn()||!t||t.summon||t.team===0) return;
   const M=t.mob?MOBS[t.mobKind]:null;
-  const xp  = M?Math.round(M.xp *(1+.18*(ADV.stage-1))) : Math.round(90+ADV.stage*14);
+  const n=advDepth();
+  /* Quái cho exp gấp hơn hai lần bản đầu — xem ghi chú ở `advNeed`. */
+  const xp  = M?Math.round(M.xp*ADV_XP_MUL*(1+.18*(n-1))) : Math.round(120+n*18);
   G.advXp=(G.advXp|0)+xp; ADV.kills++;
   /* EXP ăn NGAY GIỮA TRẬN chứ không đợi hết màn — §3 muốn lên cấp là dừng trận chọn thẻ
      liền, đó mới là nhịp roguelite. `advLevel()` đẩy vào hàng chờ, `loop()` mở màn. */
@@ -6214,17 +6440,44 @@ function advLevel(){
    đánh không đọc lại được nữa. */
 function advResult(win){
   if(!advOn()) return;
+  /* CHỈ CHỐT MỘT LẦN cho mỗi trận. `finish()` về lý thuyết chỉ gọi một lượt, nhưng nó có
+     nhiều đường vào — chốt hai lần là cộng đôi phần thưởng và ĐẨY REGION ĐI HAI NẤC, lúc đó
+     người chơi rơi thẳng vào tier quái của region sau và chết oan. Đã dính đúng một lần khi
+     đo cân bằng: log ra `boss✓` rồi chết ngay trận kế, mà sổ ghi region 3. */
+  if(G.advDone) return;
+  G.advDone=1;
   const heroWin=!!win&&win.team===0;
+  const E=advEncounter(), node=advNodeAt();
+  const h=G.fighters.find(f=>!f.summon&&f.team===0);
   /* EXP đã cộng dần ngay lúc hạ từng con (xem `advGain`), nên ở đây KHÔNG cộng lại —
-     cộng hai lần là ăn gấp đôi. Chỉ còn phần thưởng kết màn. */
-  if(heroWin){ ADV.rr=(ADV.rr|0)+(advIsBoss(ADV.stage)?2:1); }
-  const ups=0;
+     cộng hai lần là ăn gấp đôi. */
   if(heroWin){
-    ADV.best=Math.max(ADV.best,ADV.stage);
-    if(ADV.stage<ADV_STAGES) ADV.stage++;
-    else ADV.done=true;
+    /* MÁU MANG THEO sang node kế — §30. Chỉ chốt khi THẮNG; thua thì đi đường hồi sinh. */
+    ADV.hp=Math.max(1,Math.round(h?h.hp:1));
+    const g=ADV_GOLD_WIN[E.kind]||18;
+    ADV.gold=(ADV.gold|0)+g; ADV.lastGold=g;
+    const bx=Math.round((ADV_XP_CLEAR[E.kind]||55)*(1+.15*(advDepth()-1)));
+    ADV.exp+=bx; ADV.lastClearXp=bx; advLevel();
+    ADV.rr=(ADV.rr|0)+(E.kind==='boss'?2:E.kind==='elite'?1:0);
+    if(node) node.done=1;
+    ADV.best=Math.max(ADV.best|0,advDepth());
+    /* Tinh nhuệ và boss còn thưởng thẳng một lượt CHỌN THẺ (§16). */
+    if(E.kind==='elite'||E.kind==='boss') ADV.pending=(ADV.pending|0)+1;
+    if(E.kind==='boss'){
+      ADV.reg=(ADV.reg|0)+1;
+      if(ADV.reg>=ADV_REGIONS){ ADV.done=true; }
+      /* Sang region mới thì hồi HẲN một nửa. §30 cấm hồi đầy sau MỖI TRẬN, nhưng qua được
+         một region là một cột mốc — và tier quái của region sau nhảy hẳn một bậc (slime/bat
+         → bat/scare/wisp → wisp/golem). Đo bản hồi 35%: cả sáu nhân vật đều thua đúng trận
+         ĐẦU TIÊN của region mới, mà mấy trận sau thì thắng bình thường. */
+      else { ADV.map=advMapNew(ADV.reg); advHeal(ADV_REG_HEAL); }
+    }
+  }else{
+    /* §31 — còn mạng hồi sinh thì đứng dậy đánh lại đúng node đó với một nửa máu. */
+    if((ADV.rev|0)>0){ ADV.rev--; ADV.hp=Math.max(1,Math.round(advMaxHp()*.5)); }
+    else ADV.dead=true;
   }
-  ADV.lastWin=heroWin; ADV.lastXp=(G.advXp|0); ADV.lastUp=ups;
+  ADV.lastWin=heroWin; ADV.lastXp=(G.advXp|0);
   advSave();
 }
 /* Mọi nâng cấp giờ đi qua MÀN CHỌN THẺ (`advTake`), không còn cửa mua bằng điểm nào. */
@@ -6713,6 +6966,182 @@ function advCardPaint(){
 function advRerollGo(){
   if(!ADV||(ADV.rr|0)<=0||!advCards) return;
   ADV.rr--; advCards=advPick3(); advSave(); advCardPaint(); sfx('ui_tap');
+}
+/* ==================== NODE KHÔNG ĐÁNH NHAU ====================
+   Bốn loại mở một bảng rồi đi tiếp: cửa hàng · kho báu · sự kiện · chỗ nghỉ (§16).
+   Tất cả dùng chung một lớp phủ `#advNode` và cùng một khuôn: tiêu đề · một dòng kể · vài
+   lựa chọn. Chọn xong thì `advNodeDone()` đánh dấu node và trả về bản đồ. */
+let advNodeUI=null;
+
+/* ---------- cửa hàng ---------- */
+const ADV_SHOP_HEAL=.34, ADV_REST_HEAL=.55, ADV_REG_HEAL=.60;
+function advShopStock(){
+  const n=advDepth();
+  const price=b=>Math.round(b*(1+.12*(n-1)));
+  const pool=advPool();
+  const pick=[];
+  const seen={};
+  for(let i=0;i<2&&pool.length;i++){
+    const U=pool[Math.random()*pool.length|0];
+    if(!U||seen[U.id]) continue;
+    seen[U.id]=1; pick.push(U);
+  }
+  const out=pick.map(U=>({kind:'card', up:U, cost:price(U.rar==='legend'?150:U.rar==='epic'?110:U.rar==='rare'?80:52)}));
+  out.push({kind:'heal', cost:price(45)});
+  out.push({kind:'rr',   cost:price(38)});
+  if((ADV.rev|0)<1) out.push({kind:'rev', cost:price(140)});
+  return out;
+}
+function advShopBuy(it){
+  if(!ADV||!it||it.bought) return false;
+  if((ADV.gold|0)<it.cost) return false;
+  ADV.gold-=it.cost; it.bought=1;
+  if(it.kind==='card'){ advTake(it.up); padBuild(); }
+  else if(it.kind==='heal') advHeal(ADV_SHOP_HEAL);
+  else if(it.kind==='rr') ADV.rr=(ADV.rr|0)+1;
+  else if(it.kind==='rev') ADV.rev=(ADV.rev|0)+1;
+  advSave(); return true;
+}
+
+/* ---------- sự kiện (§28) ----------
+   Text ngắn, hai lựa chọn, luôn có một đường "đi tiếp" không mất gì. Mỗi lựa chọn là một
+   hàm chạy rồi trả về dòng kết quả. */
+const ADV_EVENTS=[
+  { id:'shrine',
+    vi:'Một bệ đá cũ toả sáng mờ. Có thứ gì đó muốn đổi chác.',
+    en:'An old shrine glows faintly. Something here wants a trade.',
+    opts:[
+      { vi:'Hiến 15% máu — nhận một thẻ', en:'Offer 15% HP — take a card',
+        run(){ const mx=advMaxHp(); ADV.hp=Math.max(1,ADV.hp-Math.round(mx*.15));
+               ADV.pending=(ADV.pending|0)+1;
+               return {vi:'Bệ đá nuốt lấy chút sinh lực — và trả lại một thứ khác.',
+                       en:'The shrine drinks deep — and gives something back.'}; } },
+      { vi:'Đi tiếp', en:'Walk on', run(){ return {vi:'Bạn đi tiếp.',en:'You move on.'}; } }
+    ] },
+  { id:'merchant',
+    vi:'Một thương nhân lạ chặn đường, tay ôm một cái túi nặng.',
+    en:'A strange merchant blocks the path, clutching a heavy sack.',
+    opts:[
+      { vi:'Đổi 40 vàng lấy hai lượt bốc lại', en:'Trade 40 gold for two rerolls',
+        need(){ return (ADV.gold|0)>=40; },
+        run(){ ADV.gold-=40; ADV.rr=(ADV.rr|0)+2;
+               return {vi:'Ông ta cười, thả hai đồng xu lạ vào tay bạn.',
+                       en:'He grins and drops two odd coins in your hand.'}; } },
+      { vi:'Đi tiếp', en:'Walk on', run(){ return {vi:'Bạn đi tiếp.',en:'You move on.'}; } }
+    ] },
+  { id:'cache',
+    vi:'Một hòm đồ bỏ lại giữa đường. Nắp hòm còn ấm.',
+    en:'An abandoned cache sits in the road. The lid is still warm.',
+    opts:[
+      { vi:'Mở ra', en:'Open it',
+        run(){ const g=30+Math.round(Math.random()*40); ADV.gold=(ADV.gold|0)+g;
+               return {vi:`Bên trong là ${g} vàng.`, en:`${g} gold inside.`}; } },
+      { vi:'Đá đổ rồi bỏ đi — hồi 12% máu vì đỡ phải lo', en:'Kick it over and rest — heal 12%',
+        run(){ const h=advHeal(.12);
+               return {vi:`Bạn thở phào, hồi ${h} máu.`, en:`You breathe easier: ${h} HP back.`}; } }
+    ] },
+  { id:'dojo',
+    vi:'Một võ đường bỏ hoang. Bao cát vẫn còn treo.',
+    en:'An abandoned dojo. The heavy bag still hangs.',
+    opts:[
+      { vi:'Tập một lúc — nhận một thẻ', en:'Train a while — take a card',
+        run(){ ADV.pending=(ADV.pending|0)+1;
+               return {vi:'Bạn tìm ra một thói quen mới trong lúc đấm bao cát.',
+                       en:'You find a new habit somewhere in the rhythm.'}; } },
+      { vi:'Ngủ một giấc — hồi 25% máu', en:'Sleep instead — heal 25%',
+        run(){ const h=advHeal(.25);
+               return {vi:`Bạn ngủ một giấc và hồi ${h} máu.`, en:`You sleep and recover ${h} HP.`}; } }
+    ] }
+];
+function advNodeOpen(){
+  const node=advNodeAt(); if(!node) return;
+  const T=node.t;
+  if(T==='shop')     advNodeUI={t:'shop', stock:advShopStock()};
+  else if(T==='rest')advNodeUI={t:'rest'};
+  else if(T==='treasure') advNodeUI={t:'treasure'};
+  else advNodeUI={t:'event', ev:ADV_EVENTS[Math.random()*ADV_EVENTS.length|0], said:null};
+  advClose();
+  const b=document.getElementById('advNode'); if(b) b.classList.remove('off');
+  sfx('ui_board');
+  advNodePaint();
+}
+function advNodeClose(){
+  advNodeUI=null;
+  const b=document.getElementById('advNode'); if(b) b.classList.add('off');
+}
+function advNodePaint(){
+  const box=document.getElementById('advNodeBody'); if(!box||!advNodeUI) return;
+  const U=advNodeUI, ttl=document.getElementById('advNodeTitle');
+  const D=ADV_NODES[U.t==='event'?'event':U.t]||ADV_NODES.event;
+  if(ttl) ttl.textContent=tr({vi:D.vi,en:D.en}).toUpperCase();
+  const meta=document.getElementById('advNodeMeta');
+  if(meta) meta.textContent=`${t('advGold')} ${ADV.gold|0} · ${t('advHp')} ${ADV.hp}/${advMaxHp()}`;
+  let h='';
+  if(U.t==='shop'){
+    h+=`<p class="advNote">${t('advShopSay')}</p><div class="advList">`;
+    U.stock.forEach((it,i)=>{
+      const can=!it.bought&&(ADV.gold|0)>=it.cost;
+      let nm,ds;
+      if(it.kind==='card'){ nm=tr(it.up.name); ds=tr(it.up.desc); }
+      else if(it.kind==='heal'){ nm=t('advBuyHeal'); ds=tf('advBuyHealD',{n:Math.round(ADV_SHOP_HEAL*100)}); }
+      else if(it.kind==='rr'){ nm=t('advBuyRr'); ds=t('advBuyRrD'); }
+      else { nm=t('advBuyRev'); ds=t('advBuyRevD'); }
+      h+=`<div class="advRow"${it.bought?' style="opacity:.4"':''}><div><b>${nm}</b><s>${ds}</s></div>`+
+         `<div class="advVal">${it.bought?'—':it.cost+'⛁'}</div>`+
+         `<button class="advBuy" data-buy="${i}" type="button"${can?'':' disabled'}>+</button></div>`;
+    });
+    h+='</div>';
+  }else if(U.t==='rest'){
+    h+=`<p class="advNote">${t('advRestSay')}</p><div class="advList">`+
+       `<div class="advRow"><div><b>${t('advRestHeal')}</b><s>${tf('advRestHealD',{n:Math.round(ADV_REST_HEAL*100)})}</s></div>`+
+       `<div class="advVal"></div><button class="advBuy" data-rest="heal" type="button">+</button></div>`+
+       `<div class="advRow"><div><b>${t('advRestTrain')}</b><s>${t('advRestTrainD')}</s></div>`+
+       `<div class="advVal"></div><button class="advBuy" data-rest="card" type="button">+</button></div>`+
+       `</div>`;
+  }else if(U.t==='treasure'){
+    if(!U.got){
+      const roll=Math.random();
+      if(roll<.45){ const g=40+Math.round(Math.random()*55); ADV.gold=(ADV.gold|0)+g;
+        U.got={vi:`Trong hòm có ${g} vàng.`,en:`${g} gold in the chest.`}; }
+      else if(roll<.8){ ADV.pending=(ADV.pending|0)+1;
+        U.got={vi:'Một cuộn giấy cũ — bạn học được một thứ mới.',en:'An old scroll — you learn something new.'}; }
+      else { ADV.rr=(ADV.rr|0)+2;
+        U.got={vi:'Hai đồng xu lạ: hai lượt bốc lại.',en:'Two odd coins: two rerolls.'}; }
+      advSave();
+    }
+    h+=`<p class="advNote">${tr(U.got)}</p>`;
+  }else{
+    const E=U.ev;
+    h+=`<p class="advNote">${tr({vi:E.vi,en:E.en})}</p>`;
+    if(U.said) h+=`<p class="advNote" style="color:var(--gold)">${tr(U.said)}</p>`;
+    else{
+      h+='<div class="advList">';
+      E.opts.forEach((o,i)=>{
+        const can=!o.need||o.need();
+        h+=`<div class="advRow"><div><b>${tr({vi:o.vi,en:o.en})}</b></div><div class="advVal"></div>`+
+           `<button class="advBuy" data-ev="${i}" type="button"${can?'':' disabled'}>+</button></div>`;
+      });
+      h+='</div>';
+    }
+  }
+  box.innerHTML=h;
+  for(const b of box.querySelectorAll('[data-buy]'))
+    b.addEventListener('click',()=>{ if(advShopBuy(U.stock[+b.dataset.buy])){ sfx('ui_tap'); advNodePaint(); } });
+  for(const b of box.querySelectorAll('[data-rest]'))
+    b.addEventListener('click',()=>{
+      if(b.dataset.rest==='heal') advHeal(ADV_REST_HEAL); else ADV.pending=(ADV.pending|0)+1;
+      sfx('ui_next'); advSave(); advNodeDone();
+    });
+  for(const b of box.querySelectorAll('[data-ev]'))
+    b.addEventListener('click',()=>{
+      const o=U.ev.opts[+b.dataset.ev]; if(!o) return;
+      U.said=o.run()||{vi:'',en:''}; sfx('ui_next'); advSave(); advNodePaint();
+    });
+}
+/* Đi tiếp: đánh dấu node đã xong rồi trở về bản đồ. */
+function advNodeDone(){
+  const node=advNodeAt(); if(node) node.done=1;
+  advSave(); advNodeClose(); advOpen();
 }
 const duelLike=m=>m==='duel'||m==='league'||m==='cup';
 const compOn=()=>!!COMP;
@@ -18052,13 +18481,11 @@ const advBoardOn=()=>{ const b=document.getElementById('advBoard'); return !!b&&
 function advPaint(){
   if(!ADV) return;
   const body=document.getElementById('advBody'); if(!body) return;
-  const C=CHARS[ADV.key], n=ADV.stage, d=advStageDef(n);
+  const C=CHARS[ADV.key], R=advReg();
   const ttl=document.getElementById('advTitle');
   if(ttl) ttl.textContent=t('advTitle');
   const sub=document.getElementById('advSub');
-  if(sub) sub.textContent=ADV.done?t('advDone')
-      :tf(d.boss?'advSubBoss':'advSubMob',{n,of:ADV_STAGES,
-         who:d.boss?CHARS[d.enemies[0]].name:tf('advMobs',{c:d.enemies.length})});
+  if(sub) sub.textContent=ADV.dead?t('advDead'):advRunDone()?t('advDone'):t('advPickNode');
   const need=ADV.lv>=ADV_LVMAX?0:advNeed(ADV.lv);
   const pct=need?Math.round(ADV.exp/need*100):100;
 
@@ -18066,11 +18493,14 @@ function advPaint(){
     <div class="advFace">${avaHtml(ADV.key)}</div>
     <div class="advWho">
       <b>${C.name}</b>
-      <div class="advLv">${tf('advLv',{lv:ADV.lv})} · ${t('advHp')} ${advMaxHp()}</div>
+      <div class="advLv">${tf('advLv',{lv:ADV.lv})} · ${t('advHp')} ${Math.min(ADV.hp,advMaxHp())}/${advMaxHp()}</div>
+      <div class="advMeter hp"><i style="width:${Math.round(advHpPct()*100)}%"></i></div>
       <div class="advMeter"><i style="width:${pct}%"></i></div>
       <div class="advMeta">
         <span>EXP ${ADV.exp}${need?' / '+need:''}</span>
         <span>${t('advRr')} <b style="color:var(--cyan)">${ADV.rr|0}</b></span>
+        <span>${t('advGold')} <b style="color:var(--gold)">${ADV.gold|0}</b></span>
+        <span>${t('advRev')} <b style="color:#FF7A7A">${ADV.rev|0}</b></span>
         <span>${t('advKills')} ${ADV.kills}</span>
       </div>
     </div>
@@ -18101,32 +18531,66 @@ function advPaint(){
   }
   h+='</div>';
 
-  // ---- dải màn ----
-  h+=`<div class="advH">${t('advRoad')}</div><div class="advStage">`;
-  for(let i=1;i<=ADV_STAGES;i++){
-    const cls=[ 'advCell' ];
-    if(advIsBoss(i)) cls.push('boss');
-    if(i<ADV.stage||(ADV.done&&i===ADV_STAGES)) cls.push('done');
-    else if(i===ADV.stage&&!ADV.done) cls.push('now');
-    h+=`<div class="${cls.join(' ')}">${advIsBoss(i)?'★':''}${i}</div>`;
+  // ---- BẢN ĐỒ ----
+  const M=ADV.map, open=advNext();
+  h+=`<div class="advH">${tr({vi:R.vi,en:R.en})} <span class="advPts">`+
+     tf('advRegN',{n:(ADV.reg|0)+1,of:ADV_REGIONS})+`</span></div>`;
+  h+='<div class="advMap">';
+  for(let r=M.rows.length-1;r>=0;r--){          // vẽ từ BOSS xuống, đi lên trên như leo núi
+    const row=M.rows[r];
+    h+='<div class="advMapRow">';
+    for(let i2=0;i2<row.length;i2++){
+      const nd=row[i2], D=ADV_NODES[nd.t]||ADV_NODES.battle;
+      const here=(M.at===r&&M.pick===i2);
+      const can=(M.at+1===r)&&open.indexOf(i2)>=0&&!ADV.dead;
+      const past=r<M.at||(r===M.at&&nd.done);
+      const cls=['advNode',can?'can':'',here?'here':'',past?'past':'',nd.t].filter(Boolean).join(' ');
+      h+=`<button class="${cls}" ${can?`data-go="${r}:${i2}"`:'disabled'} type="button" `+
+         `title="${tr({vi:D.vi,en:D.en})}"><i>${D.ico}</i><s>${tr({vi:D.vi,en:D.en})}</s></button>`;
+    }
+    h+='</div>';
   }
   h+='</div>';
   h+=`<div class="advNote">${t('advHint')}</div>`;
   body.innerHTML=h;
-
+  /* Nút chính đổi vai theo tình huống: hết run thì "đi lại từ đầu", còn lại thì nó chỉ là
+     lối thoát — đi tiếp là bấm thẳng vào NODE trên bản đồ. */
   const go=document.getElementById('advGo');
   if(go){
-    go.textContent=ADV.done?t('advReplay'):tf('advGo',{n:ADV.stage});
+    const over=ADV.dead||advRunDone();
+    go.textContent=over?t('advAgain'):t('advClose');
     go.disabled=false;
   }
-  /* Không còn nút mua điểm nào: nâng cấp giờ đi qua MÀN CHỌN THẺ lúc lên cấp. */
+  for(const b of body.querySelectorAll('[data-go]')){
+    b.addEventListener('click',()=>{
+      const [r,i2]=b.dataset.go.split(':').map(Number);
+      advEnter(r,i2);
+    });
+  }
 }
-/* Vào màn: hỏi sàn trước (đúng lối mỗi trận một sàn của giải đấu) rồi mới dựng trận. */
+/* Bước vào một node. Node có đánh nhau thì hỏi sàn rồi dựng trận; node còn lại mở bảng. */
+function advEnter(r,i2){
+  if(!ADV||ADV.dead) return;
+  const M=ADV.map; if(!M||!M.rows[r]||!M.rows[r][i2]) return;
+  M.at=r; M.pick=i2; M.path.push(r+':'+i2);
+  const nd=M.rows[r][i2], D=ADV_NODES[nd.t]||ADV_NODES.battle;
+  ADV_ENC=null;                       // node mới thì tính lại trận
+  sfx('ui_next'); advSave();
+  if(D.panel){ advNodeOpen(); return; }
+  advClose();
+  /* Sàn của region áp vào trước, người chơi vẫn đổi được ở màn hỏi sàn. */
+  STAGE=advReg().stage||STAGE;
+  stagePickOpen(()=>{ newGame(); padBuild(); arcFight(); });
+}
+/* Bắt đầu lại một hành trình mới với cùng nhân vật — giữ nguyên nút "Đổi nhân vật". */
+function advRestart(){
+  if(!ADV) return;
+  ADV=advNew(ADV.key); ADV_ENC=null; advIndex(); advSave(); advPaint();
+}
 function advPlay(){
   if(!ADV) return;
-  if(ADV.done) ADV.stage=Math.max(1,Math.min(ADV_STAGES,ADV.stage));
+  if(ADV.dead||advRunDone()){ advRestart(); return; }
   advClose();
-  stagePickOpen(()=>{ newGame(); padBuild(); arcFight(); });
 }
 
 /* ---------- màn bảng xếp hạng / sơ đồ nhánh ----------
@@ -18695,6 +19159,7 @@ if(ARCADE){
   el('arcAdv').addEventListener('click',()=>advOpen());
   el('advGo').addEventListener('click',advPlay);
   el('advReroll').addEventListener('click',advRerollGo);
+  el('advNodeGo').addEventListener('click',advNodeDone);
   el('advPick').addEventListener('click',()=>{ advClose(); TMP.mode='adv'; cselPage=cselSteps()[0]; openCsel(); });
   el('advQuit').addEventListener('click',()=>{
     advClose(); advWipe(); PMODE='duel'; TMP.mode='duel';

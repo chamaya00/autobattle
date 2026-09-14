@@ -2278,8 +2278,67 @@ Màn chọn nhân vật dùng lại **đúng bước `p1`** của đấu tay đ�
 thẻ hồ sơ) — `cselSteps()` cho `adv` trả về `['mode','p1','stage']`. Vì vậy `cselRefresh()`
 phải cho `adv` đi chung nhánh `duel` (`#duelPane`), không thì lưới `#listA` không bao giờ hiện.
 
-**24 màn, cứ màn thứ 4 là một BOSS** ⇒ sáu boss (`ADV_BOSS`, mạnh dần). Màn thường là quái,
-càng về sau càng đông (2 → 5 con) và càng nặng đòn.
+### Bản đồ PHÂN NHÁNH — `ADV.map`
+
+§15: *"Không làm map chỉ là một đường thẳng. Sử dụng Node-Based Adventure Map. Player chọn
+route."* Một run = **ba REGION**, mỗi region **tám HÀNG**, hàng cuối luôn là BOSS. Tổng vẫn
+đúng 24 nấc (`ADV_STAGES = 3 × 8`) nên mọi công thức scale theo **độ sâu** giữ nguyên — độ
+sâu quyết định địch mạnh tới đâu, bản đồ chỉ quyết định **đi đường nào**.
+
+Mỗi hàng 2~4 node, mỗi node nối sang 1~2 node hàng kế. Ba luật dựng map, đừng bỏ cái nào:
+- **hàng đầu toàn trận thường** (vào cho êm), **hàng cuối là boss một mình**;
+- **hàng áp chót luôn có chỗ nghỉ** — đánh boss với thanh máu rách thì không phải lựa chọn,
+  mà là bị ép;
+- **mọi node phải có đường ra VÀ đường vào** — thiếu vế sau là sinh ra node chết không ai tới.
+
+> **MẬT ĐỘ TRẬN ĐÁNH: hàng CHẴN bắt buộc toàn node có đánh nhau.** Không có luật này thì một
+> đường đi có thể gần như không đánh trận nào — đo được Beatrice tới boss region 1 với đúng
+> **2 trận, cấp 1, không thẻ nào**, rồi chết chắc. Hàng lẻ vẫn thoải mái cửa hàng / sự kiện /
+> kho báu nên route vẫn có cái để chọn.
+
+Tám loại node (§16) trong `ADV_NODES`: `battle · hard · elite · boss` có đánh nhau,
+`shop · treasure · event · rest` mở một bảng rồi đi tiếp. Ba region (`ADV_REG`) mỗi cái một
+sàn đấu, một tông màu, một **tier quái** và một cặp **tinh nhuệ / boss** riêng.
+
+**MÁU MANG THEO giữa các node** (§30) — `ADV.hp`. Không hồi đầy sau mỗi trận, nên chọn route
+mới có nghĩa. Đường hồi: chỗ nghỉ 55% · cửa hàng 34% · qua region 60%. **Thua** thì tiêu một
+mạng hồi sinh và đánh lại với nửa máu (§31); hết mạng là run kết thúc.
+
+> **`advResult()` chỉ được chốt MỘT LẦN cho mỗi trận** (`G.advDone`). `finish()` có nhiều
+> đường vào; chốt hai lần là cộng đôi phần thưởng và **đẩy region đi hai nấc**, lúc đó người
+> chơi rơi thẳng vào tier quái của region sau và chết oan. Đã dính đúng một lần lúc đo cân
+> bằng: log ra `boss✓` rồi chết ngay trận kế, mà sổ ghi region 3.
+
+> **`advEncounter()` có ĐỆM theo trận** (`ADV_ENC`) vì `advStatTick` gọi nó cho TỪNG địch MỖI
+> NHỊP. Xoá đệm ở `advEnter()`, `newGame()` và `advRestart()`. Test đổi loại node thì phải
+> gọi `__advEncClear()` trước khi đọc lại.
+
+### Cân bằng — mấy con số này ĐO RỒI MỚI CHỐT, đừng đoán
+
+Đường cong của bản 24-màn-thẳng cũ **quá dốc** khi chuyển sang bản đồ: một region có 8 hàng
+mà chỉ ~5 hàng là đánh nhau. Ghi lại cả đường đi để khỏi mò lại:
+
+| Lần đo | Kết quả |
+|---|---|
+| curve cũ + mob HP ×.28/nấc | tới boss region 1 mới **lv2~3, 1~3 thẻ** — chết sạch |
+| phẳng curve + thưởng kết trận + hàng chẵn toàn trận | **lv10~15, 7~13 thẻ** — qua được boss region 1 |
+| mob HP ×.28 (chưa sửa) | chết ngay **trận đầu region 2**: quái 3.2× máu mà sát thương gốc người chơi đứng yên |
+| mob HP ×.13, mob dmg ×.07, +7% dmg mỗi cấp | tới **region 2~3**, chết dần chứ không chết dốc |
+
+Ba chỗ đáng nhớ:
+1. **§21 — đừng thổi máu quái.** `advMobHp` chỉ `1+.13*(n-1)`. Cái làm địch khó dần là **LOẠI
+   QUÁI** (mỗi region một tier hẳn) và **SỐ LƯỢNG**, không phải thanh máu.
+2. **Sát thương gốc phải nhích theo cấp** (`ADV_LVDMG = .07`). Người dùng cấm lấy "+10%
+   damage" làm TRỤC CHÍNH — và nó không phải, trục chính là 29 thẻ cơ chế. Nhưng để nó đứng
+   yên hẳn thì late game thành cào mãi không chết.
+3. **Thưởng exp KẾT TRẬN (`ADV_XP_CLEAR`) tách khỏi exp từng con** — muốn người chơi tới boss
+   ở cấp nào thì vặn đúng bảng đó, khỏi đụng tới từng loại quái.
+
+Đo bằng `scratchpad/run.js` (đi trọn một run, bốc đường và bốc thẻ ngẫu nhiên).
+
+**Boss / tinh nhuệ** là nhân vật thật, hạ **cả máu lẫn sát thương** theo độ sâu
+(`advBossHp` .30→.90, `advBossDmg` .46→.92); tinh nhuệ còn nhẹ hơn boss cùng độ sâu một nấc
+(`ADV_ELITE_CUT`).
 
 > **Boss phải hạ CẢ MÁU LẪN SÁT THƯƠNG, đừng chỉ hạ máu.** Boss là nhân vật thật nên bộ chiêu
 > của họ cân theo 800 máu, trong khi người chơi ở màn 4 mới có ~370 máu — hạ máu boss mà để

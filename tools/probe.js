@@ -154,7 +154,14 @@ window.__MOBS=MOBS; window.__MOB_KEYS=MOB_KEYS; window.__isMobKey=isMobKey;
 window.__CKEYS=()=>CKEYS;
 window.__ADV=()=>ADV; window.__setADV=a=>{ ADV=a; };
 window.__advNew=advNew; window.__advNeed=advNeed; window.__advMaxHp=()=>advMaxHp();
-window.__advStageDef=advStageDef; window.__advIsBoss=advIsBoss; window.__advRoster=advRoster;
+window.__advIsBoss=advIsBoss; window.__advRoster=advRoster;
+/* bản đồ phân nhánh */
+window.__advMapNew=advMapNew; window.__advNodeAt=advNodeAt; window.__advNext=advNext;
+window.__advEncounter=advEncounter; window.__advEncClear=()=>{ADV_ENC=null;}; window.__advDepth=advDepth; window.__advEnter=(r,i)=>advEnter(r,i);
+window.__ADV_NODES=ADV_NODES; window.__ADV_REG=ADV_REG; window.__ADV_ROWS=()=>ADV_ROWS;
+window.__ADV_REGIONS=()=>ADV_REGIONS; window.__advHeal=advHeal; window.__advShopStock=advShopStock;
+window.__advShopBuy=advShopBuy; window.__ADV_EVENTS=ADV_EVENTS; window.__advNodeUI=()=>advNodeUI;
+window.__advRestart=()=>advRestart(); window.__advRunDone=()=>advRunDone();
 window.__advMobHp=advMobHp; window.__advMobDmg=advMobDmg; window.__advBossHp=advBossHp; window.__advBossDmg=advBossDmg;
 window.__advGain=advGain; window.__advLevel=advLevel; window.__advResult=advResult;
 window.__advRank=advRank;

@@ -27,6 +27,15 @@ async function newPage(file) {
   return { browser, page, errors };
 }
 
+/* Vào trận từ BẢN ĐỒ: bấm node đi được đầu tiên (hàng đầu luôn là trận thường), rồi qua
+   màn hỏi sàn. Từ đợt bản đồ phân nhánh thì `#advGo` không còn là nút vào trận nữa. */
+async function goBattle(page) {
+  await page.click('#advBody .advNode.can');
+  await page.waitForTimeout(250);
+  await page.click('#arcStageGo');
+  await page.waitForTimeout(3800);
+}
+
 /* ---------- 1. quái: có trong CHARS nhưng KHÔNG lọt vào lưới chọn nhân vật ---------- */
 async function mobs() {
   console.log('\n== 1. quái ==');
@@ -234,21 +243,21 @@ async function adventure() {
     const b = document.getElementById('advBoard');
     const A = window.__ADV();
     return { up: !!b && !b.classList.contains('off'), key: A && A.key, lv: A && A.lv,
-             stage: A && A.stage, rr: A && A.rr, ups: A && Object.keys(A.ups || {}).length,
+             rr: A && A.rr, ups: A && Object.keys(A.ups || {}).length,
              maxHp: window.__advMaxHp(), hp0: window.__ADV_HP0(),
              rows: document.querySelectorAll('#advBody .advRow').length,
-             cells: document.querySelectorAll('#advBody .advCell').length,
+             nodes: document.querySelectorAll('#advBody .advNode').length,
              stages: window.__ADV_STAGES() };
   });
   ok('bảng hành trình mở ra', board.up);
-  ok('bắt đầu ở cấp 1, màn 1, chưa có thẻ nào',
-     board.lv === 1 && board.stage === 1 && board.ups === 0,
-     'lv' + board.lv + ' màn' + board.stage + ' · ' + board.ups + ' thẻ');
+  ok('bắt đầu ở cấp 1, region 1, chưa có thẻ nào',
+     board.lv === 1 && board.ups === 0,
+     'lv' + board.lv + ' · ' + board.ups + ' thẻ');
   ok('có sẵn vài lượt bốc lại', board.rr > 0, board.rr + ' lượt');
   ok('lv1 máu THẤP hẳn (không đọc HP 800 của bảng chuẩn)',
      board.maxHp === board.hp0, board.maxHp + ' máu');
   ok('bảng liệt kê đủ bốn ô chiêu', board.rows >= 4, board.rows + ' hàng');
-  ok('dải màn đủ ' + board.stages + ' ô', board.cells === board.stages, board.cells + ' ô');
+  ok('bản đồ vẽ ra node thật', board.nodes > 8, board.nodes + ' node');
 
   // lv1: chỉ đòn thường, ba ô chiêu còn khoá
   const locked = await page.evaluate(() => {
@@ -269,6 +278,112 @@ async function adventure() {
   ok('ô chiêu chưa mở thì coi như không bấm; đòn thường (j) vẫn ăn',
      gate.j === true && gate.k === false && gate.u === false,
      'j=' + gate.j + ' k=' + gate.k + ' u=' + gate.u);
+
+  /* ---------- BẢN ĐỒ PHÂN NHÁNH (§15/§16) ---------- */
+  const map = await page.evaluate(() => {
+    const A = window.__ADV(), M = A.map;
+    let out = true, into = true, valid = true;
+    for (let r = 0; r < M.rows.length - 1; r++) {
+      for (const n of M.rows[r]) {
+        if (!n.to || !n.to.length) out = false;
+        for (const k of (n.to || [])) if (k < 0 || k >= M.rows[r + 1].length) valid = false;
+      }
+      for (let j2 = 0; j2 < M.rows[r + 1].length; j2++)
+        if (!M.rows[r].some(n => (n.to || []).indexOf(j2) >= 0)) into = false;
+    }
+    const last = M.rows[M.rows.length - 1];
+    return { rows: M.rows.length, ROWS: window.__ADV_ROWS(), out, into, valid,
+             rowN: M.rows.map(r => r.length), at: M.at,
+             lastBoss: last.length === 1 && last[0].t === 'boss',
+             firstBattle: M.rows[0].every(n => n.t === 'battle'),
+             rest: M.rows[M.rows.length - 2].some(n => n.t === 'rest'),
+             regions: window.__ADV_REGIONS() };
+  });
+  ok('bản đồ đủ ' + map.ROWS + ' hàng', map.rows === map.ROWS, map.rowN.join('-'));
+  ok('KHÔNG phải đường thẳng — có hàng nhiều hơn một node',
+     map.rowN.some(n => n > 1), map.rowN.join('-'));
+  ok('không có node chết: node nào cũng có đường ra và đường vào', map.out && map.into);
+  ok('cạnh không trỏ ra ngoài hàng kế', map.valid);
+  ok('hàng đầu là trận thường, hàng cuối là BOSS một mình', map.firstBattle && map.lastBoss);
+  ok('hàng áp chót luôn có chỗ nghỉ (đừng ép đánh boss với máu rách)', map.rest);
+  ok('có đủ ba region', map.regions === 3, map.regions + ' region');
+
+  const kinds = await page.evaluate(() => Object.keys(window.__ADV_NODES));
+  ok('đủ tám loại node của §16',
+     ['battle','hard','elite','boss','shop','treasure','event','rest'].every(k => kinds.indexOf(k) >= 0),
+     kinds.join(' '));
+
+  // chỉ đi được sang node mình NỐI TỚI
+  const route = await page.evaluate(() => {
+    const A = window.__ADV(), M = A.map;
+    const first = window.__advNext().length;
+    M.at = 0; M.pick = 0;
+    const after = window.__advNext();
+    return { first, row0: M.rows[0].length, after, legal: M.rows[0][0].to,
+             depth: window.__advDepth() };
+  });
+  ok('chưa đi thì cả hàng đầu đều chọn được', route.first === route.row0, route.first + ' lối');
+  ok('đi rồi thì CHỈ sang được node mình nối tới',
+     JSON.stringify(route.after) === JSON.stringify(route.legal), JSON.stringify(route.after));
+
+  // encounter đọc theo NODE chứ không theo số màn
+  const enc = await page.evaluate(() => {
+    const M = window.__ADV().map;
+    M.at = 0; M.pick = 0;
+    /* `advEncounter()` có ĐỆM theo trận (nó bị gọi cho từng địch mỗi nhịp), nên đổi loại
+       node xong phải xoá đệm rồi mới đọc lại — không thì đọc ra kết quả của loại trước. */
+    const set = t2 => { M.rows[0][0].t = t2; window.__advEncClear(); return window.__advEncounter(); };
+    const b = set('battle'), h = set('hard'), e = set('elite'), bo = set('boss');
+    set('battle');
+    return { bMob: b.enemies.every(window.__isMobKey), bN: b.enemies.length, bHp: b.hp,
+             hN: h.enemies.length, hHp: h.hp,
+             eMob: e.enemies.some(window.__isMobKey), eHp: e.hp,
+             boMob: bo.enemies.some(window.__isMobKey), boHp: bo.hp };
+  });
+  ok('trận thường là QUÁI, tinh nhuệ và boss là NHÂN VẬT THẬT',
+     enc.bMob && !enc.eMob && !enc.boMob);
+  ok('trận khó đông hơn và dai hơn trận thường',
+     enc.hN >= enc.bN && enc.hHp > enc.bHp, enc.bN + ' -> ' + enc.hN + ' con');
+  ok('tinh nhuệ nhẹ hơn boss cùng độ sâu', enc.eHp < enc.boHp,
+     '×' + enc.eHp.toFixed(2) + ' vs ×' + enc.boHp.toFixed(2));
+
+  // máu MANG THEO giữa các node (§30)
+  const carry = await page.evaluate(() => {
+    const A = window.__ADV();
+    A.hp = Math.round(window.__advMaxHp() * .4);
+    const before = A.hp;
+    const healed = window.__advHeal(.30);
+    return { before, healed, after: A.hp, max: window.__advMaxHp() };
+  });
+  ok('máu mang theo giữa các node, KHÔNG hồi đầy mỗi trận (§30)',
+     carry.before < carry.max, carry.before + '/' + carry.max);
+  ok('chỗ nghỉ hồi đúng phần máu tối đa', carry.healed > 0, '+' + carry.healed);
+
+  // cửa hàng
+  const shop = await page.evaluate(() => {
+    const A = window.__ADV();
+    A.gold = 0;
+    const st = window.__advShopStock();
+    const poor = window.__advShopBuy(st[0]);
+    A.gold = 9999; const g0 = A.gold;
+    const rich = window.__advShopBuy(st[0]);
+    const twice = window.__advShopBuy(st[0]);
+    return { n: st.length, poor, rich, twice, spent: g0 - A.gold, kinds: st.map(x => x.kind) };
+  });
+  ok('cửa hàng có vài món', shop.n >= 3, shop.kinds.join(' '));
+  ok('không đủ vàng thì KHÔNG mua được', shop.poor === false);
+  ok('đủ vàng thì mua được và bị trừ vàng', shop.rich === true && shop.spent > 0, '-' + shop.spent);
+  ok('một món chỉ mua được một lần', shop.twice === false);
+
+  // sự kiện
+  const evs = await page.evaluate(() => window.__ADV_EVENTS.map(E => {
+    const o = E.opts[E.opts.length - 1];
+    let said = null;
+    try { said = o.run(); } catch (e) { said = null; }
+    return { id: E.id, opts: E.opts.length, ok: !!(said && said.vi && said.en) };
+  }));
+  ok('mọi sự kiện có ít nhất hai lựa chọn và trả lời song ngữ',
+     evs.length >= 3 && evs.every(e => e.opts >= 2 && e.ok), evs.map(e => e.id).join(' '));
 
   /* ---------- bảng thẻ: cơ chế phải ÁP ĐẢO chỉ số ----------
      Người dùng chốt: *"Không được biến progression chủ yếu thành +10% damage / +5% HP"*. */
@@ -372,10 +487,10 @@ async function advFight() {
   await page.waitForTimeout(160);
   await page.click('#cselGo');
   await page.waitForTimeout(300);
-  await page.click('#advGo');                 // -> hỏi sàn
+  await page.click('#advBody .advNode.can');  // bấm một node trên bản đồ
   await page.waitForTimeout(250);
   const asked = await page.$eval('#arcStage', e => !e.classList.contains('off'));
-  ok('vào màn thì hỏi sàn trước (đúng lối mỗi trận một sàn)', asked);
+  ok('bấm node trên bản đồ thì hỏi sàn trước (đúng lối mỗi trận một sàn)', asked);
   await page.click('#arcStageGo');
   await page.waitForTimeout(3800);            // qua màn VS
 
@@ -405,33 +520,47 @@ async function advFight() {
     for (const f of G.fighters.filter(f => !f.summon && f.team !== 0)) window.__defeat(f);
     await new Promise(r => setTimeout(r, 500));
     const A = window.__ADV();
-    return { xp: A.exp, lv: A.lv, pend: A.pending | 0, rr: A.rr | 0, stage: A.stage,
-             kills: A.kills, over: !!window.__G().over, lastWin: A.lastWin };
+    const nd = window.__advNodeAt();
+    return { xp: A.exp, lv: A.lv, pend: A.pending | 0, gold: A.gold | 0, hp: A.hp,
+             kills: A.kills, over: !!window.__G().over, lastWin: A.lastWin,
+             done: nd && nd.done, next: window.__advNext().length };
   });
   ok('hạ hết quái thì thắng màn', done.over && done.lastWin === true);
   /* EXP cộng NGAY lúc từng con gục, nên đủ exp là lên cấp luôn và xếp một lượt chọn thẻ —
      hoặc còn nằm trong thanh exp nếu chưa đủ. Cả hai đều tính là "có ăn exp". */
   ok('ăn EXP ngay trong trận', done.xp > 0 || done.lv > 1 || done.pend > 0,
      'exp ' + done.xp + ' · lv' + done.lv + ' · chờ ' + done.pend + ' thẻ');
-  ok('thắng màn thì được thêm lượt bốc lại', done.rr > 2, done.rr + ' lượt');
+  ok('thắng trận thường thì ăn VÀNG', done.gold > 60, done.gold + ' vàng');
   ok('đếm đúng số con đã hạ', done.kills >= 2, done.kills + ' con');
-  ok('thắng thì sang màn kế tiếp', done.stage === 2, 'màn ' + done.stage);
+  ok('node vừa đánh được đánh dấu xong, và mở ra đường đi tiếp',
+     done.done === 1 && done.next > 0, done.next + ' lối đi tiếp');
+  ok('máu còn lại được MANG THEO sang node sau', done.hp > 0 && done.hp <= 260,
+     done.hp + ' máu');
 
-  // thua vẫn giữ phần đã farm
+  /* Thua: §31 — còn mạng hồi sinh thì đứng dậy đánh lại với nửa máu, hết mạng thì run kết
+     thúc. Phần đã farm (exp, thẻ) vẫn giữ nguyên trong cả hai trường hợp. */
   const keep = await page.evaluate(async () => {
     const A = window.__ADV();
-    A.stage = 5; A.exp = 0; A.sxp = 0;
+    A.rev = 1; A.dead = false; A.exp = 0;
     window.__newGame();
     const G = window.__G();
     const foes = G.fighters.filter(f => !f.summon && f.team !== 0);
     window.__defeat(foes[0]);                       // hạ được một con
-    const mid = { xp: G.advXp, sxp: G.advSxp };
     window.__defeat(G.fighters.find(f => !f.summon && f.team === 0));   // rồi mình gục
     await new Promise(r => setTimeout(r, 400));
-    return { mid, xp: A.exp, sxp: A.sxp, stage: A.stage, win: A.lastWin };
+    const once = { rev: A.rev, dead: A.dead, hp: A.hp, xp: A.exp };
+    // gục lần nữa khi đã hết mạng
+    A.dead = false; window.__newGame();
+    const G2 = window.__G();
+    window.__defeat(G2.fighters.find(f => !f.summon && f.team === 0));
+    await new Promise(r => setTimeout(r, 400));
+    return { once, dead: A.dead, ups: Object.keys(A.ups || {}).length };
   });
-  ok('thua thì KHÔNG sang màn mới', keep.win === false && keep.stage === 5, 'màn ' + keep.stage);
-  ok('nhưng vẫn giữ phần đã farm', keep.xp > 0, 'giữ ' + keep.xp + ' exp');
+  ok('thua mà còn mạng hồi sinh thì đứng dậy đánh lại với nửa máu',
+     keep.once.rev === 0 && keep.once.dead === false && keep.once.hp > 0,
+     'còn ' + keep.once.rev + ' mạng · ' + keep.once.hp + ' máu');
+  ok('hết mạng thì hành trình kết thúc', keep.dead === true);
+  ok('thua vẫn giữ phần đã farm', keep.once.xp > 0, 'giữ ' + keep.once.xp + ' exp');
 
   await browser.close();
   return errors;
@@ -464,10 +593,7 @@ async function padCd() {
      !lock[0].lock && lock.slice(1).every(x => x.lock),
      lock.map(x => x.k + (x.lock ? '(' + x.txt + ')' : ':mở')).join(' '));
 
-  await page.click('#advGo');
-  await page.waitForTimeout(220);
-  await page.click('#arcStageGo');
-  await page.waitForTimeout(3800);
+  await goBattle(page);
 
   const cd = await page.evaluate(async () => {
     const G = window.__G(), f = G.fighters.find(x => x.team === 0 && !x.summon);
@@ -506,10 +632,7 @@ async function fxLive() {
   await page.waitForTimeout(160);
   await page.click('#cselGo');
   await page.waitForTimeout(300);
-  await page.click('#advGo');
-  await page.waitForTimeout(220);
-  await page.click('#arcStageGo');
-  await page.waitForTimeout(3800);
+  await goBattle(page);
 
   // MARK: gắn được, hết hạn được, và thẻ ăn theo mark cộng đúng sát thương
   const mark = await page.evaluate(() => {
