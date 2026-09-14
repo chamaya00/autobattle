@@ -16,9 +16,13 @@ p.write_text(s)
 
 t=Path('tools/t_isagi.js')
 q=t.read_text()
+old_puzzle="has('puzzleCd:gs(9), puzzleT:gs(1), puzzleMove:.60, puzzleVision:30','Puzzle Pieces');"
+if old_puzzle not in q:
+    raise SystemExit('Puzzle Pieces test anchor missing')
+q=q.replace(old_puzzle,"has('puzzleCd:gs(9), puzzleT:gs(.75), puzzleMove:.60, puzzleVision:30','Puzzle Pieces faster cast');",1)
 anchor="has('directDmg:66, directPerfect:86, directCd:gs(7)','Direct / Perfect Timing nerf');"
 if anchor not in q:
     raise SystemExit('t_isagi anchor missing')
-extra="\nhas('directCd:gs(7), directWind:gs(.45)','Direct Shot faster cast');\nhas('puzzleCd:gs(9), puzzleT:gs(.75)','Puzzle Pieces faster analysis cast');\nhas('ultRange:500, ultWind:gs(.85)','Two-Gun Volley faster cast');"
+extra="\nhas('directCd:gs(7), directWind:gs(.45)','Direct Shot faster cast');\nhas('ultRange:500, ultWind:gs(.85)','Two-Gun Volley faster cast');"
 q=q.replace(anchor,anchor+extra,1)
 t.write_text(q)
