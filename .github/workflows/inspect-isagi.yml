@@ -9,9 +9,20 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feature/isagi-yoichi
-      - name: Inspect exact ranges
+      - name: Inspect anchors
         run: |
-          for r in '1940,2310' '2815,3305' '3415,3685' '5650,6035' '12610,13165' '13745,14540' '17070,17180' '17620,17675'; do
-            echo "=== RANGE $r ==="
-            sed -n "${r}p" index.html
-          done
+          echo '=== tryEvade ==='
+          n=$(grep -n 'function tryEvade' index.html | head -1 | cut -d: -f1); sed -n "$((n-10)),$((n+115))p" index.html
+          echo '=== hurt ==='
+          n=$(grep -n 'function hurt' index.html | head -1 | cut -d: -f1); sed -n "$((n-15)),$((n+135))p" index.html
+          echo '=== fighter update around conanTick ==='
+          n=$(grep -n 'conanTick(f,dt)' index.html | tail -1 | cut -d: -f1); sed -n "$((n-45)),$((n+90))p" index.html
+          echo '=== draw functions ==='
+          grep -nE '^function (draw|render)' index.html | tail -n 35
+          echo '=== projectile draw occurrence ==='
+          grep -n 'for(const p of G.proj)' index.html | tail -n 8
+          for n in $(grep -n 'for(const p of G.proj)' index.html | tail -n 3 | cut -d: -f1); do sed -n "$((n-55)),$((n+105))p" index.html; done
+          echo '=== SPR anchors ==='
+          grep -nE 'SPR_DEFAULT|const SPR|let SPR|conan:' index.html | head -n 80
+          echo '=== DEX bounds ==='
+          grep -nE '^const DEX=|^};$' index.html | head -n 40
