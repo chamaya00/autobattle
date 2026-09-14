@@ -1,0 +1,27 @@
+name: Clean Isagi balance branch
+
+on:
+  push:
+    branches:
+      - balance/isagi-ball-nerf
+
+permissions:
+  contents: write
+
+jobs:
+  clean:
+    if: github.event.head_commit.message == 'Clean Isagi balance branch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: balance/isagi-ball-nerf
+      - name: Remove test dependencies and self
+        run: |
+          rm -rf node_modules
+          rm -f .github/workflows/cleanup-isagi-balance.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Clean Isagi balance branch"
+          git push origin HEAD:balance/isagi-ball-nerf
