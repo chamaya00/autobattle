@@ -1968,13 +1968,13 @@ let vsOn=false, vsTimer=0;
 const keys={};
 
 /* ---------- sprite slots ---------- */
-const SPR={stages:{},kono:{},chichi:{},tsubasa:{},shika:{},suzune:{},ginyu:{},dora:{},superman:{},beatrice:{},tanjiro:{},gojo:{},conan:{},ayanokouji:{},nara:{},garden:{},goku:{},gohan:{},hyuga:{},misaki:{},wakabayashi:{},ishizaki:{}};
-const COLORS={kono:'#63B4FF',chichi:'#FF4D6D',tsubasa:'#2ED573',shika:'#9B8CFF',suzune:'#7FC8FF',ginyu:'#A05CFF',dora:'#2B9BE8',superman:'#2E5BD8',beatrice:'#C77DFF',tanjiro:'#39B87F',gojo:'#78D9FF',conan:'#4B8BFF'};
+const SPR={stages:{},kono:{},chichi:{},tsubasa:{},shika:{},suzune:{},ginyu:{},dora:{},superman:{},beatrice:{},tanjiro:{},gojo:{},isagi:{},conan:{},ayanokouji:{},nara:{},garden:{},goku:{},gohan:{},hyuga:{},misaki:{},wakabayashi:{},ishizaki:{}};
+const COLORS={kono:'#63B4FF',chichi:'#FF4D6D',tsubasa:'#2ED573',shika:'#9B8CFF',suzune:'#7FC8FF',ginyu:'#A05CFF',dora:'#2B9BE8',superman:'#2E5BD8',beatrice:'#C77DFF',tanjiro:'#39B87F',gojo:'#78D9FF',conan:'#4B8BFF',isagi:'#16C7FF'};
 /* Superman đứng riêng ở 800 máu — cả bộ chiêu của anh cân theo đúng thanh máu đó. */
 /* Máu chuẩn của cả bảng. Người chơi chỉnh thoải mái ở màn chọn nhân vật (ô HP_MIN..HP_MAX),
    nút "Chuẩn" đưa mọi người về đúng con số này. */
 const HP_STD=800, HP_MIN=100, HP_MAX=9999;
-const HP={kono:800,chichi:800,tsubasa:800,shika:800,suzune:800,ginyu:800,dora:800,superman:800,beatrice:800,tanjiro:HP_STD,gojo:HP_STD,conan:HP_STD};
+const HP={kono:800,chichi:800,tsubasa:800,shika:800,suzune:800,ginyu:800,dora:800,superman:800,beatrice:800,tanjiro:HP_STD,gojo:HP_STD,conan:HP_STD,isagi:HP_STD};
 const CAST={mul:1.8};
 const cm=v=>v*CAST.mul;
 /* ---------- ngôn ngữ ----------
@@ -2841,7 +2841,70 @@ const CONAN={
   midMin:175, midMax:285
 };
 
+
+/* ---------- Isagi Yoichi ----------
+   Tactical Finisher / Adaptive Striker. Maximum HP deliberately stays OUT of this
+   object: mkChar() reads HP.isagi so the shared HP setting keeps working. All visible
+   Isagi copy is English. Timings use player seconds through gs(). */
+const ISAGI={
+  visionMax:100, visionStart:15, visionPerSec:30, visionLock:gs(1.5), observeRange:460,
+  metaT:gs(4), metaMove:1.40, metaUltWait:gs(2), metaRecalc:gs(.25),
+  basicDmg:14, basicCd:gs(1.1), basicStagger:gs(.15), basicSpeed:500, basicRange:355, basicVision:5,
+  firstDmg:38, firstT:gs(2), firstSpeed:610, firstVision:10, firstKb:245,
+  blindCd:gs(6), blindT:gs(1), blindMove:2.20, blindTake:.60, blindVision:8,
+  directDmg:72, directPerfect:96, directCd:gs(7), directWind:gs(.6), directSpeed:650,
+  directRange:390, directVision:12, directStagger:gs(.45), directDown:gs(.8), directKb:330,
+  puzzleCd:gs(9), puzzleT:gs(1), puzzleMove:.60, puzzleVision:30, analyzedT:gs(6), analyzedBonus:8, analyzedBonusMax:2,
+  allyVision:6, allyVisionCd:gs(1.5),
+  ballReturn:gs(.35),
+  ultRange:500, ultWind:gs(1.1), ultArmor:gs(.35), ultDmg:160, ultDevour:190, ultPierce:.20,
+  ultDown:gs(1.2), ultDevourDown:gs(1.5), ultSpeed:760, ultKb:560,
+  midMin:170, midMax:285
+};
+
 const CHARS={
+  isagi:{
+    name:'Isagi Yoichi', short:'Isagi', tag:'Tactical Finisher · Adaptive Striker', emoji:'🧩', color:'#16C7FF', alt:'#EAFBFF',
+    role:'ranged', want:225, speed:102, dodge:.68, male:true, spriteH:116,
+    skills:[
+      `<b>Passive · Spatial Awareness</b> Vision Gauge starts at ${ISAGI.visionStart}/${ISAGI.visionMax} and never fills by time alone. Controlled Shot +${ISAGI.basicVision}, observed enemy Active Skill +10, a successful read/dodge +8, Direct Shot +${ISAGI.directVision}, Puzzle Pieces +${ISAGI.puzzleVision}, ally-created control +${ISAGI.allyVision}. Vision gain is capped at ${ISAGI.visionPerSec} per second.`,
+      `<b>100 Vision · Metavision</b> Up to ${rts(ISAGI.metaT)}s: +40% movement, tactical target selection, a visible Goal Route and Critical Space, and the first eligible direct attack can be read and sidestepped. It never auto-dodges ultimates, area attacks or damage already on the ground.`,
+      `<b>Basic · Controlled Shot</b> ${ISAGI.basicDmg} damage every ${rts(ISAGI.basicCd)}s, slight tracking, light ${rts(ISAGI.basicStagger)}s hit-stagger and +${ISAGI.basicVision} Vision. Blind Spot Run upgrades the next basic for ${rts(ISAGI.firstT)}s into <b>First-Touch Shot</b>: ${ISAGI.firstDmg} damage, +${ISAGI.firstVision} Vision and light knockback.`,
+      `<b>1 · Blind Spot Run</b> ${rts(ISAGI.blindCd)}s cooldown · a real ${rts(ISAGI.blindT)}s flank run, no teleport: +120% movement, −40% damage taken, ignores slow but not stun/freeze/knockdown. A successful missed attack during the run feeds his read and primes First-Touch Shot.`,
+      `<b>2 · Direct Shot</b> ${ISAGI.directDmg} damage · ${rts(ISAGI.directCd)}s cooldown · ${rts(ISAGI.directWind)}s wind-up · +${ISAGI.directVision} Vision on hit. Recovery, stun/knockdown, facing away or a recent miss creates <b>Perfect Timing</b>: ${ISAGI.directPerfect} damage, faster ball and ${rts(ISAGI.directDown)}s knockdown.`,
+      `<b>3 · Puzzle Pieces</b> ${rts(ISAGI.puzzleCd)}s cooldown · analyzes for ${rts(ISAGI.puzzleT)}s while moving at 60%, then +${ISAGI.puzzleVision} Vision and <b>Analyzed</b> for ${rts(ISAGI.analyzedT)}s. The next two Active Skills from that target feed +${ISAGI.analyzedBonus} extra Vision, and the first eligible straight attack can be sidestepped.`,
+      `<b>Ultimate · Two-Gun Volley</b> Requires 100 Vision + Metavision. Isagi reads a Critical Space for up to ${rts(ISAGI.metaUltWait)}s, then fires for ${ISAGI.ultDmg} damage with 20% defense penetration and ${rts(ISAGI.ultDown)}s knockdown. Analyzed/controlled/recovering targets become <b>Devoured Opportunity</b>: ${ISAGI.ultDevour} damage and ${rts(ISAGI.ultDevourDown)}s knockdown. The shot spends all Vision even if it is dodged or blocked.`
+    ],
+    init(f){
+      f.cds={s1:gs(1.5),s2:gs(2.4),s3:gs(1),s4:0,basic:0};
+      f.vision=ISAGI.visionStart; f.isagiVisionSecT=0; f.isagiVisionSecGain=0; f.isagiVisionLock=0;
+      f.isagiSeenSkills=new Map(); f.isagiAnalyzed=new Map(); f.isagiMissedBy=new Map(); f.isagiTeamSeen=new Map();
+      f.isagiTeamCd=0; f.isagiMeta=0; f.isagiMetaWait=0; f.isagiMetaDodge=true; f.isagiMetaTarget=null;
+      f.isagiCritical=null; f.isagiCriticalRecalc=0; f.isagiAct=null; f.isagiBlind=null; f.isagiSidestep=null;
+      f.isagiFirst=0; f.isagiShot=null; f.isagiBallReturn=0; f.isagiPuzzlePulse=0; f.isagiHitAt=-99;
+    },
+    think(f,e,d,auto){
+      if(f.isagiAct||f.isagiBlind||f.isagiSidestep)return;
+      e=isagiBestNormalTarget(f)||e; if(!e)return; d=dist(f,e);
+      const use=k=>auto||keys[k];
+      if(f.isagiMeta>0){
+        if((!auto&&keys['u'])&&isagiBallReady(f)) isagiUltimate(f,isagiBestTarget(f)||e);
+        return;
+      }
+      if(f.cds.s3<=0&&f.vision<70&&use('l')){ f.cds.s3=ISAGI.puzzleCd; isagiPuzzle(f,e); return; }
+      const threat=isagiFacing(f,e)||isagiPreparing(e);
+      if(f.cds.s1<=0&&threat&&use('j')){ f.cds.s1=ISAGI.blindCd; isagiBlindSpot(f,e); return; }
+      if(f.cds.s2<=0&&d<=ISAGI.directRange&&isagiBallReady(f)&&(isagiOpportunity(f,e)||auto||keys['k'])){
+        f.cds.s2=ISAGI.directCd; isagiDirect(f,e); return;
+      }
+      if(f.cds.basic<=0&&d<=ISAGI.basicRange&&isagiBallReady(f)&&(auto||keys['j'])){ isagiBasic(f,e); return; }
+      if(!auto&&f.cds.s1<=0&&keys['j']){ f.cds.s1=ISAGI.blindCd; isagiBlindSpot(f,e); }
+    },
+    gauge:f=>{
+      if(f.isagiMeta>0) return {pct:1,fill:'#16C7FF',txt:`METAVISION · ${(f.isagiMeta*RT).toFixed(1)}s`};
+      return {pct:clamp((f.vision||0)/ISAGI.visionMax,0,1),fill:'#16C7FF',txt:`Vision Gauge: ${Math.round(f.vision||0)}/${ISAGI.visionMax}`};
+    }
+  },
   kono:{
     name:'Konohamaru', short:'Kono', tag:'Ninja · Ranged', emoji:'🌀', color:'#63B4FF', alt:'#8FD0FF',
     role:'ranged', want:215, speed:92, dodge:1, male:true,
@@ -3418,6 +3481,18 @@ const pwAvg=k=>{const p=(DEX[k]||{}).pw||{};
   return Math.round(PW_AXES.reduce((a,x)=>a+(p[x.key]||0),0)/PW_AXES.length);};
 
 const DEX={
+  isagi:{ role:{vi:'Tactical Finisher · Adaptive Striker',en:'Tactical Finisher · Adaptive Striker'}, st:{pow:4,spd:4,rng:4,def:2},
+    pw:{dmg:72,dur:42,mob:88,as:68,rng:76,cc:58,uti:96,con:74,cmb:38},
+    bio:{vi:'Reads the field, builds Vision, finds Critical Space and converts one opening into a goal.',
+         en:'Reads the field, builds Vision, finds Critical Space and converts one opening into a goal.'},
+    skills:[
+      {tag:'P',name:'Spatial Awareness',vi:'Vision comes from information, not time. Gain is capped at 30 per second and stops while hard-controlled.',en:'Vision comes from information, not time. Gain is capped at 30 per second and stops while hard-controlled.'},
+      {tag:'100',name:'Metavision',vi:'At 100 Vision, reveals Critical Space, speeds movement and reads the first eligible direct attack before the finish.',en:'At 100 Vision, reveals Critical Space, speeds movement and reads the first eligible direct attack before the finish.'},
+      {tag:'1',name:'Blind Spot Run',vi:'A real flank run with damage reduction and slow immunity; primes First-Touch Shot.',en:'A real flank run with damage reduction and slow immunity; primes First-Touch Shot.'},
+      {tag:'2',name:'Direct Shot',vi:'72 damage. Perfect Timing turns a genuine opening into 96 damage and a knockdown.',en:'72 damage. Perfect Timing turns a genuine opening into 96 damage and a knockdown.'},
+      {tag:'3',name:'Puzzle Pieces',vi:'Analyze for 1s, gain 30 Vision and mark the target Analyzed for 6s.',en:'Analyze for 1s, gain 30 Vision and mark the target Analyzed for 6s.'},
+      {tag:'U',name:'Two-Gun Volley',vi:'Metavision finisher: 160 with 20% defense penetration, or 190 as Devoured Opportunity.',en:'Metavision finisher: 160 with 20% defense penetration, or 190 as Devoured Opportunity.'}
+    ]},
   kono:{ role:{vi:'Ninja · Đánh xa',en:'Ninja · Ranged'}, st:{pow:3,spd:4,rng:5,def:2},
     pw:{dmg:62,dur:38,mob:46,as:72,rng:88,cc:60,uti:44,con:66,cmb:40},
     bio:{vi:'Ném phi tiêu từ xa, thỉnh thoảng lại quăng ra một quả kunai nổ. Bị vây sát thì xoáy một quả Rasengan nhỏ để thoát.',
@@ -5041,6 +5116,7 @@ const BULK_CHAR={
   dora:['doraemon','dora'], superman:['superman','clark','sup'],
   gojo:['satoru gojo','gojo','satoru'],
   conan:['conan edogawa','conan','edogawa','detective conan'],
+  isagi:['isagi yoichi','isagi','yoichi','blue lock'],
   ayanokouji:['ayanokouji','kiyotaka','aya'], nara:['nara','con nai','deer','nai'],
   garden:['garden','khu rung','phong canh','background'],
   goku:['goku'], gohan:['gohan'], hyuga:['hyuga'], misaki:['misaki'],
@@ -5944,9 +6020,11 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
     G.floats.push({x:t.x,y:t.y-88,txt:'MISS',color:'#C9A0FF',life:.9,ml:.9,banner:true,sc:.6});
     return false;
   }
+  if(isagiReadDodge(t,src,kind))return false;
   const opening=tanOpeningReady(t,src,kind);
   let acc=accuracyMul===undefined?1:accuracyMul;
   if(tryEvade(t,kind,opening?Math.min(TAN.threadDodgeMul,acc):acc)){
+    if(t.key==='isagi'&&!t.swapAs&&src&&src.team!==t.team) isagiOnDodge(t,src);
     if(t.key==='conan'&&!t.swapAs&&t.conanSkate&&src&&src.team!==t.team) conanSkateMiss(t,src);
     return false;
   }
@@ -5968,8 +6046,8 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
     t.beaLog.push({t:G.t,src});
   }
   if(t.vuln>0) amt*=1.5;                    // dính Twin Shot: nhận thêm 50% sát thương
-  const gojoPurple=kind==='gojoPurple';
-  const dm=m=>{ let v=tanDefMul(m,pierced); return gojoPurple&&v<1?1-(1-v)*.70:v; };
+  const gojoPurple=kind==='gojoPurple', isagiUlt=kind==='isagiUlt';
+  const dm=m=>{ let v=tanDefMul(m,pierced); if(isagiUlt&&v<1)v=1-(1-v)*(1-ISAGI.ultPierce); return gojoPurple&&v<1?1-(1-v)*.70:v; };
   if(t.eagle) amt*=dm(.3);                      // Wings of the Eagle: miễn 70% sát thương
   else if(t.prewing) amt*=dm(PREWING_RES);      // Pre-Wings: miễn 35% sát thương
   /* Man of Steel: da thép chắn đòn vật lý và đạn năng lượng, nhưng KHÔNG chắn được
@@ -5985,6 +6063,7 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
   if(t.dash&&t.dash.guard) amt*=dm(CHICHI_DASH_RES);   // đang lao tới: nhận ít sát thương hơn
   if(t.key==='tanjiro'&&t.tanUlt) amt*=dm(TAN.ultTake);
   if(t.key==='conan'&&!t.swapAs&&t.conanSkate) amt*=CONAN.skateTake;
+  if(t.key==='isagi'&&!t.swapAs&&t.isagiBlind) amt*=ISAGI.blindTake;
   /* Sổ sát thương gây ra — Small Light chọn mục tiêu theo nó, và giải đấu lấy nó làm
      hiệu số. Hai luật:
        · VIỆN BINH ghi công cho CHỦ (`src.master`). Goku / Gohan / Ayanokouji là người
@@ -6000,6 +6079,8 @@ function hurt(t,amt,src,crit,kind,tint,raw,accuracyMul){
   const cred=src&&(src.summon?src.master:src);
   if(cred&&!cred.summon) cred.dmgDealt=(cred.dmgDealt||0)+Math.min(amt,t.hp);
   t.hp=Math.max(0,t.hp-amt);
+  if(src&&src.team!==t.team){ t.lastHitBy=src.summon&&src.master?src.master:src; t.lastHitAt=G.t; t.lastHitKind=kind||'normal'; }
+  if(t.key==='isagi'&&!t.swapAs&&kind!=='dot'&&kind!=='domain') t.isagiHitAt=G.t;
   if(t.key==='conan'&&!t.swapAs&&src&&src.team!==t.team) conanRecordIncoming(t,src,amt);
   /* Man of Steel: đòn dưới 25 dmg không làm anh ngã người ra — vẫn mất máu, vẫn chớp
      sáng, nhưng không đổi sang dáng trúng đòn và gần như không giật lùi. */
@@ -12596,6 +12677,313 @@ function tanjiroTick(f,dt){
   }
 }
 
+/* ---------- Isagi Yoichi ---------- */
+const isagiHardCC=f=>!!f&&(f.stun>0||f.infoOverload>0||f.conanSleep>0||f.frozen>0);
+const isagiBallReady=f=>!!f&&!f.isagiShot&&(f.isagiBallReturn||0)<=0;
+function isagiGainVision(f,n,reason){
+  if(!f||f.key!=='isagi'||f.swapAs||!f.alive||f.isagiVisionLock>0||isagiHardCC(f))return 0;
+  const cap=Math.max(0,ISAGI.visionPerSec-(f.isagiVisionSecGain||0));
+  const add=Math.max(0,Math.min(n,cap,ISAGI.visionMax-(f.vision||0)));
+  if(add<=0)return 0;
+  const before=f.vision||0; f.vision=before+add; f.isagiVisionSecGain=(f.isagiVisionSecGain||0)+add;
+  for(const mark of [25,50,75]) if(before<mark&&f.vision>=mark){ f.isagiPuzzlePulse=.75; if(mark===50)sfx('stun'); }
+  if(reason) G.floats.push({x:f.x+rnd(-24,24),y:f.y-92,txt:`VISION +${Math.round(add)}`,color:'#8BEAFF',life:.72,ml:.72,sc:.45});
+  if(f.vision>=ISAGI.visionMax&&!f.isagiMeta) isagiStartMeta(f);
+  return add;
+}
+function isagiStartMeta(f){
+  if(!f||!f.alive)return;
+  f.vision=ISAGI.visionMax; f.isagiMeta=ISAGI.metaT; f.isagiMetaWait=0; f.isagiMetaDodge=true;
+  f.isagiMetaTarget=isagiBestTarget(f)||nearestFoe(f); f.isagiCritical=isagiCriticalSpace(f,f.isagiMetaTarget);
+  f.isagiCriticalRecalc=ISAGI.metaRecalc; f.isagiPuzzlePulse=ISAGI.metaT;
+  G.floats.push({x:f.x,y:f.y-118,txt:'METAVISION',color:'#16C7FF',life:1.25,ml:1.25,banner:true,gold:true,sc:.62});
+  ring(f.x,f.y,105,'#16C7FF',.42); sfx('stun');
+}
+function isagiOnDodge(f,src){
+  if(!f||f.key!=='isagi'||f.swapAs)return;
+  if(src)f.isagiMissedBy.set(src,G.t);
+  isagiGainVision(f,ISAGI.blindVision,'DODGE READ');
+  if(f.isagiBlind)f.isagiBlind.missed=true;
+  if(src&&src.lastHitBy&&src.lastHitBy.team===f.team&&src.lastHitBy!==f&&G.t-(src.lastHitAt||-99)<=gs(1.5)&&f.isagiTeamCd<=0){
+    f.isagiTeamCd=ISAGI.allyVisionCd; isagiGainVision(f,ISAGI.allyVision,'TEAM OPENING');
+  }
+}
+function isagiSidePoint(f,src,distSide=82){
+  if(!src)return null;
+  const dx=src.x-f.x,dy=src.y-f.y,m=Math.hypot(dx,dy)||1;
+  let px=-dy/m,py=dx/m;
+  const a={x:clamp(f.x+px*distSide,PAD+24,W-PAD-24),y:clamp(f.y+py*distSide,PAD+58,H-PAD-24)};
+  const b={x:clamp(f.x-px*distSide,PAD+24,W-PAD-24),y:clamp(f.y-py*distSide,PAD+58,H-PAD-24)};
+  const crowd=q=>G.fighters.reduce((z,o)=>z+(o!==f&&o.alive&&Math.hypot(o.x-q.x,o.y-q.y)<86?1:0),0);
+  const q=crowd(a)<=crowd(b)?a:b;
+  return Math.hypot(q.x-f.x,q.y-f.y)>18?q:null;
+}
+function isagiStartSidestep(f,src){
+  const q=isagiSidePoint(f,src,72); if(!q)return false;
+  const dx=q.x-f.x,dy=q.y-f.y,m=Math.hypot(dx,dy)||1;
+  f.isagiSidestep={t:gs(.32),vx:dx/m,vy:dy/m,target:src};
+  G.floats.push({x:f.x,y:f.y-96,txt:'READ',color:'#8BEAFF',life:.6,ml:.6,banner:true,sc:.45});
+  return true;
+}
+function isagiReadDodge(t,src,kind){
+  if(!t||t.key!=='isagi'||t.swapAs||!src||src.team===t.team||isagiHardCC(t))return false;
+  if(t.isagiAct&&(t.isagiAct.kind==='direct'||t.isagiAct.kind==='ultimate'))return false;
+  if(kind==='ult'||kind==='domain'||kind==='dot'||kind==='reflect'||kind==='big'||kind==='explosion')return false;
+  let ok=false;
+  if(t.isagiMeta>0&&t.isagiMetaDodge&&(!t.isagiMetaTarget||src===t.isagiMetaTarget)){ t.isagiMetaDodge=false; ok=true; }
+  const an=t.isagiAnalyzed&&t.isagiAnalyzed.get(src);
+  if(!ok&&an&&an.left>0&&!an.dodgeUsed){ an.dodgeUsed=true; ok=true; }
+  if(!ok)return false;
+  if(!isagiStartSidestep(t,src))return false;
+  isagiOnDodge(t,src); return true;
+}
+function isagiFacing(f,t){
+  if(!f||!t)return false;
+  const toward=Math.sign(f.x-t.x)||1;
+  return (t.face||1)===toward;
+}
+function isagiPreparing(t){
+  if(!t)return false;
+  return t.pose==='atk1'||t.pose==='atk2'||t.pose==='ultimate'||!!t.gojoAct||!!t.tanAct||!!t.drAim||!!t.gnFlash;
+}
+function isagiOpportunity(f,t){
+  if(!t)return false;
+  const recent=(f.isagiMissedBy&&f.isagiMissedBy.has(t))?G.t-f.isagiMissedBy.get(t)<=gs(1.5):false;
+  return t.stun>0||t.pose==='hurt'||t.pose==='down'||t.recoil>.15||!isagiFacing(f,t)||recent;
+}
+function isagiDevoured(f,t){
+  const a=f.isagiAnalyzed&&f.isagiAnalyzed.get(t);
+  return !!(a&&a.left>0)||isagiOpportunity(f,t);
+}
+function isagiLineClear(f,t){
+  if(!f||!t)return false;
+  const ax=f.x,ay=f.y,bx=t.x,by=t.y,dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy||1;
+  for(const o of G.fighters){
+    if(!o.alive||o===f||o===t||o.leaving>0)continue;
+    const u=clamp(((o.x-ax)*dx+(o.y-ay)*dy)/l2,0,1),x=ax+dx*u,y=ay+dy*u;
+    if(Math.hypot(o.x-x,o.y-y)<o.r+10)return false;
+  }
+  return true;
+}
+function isagiBestTarget(f){
+  const a=G.fighters.filter(o=>foeOk(f,o)&&dist(f,o)<=ISAGI.ultRange);
+  if(!a.length)return null;
+  a.sort((x,y)=>{
+    const hp=(x.hp/x.maxHp)-(y.hp/y.maxHp); if(Math.abs(hp)>.025)return hp;
+    const op=Number(isagiOpportunity(f,y))-Number(isagiOpportunity(f,x)); if(op)return op;
+    const line=Number(isagiLineClear(f,y))-Number(isagiLineClear(f,x)); if(line)return line;
+    return dist(f,x)-dist(f,y);
+  });
+  return a[0];
+}
+function isagiBestNormalTarget(f){
+  const an=[...(f.isagiAnalyzed||new Map()).entries()].filter(([o,v])=>foeOk(f,o)&&v.left>0).sort((a,b)=>dist(f,a[0])-dist(f,b[0]));
+  return an.length?an[0][0]:nearestFoe(f);
+}
+function isagiCriticalSpace(f,t){
+  if(!f||!t)return null;
+  const dx=t.x-f.x,dy=t.y-f.y,m=Math.hypot(dx,dy)||1,ux=dx/m,uy=dy/m,px=-uy,py=ux;
+  const cand=[1,-1].map(side=>({x:clamp(t.x-ux*165+px*side*120,PAD+45,W-PAD-45),y:clamp(t.y-uy*165+py*side*120,PAD+70,H-PAD-35)}));
+  const score=q=>{
+    let z=Math.hypot(q.x-f.x)*.015;
+    for(const o of G.fighters)if(o.alive&&o!==f&&o!==t){ const d=Math.hypot(o.x-q.x,o.y-q.y); if(d<100)z+=(100-d)*.15; }
+    z+=Math.max(0,60-Math.min(q.x-PAD,W-PAD-q.x,q.y-(PAD+45),H-PAD-q.y))*.12;
+    return z;
+  };
+  cand.sort((a,b)=>score(a)-score(b)); return cand[0];
+}
+function isagiBallReturn(f){
+  f.isagiShot=null; f.isagiBallReturn=ISAGI.ballReturn;
+}
+function isagiFireBall(f,kind,t,opt={}){
+  if(!isagiBallReady(f)||!t||!t.alive)return false;
+  const srcY=f.y-20,base=Math.atan2((t.y-20)-srcY,t.x-f.x),spread=(f.isagiMeta>0||kind==='ult')?0:rnd(-.035,.035),a=base+spread;
+  const sp=opt.speed||ISAGI.basicSpeed;
+  f.isagiShot={kind,target:t,x:f.x+Math.cos(a)*24,y:srcY+Math.sin(a)*24,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:12,life:gs(2.4),age:0,perfect:!!opt.perfect,devoured:!!opt.devoured,adjusted:false};
+  setPose(f,'kick',.28); sfx('hit'); return true;
+}
+function isagiBasic(f,e){
+  if(!e||!e.alive||!isagiBallReady(f))return;
+  f.cds.basic=ISAGI.basicCd;
+  if(f.isagiFirst>0){ f.isagiFirst=0; isagiFireBall(f,'first',e,{speed:ISAGI.firstSpeed}); }
+  else isagiFireBall(f,'controlled',e,{speed:ISAGI.basicSpeed});
+}
+function isagiBlindSpot(f,e){
+  if(!e||!e.alive)return;
+  const q=isagiSidePoint(f,e,118)||{x:clamp(f.x+(f.x<e.x?-90:90),PAD+24,W-PAD-24),y:f.y};
+  const dx=q.x-f.x,dy=q.y-f.y,m=Math.hypot(dx,dy)||1;
+  f.isagiBlind={t:ISAGI.blindT,vx:dx/m,vy:dy/m,target:e,missed:false}; setPose(f,'run',ISAGI.blindT); aim(f,e,.1);
+}
+function isagiDirect(f,e){
+  if(!e||!e.alive||!isagiBallReady(f))return;
+  f.isagiAct={kind:'direct',t:0,target:e,perfect:isagiOpportunity(f,e)}; setPose(f,'kick',ISAGI.directWind); aim(f,e,.2);
+  if(f.isagiAct.perfect)G.floats.push({x:f.x,y:f.y-108,txt:'PERFECT TIMING',color:'#8BEAFF',life:.85,ml:.85,banner:true,gold:true,sc:.52});
+}
+function isagiPuzzle(f,e){
+  if(!e||!e.alive)return;
+  f.isagiAct={kind:'analysis',t:0,target:e}; setPose(f,'adjust',ISAGI.puzzleT); aim(f,e,.3);
+  G.floats.push({x:f.x,y:f.y-104,txt:'PUZZLE PIECES',color:'#16C7FF',life:.85,ml:.85,banner:true,sc:.52});
+}
+function isagiUltimate(f,t){
+  if(!t||!foeOk(f,t)||f.isagiMeta<=0||f.vision<ISAGI.visionMax||!isagiBallReady(f)||f.isagiAct)return false;
+  f.isagiAct={kind:'ultimate',t:0,target:t,devoured:isagiDevoured(f,t),fired:false}; setPose(f,'ultimate',ISAGI.ultWind); aim(f,t,.1);
+  G.floats.push({x:f.x,y:f.y-118,txt:'TWO-GUN VOLLEY',color:'#EAFBFF',life:1.05,ml:1.05,banner:true,gold:true,sc:.60});
+  return true;
+}
+function isagiWatchSkills(f){
+  if(!f.isagiSeenSkills)return;
+  for(const o of G.fighters){
+    if(!foeOk(f,o)||dist(f,o)>ISAGI.observeRange||!o.cds)continue;
+    let m=f.isagiSeenSkills.get(o); if(!m){ m={}; f.isagiSeenSkills.set(o,m); for(const k in o.cds)m[k]=o.cds[k]||0; continue; }
+    let used=false;
+    for(const k in o.cds){ const v=o.cds[k]||0,old=m[k]; if(k!=='basic'&&old!==undefined&&v>old+gs(.22))used=true; m[k]=v; }
+    if(!used)continue;
+    isagiGainVision(f,10,'ACTIVE SKILL');
+    const a=f.isagiAnalyzed.get(o); if(a&&a.left>0&&a.bonus<ISAGI.analyzedBonusMax){ a.bonus++; isagiGainVision(f,ISAGI.analyzedBonus,'ANALYZED'); }
+  }
+}
+function isagiTeamWatch(f){
+  if(f.isagiTeamCd>0)return;
+  for(const o of G.fighters){
+    if(!foeOk(f,o)||!o.lastHitBy||o.lastHitBy===f||o.lastHitBy.team!==f.team)continue;
+    if(G.t-(o.lastHitAt||-99)>gs(.25))continue;
+    if(f.isagiTeamSeen.get(o)===o.lastHitAt)continue;
+    const displaced=Math.hypot(o.kbx||0,o.kby||0)>70;
+    if(!(o.stun>0||o.pose==='down'||displaced))continue;
+    f.isagiTeamSeen.set(o,o.lastHitAt); f.isagiTeamCd=ISAGI.allyVisionCd; isagiGainVision(f,ISAGI.allyVision,'TEAM OPENING'); return;
+  }
+}
+function isagiShotsTick(f,dt){
+  const p=f.isagiShot; if(!p)return;
+  p.age+=dt; p.life-=dt;
+  if(p.kind==='controlled'&&p.target&&p.target.alive){
+    const sp=Math.hypot(p.vx,p.vy)||1,want=Math.atan2((p.target.y-20)-p.y,p.target.x-p.x),cur=Math.atan2(p.vy,p.vx),diff=Math.atan2(Math.sin(want-cur),Math.cos(want-cur));
+    const tr=clamp(diff,-.75*dt,.75*dt); p.vx=Math.cos(cur+tr)*sp; p.vy=Math.sin(cur+tr)*sp;
+  }
+  if(p.kind==='ult'&&!p.adjusted&&p.age>=gs(.18)&&p.target&&p.target.alive){
+    const sp=Math.hypot(p.vx,p.vy)||ISAGI.ultSpeed,a=Math.atan2((p.target.y-20)-p.y,p.target.x-p.x); p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;p.adjusted=true;
+  }
+  p.x+=p.vx*dt; p.y+=p.vy*dt;
+  if(p.life<=0||p.x<PAD-35||p.x>W-PAD+35||p.y<PAD-30||p.y>H-PAD+30){ isagiBallReturn(f); return; }
+  for(const o of G.fighters){
+    if(!foeOk(f,o)||!hitsBody(p,o))continue;
+    let hit=false;
+    if(p.kind==='controlled'){
+      hit=hurt(o,ISAGI.basicDmg,f,false,'isagiBasic'); if(hit){stunFx(o,ISAGI.basicStagger,'spark');isagiGainVision(f,ISAGI.basicVision,'CONTROLLED SHOT');}
+    }else if(p.kind==='first'){
+      hit=hurt(o,ISAGI.firstDmg,f,'FIRST-TOUCH SHOT','isagiFirst'); if(hit){knock(o,p.vx,p.vy,ISAGI.firstKb);isagiGainVision(f,ISAGI.firstVision,'FIRST TOUCH');}
+    }else if(p.kind==='direct'){
+      const dmg=p.perfect?ISAGI.directPerfect:ISAGI.directDmg;
+      hit=hurt(o,dmg,f,p.perfect?'PERFECT TIMING':'DIRECT SHOT','isagiDirect');
+      if(hit){ knock(o,p.vx,p.vy,ISAGI.directKb); stunFx(o,p.perfect?ISAGI.directDown:ISAGI.directStagger,p.perfect?'spin':'spark'); isagiGainVision(f,ISAGI.directVision,'DIRECT SHOT'); }
+    }else if(p.kind==='ult'){
+      const dmg=p.devoured?ISAGI.ultDevour:ISAGI.ultDmg;
+      hit=hurt(o,dmg,f,p.devoured?'DEVOURED OPPORTUNITY':'TWO-GUN VOLLEY','isagiUlt');
+      if(hit){ knock(o,p.vx,p.vy,ISAGI.ultKb); stunFx(o,p.devoured?ISAGI.ultDevourDown:ISAGI.ultDown,'spin'); ring(o.x,o.y,110,'#16C7FF',.4); }
+    }
+    isagiBallReturn(f); return;
+  }
+}
+function isagiTick(f,dt){
+  f.isagiVisionSecT=(f.isagiVisionSecT||0)+dt;
+  if(f.isagiVisionSecT>=gs(1)){ f.isagiVisionSecT%=gs(1); f.isagiVisionSecGain=0; }
+  if(f.isagiVisionLock>0)f.isagiVisionLock=Math.max(0,f.isagiVisionLock-dt);
+  if(f.isagiTeamCd>0)f.isagiTeamCd=Math.max(0,f.isagiTeamCd-dt);
+  if(f.isagiBallReturn>0)f.isagiBallReturn=Math.max(0,f.isagiBallReturn-dt);
+  if(f.isagiFirst>0)f.isagiFirst=Math.max(0,f.isagiFirst-dt);
+  if(f.isagiPuzzlePulse>0)f.isagiPuzzlePulse=Math.max(0,f.isagiPuzzlePulse-dt);
+  for(const [o,a] of [...f.isagiAnalyzed]){ a.left-=dt; if(a.left<=0||!o.alive)f.isagiAnalyzed.delete(o); }
+  isagiWatchSkills(f); isagiTeamWatch(f); isagiShotsTick(f,dt);
+
+  if(f.isagiSidestep){
+    const S=f.isagiSidestep; S.t-=dt; f.lock=Math.max(f.lock,.06);
+    if(!isagiHardCC(f)){ const sp=f.speed*2.0; f.x=clamp(f.x+S.vx*sp*dt,PAD+22,W-PAD-22); f.y=clamp(f.y+S.vy*sp*dt,PAD+55,H-PAD-22); }
+    if(S.t<=0)f.isagiSidestep=null;
+  }
+  if(f.isagiBlind){
+    const B=f.isagiBlind; B.t-=dt; f.lock=Math.max(f.lock,.06);
+    if(!isagiHardCC(f)){ const sp=f.speed*ISAGI.blindMove; f.x=clamp(f.x+B.vx*sp*dt,PAD+22,W-PAD-22); f.y=clamp(f.y+B.vy*sp*dt,PAD+55,H-PAD-22); }
+    if(B.t<=0){ f.isagiBlind=null; f.isagiFirst=ISAGI.firstT; if(B.target&&B.target.alive)aim(f,B.target,.1); }
+  }
+  if(f.isagiAct){
+    const A=f.isagiAct; A.t+=dt;
+    if(A.kind==='analysis'){
+      f.moveMul*=ISAGI.puzzleMove;
+      if(isagiHardCC(f)){ f.isagiAct=null; return; }
+      if(A.t>=ISAGI.puzzleT){
+        f.isagiAct=null; isagiGainVision(f,ISAGI.puzzleVision,'PUZZLE PIECES');
+        if(A.target&&A.target.alive){ f.isagiAnalyzed.set(A.target,{left:ISAGI.analyzedT,bonus:0,dodgeUsed:false}); G.floats.push({x:A.target.x,y:A.target.y-108,txt:'ANALYZED',color:'#8BEAFF',life:1,ml:1,banner:true,sc:.52}); }
+      }
+    }else if(A.kind==='direct'){
+      if(isagiHardCC(f)){ f.isagiAct=null; f.isagiBallReturn=0; return; }
+      if(A.t>=ISAGI.directWind){
+        const t=A.target&&A.target.alive?A.target:nearestFoe(f),perfect=t?isagiOpportunity(f,t):A.perfect;
+        f.isagiAct=null; if(t)isagiFireBall(f,'direct',t,{perfect,speed:ISAGI.directSpeed*(perfect?1.25:1)});
+      }
+    }else if(A.kind==='ultimate'){
+      if(isagiHardCC(f)){ f.isagiAct=null; return; }
+      if(A.t<ISAGI.ultWind-ISAGI.ultArmor&&G.t-(f.isagiHitAt||-99)<dt*1.6){ f.isagiAct=null; G.floats.push({x:f.x,y:f.y-100,txt:'VOLLEY INTERRUPTED',color:'#D9E6EF',life:.8,ml:.8,banner:true,sc:.45}); return; }
+      if(A.t>=ISAGI.ultWind&&!A.fired){
+        A.fired=true; const t=A.target&&A.target.alive?A.target:isagiBestTarget(f);
+        const dev=t?isagiDevoured(f,t):A.devoured;
+        if(t)isagiFireBall(f,'ult',t,{devoured:dev,speed:ISAGI.ultSpeed});
+        f.vision=0; f.isagiVisionLock=ISAGI.visionLock; f.isagiMeta=0; f.isagiMetaWait=0; f.isagiCritical=null; f.isagiMetaTarget=null; f.isagiAct=null;
+      }
+    }
+  }
+  if(f.isagiMeta>0){
+    const target=isagiBestTarget(f);
+    if(target){
+      f.isagiMeta=Math.max(0,f.isagiMeta-dt); f.isagiMetaWait+=dt; f.moveMul*=ISAGI.metaMove;
+      f.isagiMetaTarget=target; f.isagiCriticalRecalc-=dt;
+      if(f.isagiCriticalRecalc<=0){ f.isagiCriticalRecalc=ISAGI.metaRecalc; f.isagiCritical=isagiCriticalSpace(f,target); }
+      if(!f.isagiAct&&!f.isagiBlind&&!f.isagiSidestep&&isagiBallReady(f)){
+        const near=f.isagiCritical&&Math.hypot(f.x-f.isagiCritical.x,f.y-f.isagiCritical.y)<34;
+        if(near||isagiOpportunity(f,target)||f.isagiMetaWait>=ISAGI.metaUltWait) isagiUltimate(f,target);
+      }
+    }
+  }
+}
+function isagiVec(f,e){
+  if(f.isagiMeta>0&&f.isagiCritical){
+    const dx=f.isagiCritical.x-f.x,dy=f.isagiCritical.y-f.y,m=Math.hypot(dx,dy)||1;
+    if(m>22)return {x:dx/m,y:dy/m};
+    return {x:0,y:0};
+  }
+  const t=isagiBestNormalTarget(f)||e,d=dist(f,t)||1,ux=(t.x-f.x)/d,uy=(t.y-f.y)/d;
+  let x=0,y=0;
+  if(d>ISAGI.midMax){x+=ux*.82;y+=uy*.82;} else if(d<ISAGI.midMin){x-=ux*.72;y-=uy*.72;} else{x+=-uy*f.strafe*.58;y+=ux*f.strafe*.58;}
+  const dv=dodgeVec(f); x+=dv.x*1.15;y+=dv.y*1.15; return {x,y};
+}
+function drawIsagiFx(){
+  for(const f of G.fighters){
+    if(!f||f.key!=='isagi'||!f.alive||f.swapAs)continue;
+    if(isagiBallReady(f)){
+      ctx.save();ctx.translate(f.x+f.face*16,f.y+15);ctx.fillStyle='#F7FBFF';ctx.strokeStyle='#162435';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,7,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#162435';ctx.beginPath();ctx.arc(0,0,2.4,0,7);ctx.fill();ctx.restore();
+    }
+    const p=f.isagiShot;
+    if(p){
+      ctx.save();ctx.globalAlpha=.35;ctx.strokeStyle='#5DEBFF';ctx.lineWidth=p.kind==='ult'?5:2.5;ctx.beginPath();ctx.moveTo(p.x-p.vx*.035,p.y-p.vy*.035);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle='#F7FBFF';ctx.strokeStyle='#16344C';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(p.x,p.y,p.kind==='ult'?10:8,0,7);ctx.fill();ctx.stroke();ctx.restore();
+    }
+    if(f.isagiPuzzlePulse>0||f.isagiMeta>0){
+      ctx.save();ctx.strokeStyle='#66EFFF';ctx.fillStyle='rgba(22,199,255,.18)';ctx.lineWidth=1.5;
+      for(let i=0;i<4;i++){const a=G.t*2+i*Math.PI/2,r=42+(f.isagiMeta>0?8:0),x=f.x+Math.cos(a)*r,y=f.y-35+Math.sin(a)*r;ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillRect(-5,-5,10,10);ctx.strokeRect(-5,-5,10,10);ctx.restore();}
+      ctx.restore();
+    }
+    if(f.isagiMeta>0){
+      ctx.save();ctx.globalAlpha=.22;ctx.strokeStyle='#16C7FF';ctx.lineWidth=1;
+      for(let d=-120;d<=120;d+=30){ctx.beginPath();ctx.moveTo(f.x-120,f.y+d*.45);ctx.lineTo(f.x+120,f.y+d*.45);ctx.stroke();ctx.beginPath();ctx.moveTo(f.x+d,f.y-95);ctx.lineTo(f.x+d,f.y+55);ctx.stroke();}
+      if(f.isagiCritical){
+        const q=f.isagiCritical;ctx.globalAlpha=.75;ctx.strokeStyle='#8BEAFF';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(f.x,f.y-10);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(q.x,q.y,24,0,7);ctx.stroke();ctx.font='800 9px "Be Vietnam Pro",sans-serif';ctx.fillStyle='#C8F8FF';ctx.textAlign='center';ctx.fillText('CRITICAL SPACE',q.x,q.y-30);
+      }
+      ctx.globalAlpha=.85;ctx.fillStyle='#8BEAFF';ctx.beginPath();ctx.arc(f.x+f.face*6,f.y-49,3.2,0,7);ctx.fill();ctx.restore();
+    }
+    if(f.isagiAct&&f.isagiAct.kind==='ultimate'){
+      ctx.save();ctx.globalAlpha=.2;ctx.strokeStyle='#EAFBFF';ctx.lineWidth=4;for(const side of [-1,1]){ctx.beginPath();ctx.arc(f.x+side*9,f.y+14,18,-2.5,-.5);ctx.stroke();}ctx.restore();
+    }
+  }
+}
+
 /* ---------- AI ---------- */
 /* Cận chiến thì đứng cách nhau một quãng chứ đừng dán vào người ta. Tầm tay của cả
    ChiChi lẫn Horikita là r+r+16 = 68, nên điểm lượn phải nằm DƯỚI mốc đó mới ra đòn
@@ -12689,6 +13077,7 @@ function aiVec(f,e){
     const gd=dodgeVec(f); x+=gd.x*1.15; y+=gd.y*1.15;
     return {x,y};
   }
+  if(f.key==='isagi'&&!f.summon) return isagiVec(f,e);
   // Superman đang bay: bay là để ĐUỔI, nên nhắm thẳng vào địch chứ không lượn vòng
   if(f.key==='superman'&&!f.summon&&f.supFly>0) return supFlyVec(f,e);
   if(f.role==='ranged'){
@@ -12825,6 +13214,7 @@ function step(dt){
     if(f.key==='tanjiro'&&!f.summon&&f.alive&&!f.swapAs) tanjiroTick(f,dt);
     if(f.key==='gojo'&&!f.summon&&f.alive&&!f.swapAs) gojoTick(f,dt);
     if(f.key==='conan'&&!f.summon&&f.alive&&!f.swapAs) conanTick(f,dt);
+    if(f.key==='isagi'&&!f.summon&&f.alive&&!f.swapAs) isagiTick(f,dt);
     // người khiêu khích rời sàn thì đối thủ nhắm lại vào mục tiêu thật
     if(f.tauntBy&&(!f.tauntBy.alive||f.tauntBy.hp<=0||f.tauntBy.leaving>0||G.fighters.indexOf(f.tauntBy)<0)) f.tauntBy=null;
     if(f.outCut>0&&!(foeOf(f)&&foeOf(f).domain)) f.outCut=0;
@@ -12870,7 +13260,7 @@ function step(dt){
       // Doraemon thắng thì ngồi xuống ăn dorayaki chứ không đứng thủ thế
       if(w.alive){
         const wp=w.key==='tanjiro'&&!w.swapAs&&G.endT<.65?'ready'
-          :((w.key==='dora'||w.key==='superman'||w.key==='beatrice'||w.key==='tanjiro'||w.key==='gojo'||w.key==='conan')&&!w.swapAs?'win':'idle');
+          :((w.key==='dora'||w.key==='superman'||w.key==='beatrice'||w.key==='tanjiro'||w.key==='gojo'||w.key==='conan'||w.key==='isagi')&&!w.swapAs?'win':'idle');
         setPose(w,wp,0);
       }
       if(w.alive&&w.key==='gojo'&&!w.swapAs&&!w.gojoWonSaid){ w.gojoWonSaid=true; sfx('gojo_win'); }
@@ -13186,7 +13576,8 @@ function step(dt){
         }
         let cur=Math.atan2(p.vy,p.vx);
         let diff=Math.atan2(Math.sin(want-cur),Math.cos(want-cur));
-        const turn=Math.min(Math.abs(diff),(p.turn||5.5)*dt)*(diff<0?-1:1);
+        const turnRate=(tg.key==='isagi'&&tg.isagiBlind)?(p.turn||5.5)*.45:(p.turn||5.5);
+        const turn=Math.min(Math.abs(diff),turnRate*dt)*(diff<0?-1:1);
         cur+=turn;
         p.vx=Math.cos(cur)*sp; p.vy=Math.sin(cur)*sp;
         p.face=Math.cos(cur)>=0?1:-1;
@@ -17268,6 +17659,7 @@ function draw(){
   for(const p of G.proj) drawProj(p);
   drawGojoFx();
   drawConanFx();
+  drawIsagiFx();
   drawTanjiroFx();                         // thread, blade trails, Mark heat and afterimages
   for(const L of G.kos){
     /* Superman gục: chống một gối xuống trước, gượng dậy hai nhịp không nổi, rồi mới
