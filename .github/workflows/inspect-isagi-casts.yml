@@ -1,0 +1,27 @@
+name: Inspect Isagi casts
+on:
+  push:
+    branches: [balance/isagi-ball-nerf]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    if: github.event.head_commit.message == 'Inspect Isagi casts'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect Isagi cast constants and usages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          a=s.find('const ISAGI={')
+          b=s.find('\n};',a)
+          print('=== ISAGI CONSTANTS ===')
+          print(s[a:b+3])
+          print('\n=== ISAGI CAST/WIND LINES ===')
+          for i,line in enumerate(s.splitlines(),1):
+              lo=line.lower()
+              if 'isagi' in lo and any(x in lo for x in ['wind','cast','prep','firstt','blind','puzzle']):
+                  print(f'{i}: {line}')
+          PY
