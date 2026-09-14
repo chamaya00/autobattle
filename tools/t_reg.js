@@ -108,6 +108,7 @@ const MOC = 60;          // giây trong trận, đủ để một trận ngã ng
             if (f.dash && f.dash.kind === 'sakcharge') seen.add('sak-charge');
             if (f.sakHeal) seen.add('sak-heal');
             if (f.sakSeal > 0) seen.add('sak-byakugo');
+            if (f.sakExh > 0) seen.add('sak-exhausted');
           }
           if (f.sakHamper > 0) seen.add('sak-hampered');
           if (f.sakDisrupt > 0) seen.add('sak-disruption');

@@ -29,7 +29,7 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
 
   /* Mười ô tiếng, mỗi ô một `case` dự phòng trong synth() — luật mục 4 của CLAUDE.md. */
   const slots=['sak_shuriken','sak_bleed','sak_focus','sak_quake','sak_crack','sak_dash',
-               'sak_impact','sak_heal','sak_tick','sak_seal','sak_katsuyu'];
+               'sak_impact','sak_heal','sak_tick','sak_seal','sak_katsuyu','sak_exhaust'];
   for(const s of slots) assert(src.includes(`['${s}',`),'thiếu ô tiếng '+s);
   for(const s of slots) assert(src.includes(`case '${s}':`),'thiếu case synth() cho '+s);
   ok(true,`đủ ${slots.length} ô tiếng và ${slots.length} case tiếng tự tạo`);
@@ -114,6 +114,7 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
         e.evade=0;e.invuln=0;e.sakDisrupt=0;e.sakDisruptAfter=0;e.sakHamper=0;
         e.moveMul=1;e.castMul=1; s.cds={s1:0,s2:0,s3:0,basic:0}; };
 
+      o.cdBurst=+(SAK.cbCd*RT).toFixed(0); o.cdPunch=+(SAK.cpCd*RT).toFixed(0); o.cdHeal=+(SAK.mnCd*RT).toFixed(0);
       reset(); s.x=160;s.y=300;e.x=420;e.y=300;e.hp=800;
       window.__sakBurst(s,e); o.cbCast=+(s.sakAct.t*RT).toFixed(2);
       s.sakAct.t=0; window.__sakuraTick(s,1/120);
@@ -163,6 +164,9 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
       return o;
     });
     near(r.cbCast,.75,.01,'Cherry Blossom Burst gồng đúng 0.75s');
+    ok(r.cdBurst===13&&r.cdPunch===16&&r.cdHeal===20,
+       `hồi chiêu đã nới: burst ${r.cdBurst}s · punch ${r.cdPunch}s · heal ${r.cdHeal}s`);
+    ok(r.cdHeal>=2*9,`Medical Ninjutsu hồi chiêu hơn GẤP ĐÔI bản đầu (9s ⇒ ${r.cdHeal}s) — hết hồi máu liên tục`);
     ok(r.cbDmg===25,`Cherry Blossom Burst gây đúng 25 dmg (đo ${r.cbDmg})`);
     near(r.cbStun,3,.02,'Cherry Blossom Burst choáng 3s');
     ok(r.cbBroken,'bị choáng lúc gồng thì Cherry Blossom Burst đứt');
@@ -228,6 +232,36 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
       /* chỉ một lần mỗi trận */
       G.over=null;G.endT=0;G.kos.length=0;s.alive=true;s.hp=800;
       o.again=window.__sakCanSeal(s);
+
+      /* ---- Chakra Exhaustion: cái giá của Byakugo ---- */
+      reset(); s.hp=300;s.maxHp=800;s.sakSealDone=false;s.sakSeal=0;s.sakExh=0;
+      window.__sakSealOn(s); s.sakSealAnim=0;
+      s.sakSeal=.001; window.__sakuraTick(s,.002);      // ép dấu ấn hết
+      o.exhStart=+(s.sakExh*RT).toFixed(1); o.sealGone=s.sakSeal;
+      s.moveMul=1;s.castMul=1; window.__sakStatus2(s,1/120);
+      o.exhMove=+s.moveMul.toFixed(2); o.exhCast=+s.castMul.toFixed(2);
+      o.exhWind=+window.__sakCastMul(s).toFixed(2);     // 2 = quãng gồng dài gấp đôi
+      /* KHÔNG được để chính Medical Expertise cắt 70% hình phạt của mình */
+      o.exhInList=window.__SAK_DEBUFFS.indexOf('sakExh')>=0;
+      window.__sakResTick(s,1/120);
+      o.exhAfterRes=+(s.sakExh*RT).toFixed(1);
+      /* chỉ còn đòn thường + Chakra-Enhanced Punch */
+      const C=window.__CHARS.sakura;
+      e.x=s.x+200; e.y=s.y; e.alive=true;
+      s.cds={s1:0,s2:0,s3:0,basic:0}; s.hp=200; s.sakAct=null; s.sakCrack=null; s.dash=null; s.sakHeal=null;
+      C.think(s,e,200,true);
+      o.exhBurstOff=(s.sakCrack===null&&s.sakAct===null&&s.cds.s1===0);
+      s.cds={s1:0,s2:0,s3:0,basic:0}; s.sakAct=null; s.dash=null;
+      C.think(s,e,200,true);
+      o.exhHealOff=!s.sakHeal;
+      o.exhPunchOn=!!s.dash||s.cds.s2>0;
+      /* hết tê liệt thì VỀ BÌNH THƯỜNG, không phải chờ thêm */
+      s.sakExh=.001; window.__sakuraTick(s,.002);
+      s.moveMul=1;s.castMul=1; window.__sakStatus2(s,1/120);
+      o.backMove=+s.moveMul.toFixed(2); o.backCast=+s.castMul.toFixed(2);
+      s.cds={s1:0,s2:0,s3:0,basic:0}; s.sakAct=null; s.sakCrack=null; s.hp=200;
+      C.think(s,e,200,true);
+      o.backBurst=(s.cds.s1>0||!!s.sakAct);
       return o;
     });
     ok(r.hp===r.want,`máu về ĐÚNG 12% máu tối đa (đo ${r.hp})`);
@@ -244,6 +278,18 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
     near(r.regen,23.68,.3,'Katsuyu 2% máu tối đa + Byakugo 2% máu đang thiếu mỗi giây');
     ok(r.first===96&&r.dead,'combo NHIỀU HIT vẫn giết được ngay sau khi dấu ấn mở');
     ok(r.again===false,'Strength of a Hundred Seal chỉ dùng được một lần mỗi trận');
+    near(r.exhStart,10,.05,'hết Byakugo là rơi THẲNG vào Chakra Exhaustion 10s');
+    ok(r.sealGone===0,'dấu ấn tắt hẳn khi quãng tê liệt bắt đầu');
+    near(r.exhMove,.5,.01,'Chakra Exhaustion −50% tốc chạy');
+    near(r.exhCast,.5,.01,'Chakra Exhaustion −50% tốc thi triển');
+    near(r.exhWind,2,.01,'quãng gồng của chính cô dài gấp đôi khi cạn chakra');
+    ok(r.exhInList===false,'`sakExh` KHÔNG nằm trong SAK_DEBUFFS — hình phạt của chính cô');
+    near(r.exhAfterRes,10,.05,'Medical Expertise KHÔNG tự cắt ngắn quãng tê liệt của mình');
+    ok(r.exhBurstOff,'cạn chakra thì Cherry Blossom Burst không tung được');
+    ok(r.exhHealOff,'cạn chakra thì Medical Ninjutsu không tung được');
+    ok(r.exhPunchOn,'cạn chakra vẫn còn đòn thường và Chakra-Enhanced Punch');
+    ok(r.backMove===1&&r.backCast===1,'hết tê liệt là hệ số về đúng bình thường');
+    ok(r.backBurst,'hết tê liệt thì mở lại đủ bộ chiêu, không phải chờ thêm');
     assert(!errors.length,'lỗi trang: '+errors.join(' | '));
     await browser.close();
   }
@@ -300,6 +346,8 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
     await browser.close();
   }
   const play=fs.readFileSync('play.html','utf8');
+  ok(src.includes('pw:{dmg:40,dur:92,mob:44,as:46,rng:70,cc:76,uti:92,con:82,cmb:94}'),
+     'power chart đúng bản chốt: dur 92 · cc 76 · con 82 · cmb 94, còn lại giữ nguyên');
   ok(play.includes("name:'Haruno Sakura'"),'bản dựng play.html có Sakura');
   ok(play.includes('function sakResTick'),'bản dựng play.html có cửa kháng hiệu ứng');
 

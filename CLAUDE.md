@@ -2009,13 +2009,14 @@ vốn đã ngắn hơn sàn.
 
 #### Ba chiêu
 
-- **1 · Cherry Blossom Burst** — gồng `gs(.75)` rồi đập đất, đường nứt chạy thẳng: **25 dmg
+- **1 · Cherry Blossom Burst** — hồi chiêu `gs(13)`, gồng `gs(.75)` rồi đập đất, đường nứt chạy thẳng: **25 dmg
   + choáng 3s**, mỗi kẻ địch trên đường đi ăn **đúng một lần** mỗi lượt dùng. Hướng **KHOÁ
   ngay lúc tay chạm đất** nên mục tiêu đổi hướng sau đó là trượt; đường nứt không bẻ cong
   đuổi theo ai và dừng ở rìa sàn. Bị cắt ngang lúc gồng ⇒ chỉ chờ `gs(4)`.
   Người trúng bị **hất nhẹ lên** (`sakLift`) rồi rơi xuống gần chỗ trúng — **không gọi
   `knock()`**, vì đó là hất lên chứ không phải hất văng ngang.
-- **2 · Chakra-Enhanced Punch** — cú lao thật, `spd:384` = **120% tốc dash của ChiChi** (320).
+- **2 · Chakra-Enhanced Punch** — hồi chiêu `gs(16)`, cú lao thật, `spd:384` = **120% tốc dash
+  của ChiChi** (320).
   Chỉnh hướng nhẹ trong `gs(.15)` đầu rồi **khoá hẳn**, chỉ trúng kẻ địch **đầu tiên** va
   chạm. Trúng: **30 dmg + choáng 3.5s + Internal Bleeding 5 dmg/s trong 5s**, hết choáng mới
   tới **Chakra Disruption** −50% chạy / −40% cast trong 6s.
@@ -2027,7 +2028,7 @@ vốn đã ngắn hơn sàn.
   > vào lúc trúng đòn.
   > **Hai bản Internal Bleeding KHÔNG cộng dồn**: `sakIbOn()` xoá lớp cũ rồi mới đẩy lớp
   > mới, và bản **yếu không ghi đè bản mạnh** (giữ `dps` cao hơn, chỉ làm mới thời gian).
-- **3 · Medical Ninjutsu** — kết ấn `gs(1)` đứng yên, **vẫn ăn đòn và vẫn bị khống chế**;
+- **3 · Medical Ninjutsu** — hồi chiêu `gs(20)`, kết ấn `gs(1)` đứng yên, **vẫn ăn đòn và vẫn bị khống chế**;
   bị cắt ngang ⇒ chỉ chờ `gs(4)`. Xong cast thì **5 nhịp** cách nhau `gs(.5)` hồi **5% lượng
   máu ĐÃ MẤT** mỗi nhịp (tổng **25%**), và cô **đi lại / đánh nhau bình thường** trong lúc
   nó chạy.
@@ -2037,6 +2038,30 @@ vốn đã ngắn hơn sàn.
     đội thiếu 600 ⇒ 15/nhịp.
   - **Đồng đội chết giữa chừng thì phần của họ MẤT HẲN**, không dồn sang ai.
   - Không overheal, không hồi sinh, không tự giải khống chế.
+
+#### Đợt NERF — đọc trước khi nới lại bất kỳ hồi chiêu nào
+
+Bản đầu cô **cast quá dày**, và hồi máu thì dày nhất. Người dùng bác: *"Cast skill quá nhiều
+và nhanh — cần phải giảm lượng skill cast lại, hồi máu liên tục là sai r nhé, phải tăng tgian
+hồi chiêu lên nữa"*. Cắt bằng cách **nới hồi chiêu**, KHÔNG đụng vào lượng sát thương hay
+lượng hồi máu — mấy con số đó người dùng đã chốt cứng từ bản mô tả gốc.
+
+| | Bản đầu | **Chốt** |
+|---|---|---|
+| Cherry Blossom Burst (`cbCd`) | `gs(9)` | **`gs(13)`** |
+| Chakra-Enhanced Punch (`cpCd`) | `gs(12)` | **`gs(16)`** |
+| Medical Ninjutsu (`mnCd`) | `gs(9)` | **`gs(20)`** — hơn gấp đôi |
+
+> **Hồi máu nới GẤP ĐÔI là cố ý**, đó là chỗ người dùng kêu đích danh. Lượng hồi vẫn nguyên
+> 25% máu đã mất chia 5 nhịp — chỉ nhịp tung là thưa hẳn đi.
+
+**Kéo theo: trận GƯƠNG Sakura vs Sakura KHÔNG còn hoà vĩnh viễn.** Mục "còn treo" của bản
+trước đã tự tan: hồi máu tụt từ ~11 xuống ~5 máu mỗi giây trong khi sát thương vẫn ~10, nên
+máu hai bên đi XUỐNG thật. Đo được: giây 18 là `585 / 570`, giây 45 còn `478 / 347`, giây 93
+còn `288 / 256` — giảm đều chứ không dao động quanh một mốc như trước. Trận vẫn dài (một
+trận bào mòn giữa hai ninja y thuật, đúng chất nhân vật) nhưng có hồi kết.
+`t_reg` vẫn báo `con danh` ở mốc 60 giây của nó — đó là **trận chưa xong tại mốc đo**, không
+phải hoà; đừng đọc nhầm thành lỗi.
 
 #### Ultimate — Strength of a Hundred Seal
 
@@ -2088,6 +2113,37 @@ Doraemon và CHANGE của Ginyu): đòn nào sắp đưa máu về 0 thì `sakCa
   > Sakura gục hay hết Byakugo ⇒ `sakRegenTick()` thấy `katsuyuOwner` không còn hợp lệ và
   > **xoá sạch fragment**, hồi máu đồng đội dừng ngay trong nhịp đó.
 
+#### Chakra Exhaustion — cái giá của Byakugo
+
+Người dùng chốt: *"Sakura sau 10s bách hào thuật sẽ có 10s bị tê liệt khi hết chakra: giảm
+50% tốc độ move, ko thể dùng skill nào ngoài basic attack và sakura chakra punch — giảm nốt
+50% tốc độ cast skill, sau đó mới về bình thường"*.
+
+Hết `sealT` là **rơi THẲNG** vào `f.sakExh = SAK.exhT` (`gs(10)`), không có nhịp nghỉ ở giữa:
+
+| | |
+|---|---|
+| tốc chạy | **−50%** (`SAK.exhMove`) |
+| tốc thi triển | **−50%** (`SAK.exhCast`) — ăn vào **cả** `castMul` lẫn `sakCastMul` |
+| còn dùng được | **đòn thường** và **Chakra-Enhanced Punch** |
+| khoá hẳn | **Cherry Blossom Burst** và **Medical Ninjutsu** |
+
+- **`sakExh` TUYỆT ĐỐI không được nằm trong `SAK_DEBUFFS`.** Đây là hình phạt của CHÍNH cô,
+  không phải debuff của địch — lọt vào danh sách đó là Medical Expertise tự cắt 70% và quãng
+  tê liệt còn đúng 3 giây. `t_sakura.js` soi thẳng chỗ này.
+- **Khoá chiêu bằng cách gác trong `think()`, đừng nống hồi chiêu.** Nống hồi chiêu thì hết
+  tê liệt cô vẫn phải chờ thêm, mà bản mô tả nói rõ *"sau đó mới về bình thường"*. Gác ở
+  `think()` thì đúng giây thứ 10 là mở lại đủ bộ — đo được.
+- **Tốc thi triển ăn vào `castMul` ở đây, KHÁC với Byakugo.** Byakugo là BUFF nên phải tránh
+  `castMul` (không thì nó thành buff giảm hồi chiêu, trái yêu cầu *"Cast Speed không ảnh
+  hưởng cooldown"*). Chakra Exhaustion là DEBUFF nên đi đúng đường chung của mọi hiệu ứng
+  làm chậm cast trong game — cùng lối Chakra Disruption của chính cô. Nó ăn vào **cả**
+  `sakCastMul` (quãng gồng dài gấp đôi) để hình phạt có sức nặng thật.
+- Nhìn ra ngay ở cỡ trong trận: người **rũ xuống và nghiêng nhẹ**, dấu ấn trên trán **tối
+  hẳn** (`#5B4A70` thay cho `#8E4FD0`), một **vòng xám thở chậm** dưới chân, và mấy hạt
+  chakra **tản ra rồi tắt** — trái hẳn quầng tím sáng của Byakugo. Thanh phụ ghi
+  `CHAKRA EXHAUSTION · n.ns`, kèm ô tiếng riêng `sak_exhaust` (một tiếng TỤT xuống).
+
 #### Chỗ khác phải đi theo
 
 - `sakStatus()` chạy **CUỐI** trong `statusTick()` vì `gnStatus` **GÁN đè** `moveMul`/
@@ -2121,20 +2177,11 @@ Doraemon / Superman / Beatrice — đừng dựng ô mới.
 
 Kiểm bằng `node tools/t_sakura.js` (78 mục, phần lớn ĐO THẬT trong trận).
 
-> **CÒN TREO — trận GƯƠNG Sakura vs Sakura không ngã ngũ.** Đo thật: máu hai bên dao động
-> quanh 390~525 suốt 45 giây trong trận và **không bên nào đi xuống**. Nguyên nhân là số học
-> của chính bộ chiêu: Medical Ninjutsu hồi **25% máu ĐANG THIẾU mỗi 9 giây** (≈11 máu/giây
-> khi thiếu 400) trong khi sát thương của cô cố ý để thấp (~10/giây) và sát thương duy trì
-> của đối phương thì bị chính nội tại của cô cắt 70%. Hồi ≥ sát thương nên thành hoà vĩnh viễn.
-> - **Mười cặp còn lại đều ngã ngũ bình thường** (12~39 giây), nên đây là chuyện riêng của
->   trận gương.
-> - **League / Cup đã tự xử**: `compTick()` cắt ở `COMP_MAXT` = 90 giây trong trận rồi tính
->   theo phần trăm máu. Chỉ **đấu tay đôi thường** là chạy mãi, vì `compTick` gác ở `compLive`.
-> - CLAUDE.md vốn đã lường trước chuyện này ở mục 2c-bis (*"Hai người cùng có cửa hồi máu thì
->   về lý thuyết đánh nhau mãi không xong"*) — Sakura là người đầu tiên làm nó xảy ra thật.
-> - **Chưa đụng vào vì người dùng chốt cứng mấy con số hồi máu** (5%/nhịp · 25% tổng · hồi
->   chiêu 9 giây). Muốn chữa thì có ba lối, mỗi lối một dòng: hạ `SAK.mnSolo`, nới
->   `SAK.mnCd`, hoặc bỏ cờ `compLive` khỏi `compTick()` để trần thời gian áp cho mọi chế độ.
+> **Trận gương Sakura vs Sakura — ĐÃ XONG, đừng dựng lại mục "còn treo" cũ.** Bản đầu hai
+> bên hoà vĩnh viễn vì Medical Ninjutsu hồi ~11 máu/giây trong khi sát thương chỉ ~10. Đợt
+> nới hồi chiêu (bảng ở mục NERF trên) kéo nhịp hồi xuống ~5 máu/giây nên máu đi xuống thật.
+> Đo lại: giây 18 `585 / 570` · giây 45 `478 / 347` · giây 93 `288 / 256`.
+> **Đụng vào `SAK.mnCd` thì nhớ đo lại trận gương** — đó là con số giữ cho nó không hoà lại.
 
 ## 2c. Ba chế độ đấu — 1v1, hỗn chiến, đánh theo đội
 
@@ -3326,7 +3373,7 @@ Mấy tên cũ (`--ink` / `--panel` / `--gold` …) **giữ nguyên** vì đã r
 
 ### Chiều cao `--ctl` CHỈ áp cho ô trên thanh điều khiển
 
-node tools/t_sakura.js # Haruno Sakura: nội tại giảm 70% thời gian debuff / 30% choáng qua MỘT cửa
+node tools/t_sakura.js # Haruno Sakura (93 mục): nội tại giảm 70% thời gian debuff / 30% choáng qua MỘT cửa
                         # duy nhất (dps mỗi tick giữ nguyên, chỉ số nhịp giảm; sàn 0.25s;
                         # không đụng lực đẩy), shuriken bằng 80% Konohamaru và nhanh hơn 15%,
                         # hai thế đánh đổi theo khoảng cách CÓ ĐỘ TRỄ, Cherry Blossom Burst
@@ -3335,7 +3382,11 @@ node tools/t_sakura.js # Haruno Sakura: nội tại giảm 70% thời gian debuf
                         # miễn khống chế), Medical Ninjutsu hồi 25% máu đã mất và chia đôi
                         # khi có đồng đội, và Strength of a Hundred Seal: phân cảnh focus,
                         # máu về đúng 12% máu tối đa, KHÔNG có bất tử nên combo nhiều hit
-                        # vẫn giết được, Katsuyu hồi cho cả đội và tắt ngay khi cô gục
+                        # vẫn giết được, Katsuyu hồi cho cả đội và tắt ngay khi cô gục;
+                        # và CHAKRA EXHAUSTION sau Byakugo: rơi thẳng vào 10s tê liệt,
+                        # −50% chạy / −50% cast, khoá Cherry Blossom Burst lẫn Medical
+                        # Ninjutsu mà vẫn còn đòn thường + Chakra-Enhanced Punch, chính
+                        # nội tại của cô KHÔNG cắt ngắn được nó, hết 10s là về bình thường
 ```css
 .bar>button,.bar>select,.bar>label.chk,.cselBar>button,.arcOver>button{height:var(--ctl)}
 ```
