@@ -720,6 +720,28 @@ thân xác Ginyu do địch điều khiển (`swapAs==='foe'`) thì chết là c
   giờ là đi — cướp xác họ thì chẳng còn gì để cướp. Chỗ chặn nằm ở cả `gnChangeTarget()`
   lẫn nhánh va chạm lẫn `ginyuPossess()`.
 
+> **QUYỀN ĐIỀU KHIỂN ĐI THEO HỒN, không đi theo object.** Người dùng chốt: *"khi ginyu
+> chuyển thân xác thì thân xác Ginyu bây h là của tanjiro (là chúng ta) vậy chúng ta điều
+> khiển thân xác ginyu chứ"*. Vì vậy `isPlayer()` đọc cờ **`f.human`** chứ **đừng so object
+> với `G.k`/`G.c`** — so object thì người chơi tiếp tục bấm cái thân xác cũ, mà thân xác đó
+> giờ do hồn Ginyu điều khiển. `ginyuPossess()` tráo `human` cùng lúc tráo `gnSoul`, và
+> `syncHuman()` gắn lại cờ sau mỗi lần dựng trận / đổi ô chế độ.
+> Cùng một luật với `compSoul()` của giải đấu: **thắng thua và quyền điều khiển đều tính
+> theo HỒN**. Hai hàm `ginyuSwapThink()` / `gnSoulThink()` vốn đã đọc `keys[...]` khi
+> `auto` tắt, nên không phải sửa gì thêm ở đó.
+>
+> Nút chiêu cũng tách làm hai theo đúng luật đã chốt: **ô J lấy tên theo THÂN XÁC**, còn
+> **K / L / U lấy theo HỒN**. `padTick()` soi cặp (thân xác / hồn) mỗi nhịp và dựng lại nút
+> khi nó đổi — cú CHANGE nổ GIỮA TRẬN nên dựng một lần lúc vào trận là không đủ.
+
+> **Màn ra mắt đang chạy dở cũng phải dọn** (`gnEntry` · `tanEntry` · `conanEntry` ·
+> `drEntry`), cùng lý do với mấy khối dọn `supEntry` / `beaEntry` / `gojoEntry` ngay dưới:
+> tick nuôi chúng gác ở `!swapAs` nên sau khi hoán đổi thì chúng NGỪNG CHẠY mà cờ vẫn còn —
+> mà màn ra mắt thì khoá cả sàn mỗi nhịp, để lại là hai thân xác đứng khoá nhau vĩnh viễn
+> (đo được: `lock` ghim ở 0.3 và không ai nhúc nhích). Trong trận thật thì hiếm gặp vì
+> CHANGE chỉ nổ lúc Ginyu sắp chết, nhưng ba khối dọn kia đã lo đúng chuyện này rồi nên
+> bốn ông còn lại phải đi theo cho nhất quán.
+
 **Trúng — `ginyuPossess(g,t)`.** Nguyên tắc: **hồn đổi chỗ, THÂN XÁC đứng yên.** Không đụng
 tới `key`, `spriteH`, `color`, vị trí — chỉ đổi **`name`** và cờ điều khiển. Nhờ vậy ra đúng
 cái người dùng muốn: **thân xác A mà chữ B trên thanh máu**, và ngược lại.
@@ -2178,6 +2200,9 @@ CHƠI. Hai biến **khác việc nhau, đừng gộp**:
 `mode` (`auto` ↔ `p1`), `autoSkill`, và lớp nút bấm. Nhờ vậy **bản auto đi đúng đường cũ** —
 đó là điều kiện người dùng nêu đầu tiên.
 
+- **`isPlayer()` đọc cờ `f.human`, đừng so object với `G.k`** — cú CHANGE của Ginyu đổi HỒN
+  chứ không đổi thân xác, nên so object là người chơi bấm nhầm thân xác. Xem mục CHANGE!!!
+  của Captain Ginyu.
 - **Phần điều khiển tay đã có sẵn từ lâu, đừng viết lại**: cả mười ba nhân vật đã có nhánh
   `keys['j'/'k'/'l'/'u']` trong `think()`, `playerVec()` đã ăn WASD, và `autoSkill` đã có ô
   chọn trong xưởng. Bản người chơi chỉ **bật** mấy thứ đó lên.
@@ -2253,8 +2278,132 @@ Màn chọn nhân vật dùng lại **đúng bước `p1`** của đấu tay đ�
 thẻ hồ sơ) — `cselSteps()` cho `adv` trả về `['mode','p1','stage']`. Vì vậy `cselRefresh()`
 phải cho `adv` đi chung nhánh `duel` (`#duelPane`), không thì lưới `#listA` không bao giờ hiện.
 
-**24 màn, cứ màn thứ 4 là một BOSS** ⇒ sáu boss (`ADV_BOSS`, mạnh dần). Màn thường là quái,
-càng về sau càng đông (2 → 5 con) và càng nặng đòn.
+### Bản đồ PHÂN NHÁNH — `ADV.map`
+
+§15: *"Không làm map chỉ là một đường thẳng. Sử dụng Node-Based Adventure Map. Player chọn
+route."* Một run = **ba REGION**, mỗi region **tám HÀNG**, hàng cuối luôn là BOSS. Tổng vẫn
+đúng 24 nấc (`ADV_STAGES = 3 × 8`) nên mọi công thức scale theo **độ sâu** giữ nguyên — độ
+sâu quyết định địch mạnh tới đâu, bản đồ chỉ quyết định **đi đường nào**.
+
+Mỗi hàng 2~4 node, mỗi node nối sang 1~2 node hàng kế. Ba luật dựng map, đừng bỏ cái nào:
+- **hàng đầu toàn trận thường** (vào cho êm), **hàng cuối là boss một mình**;
+- **hàng áp chót luôn có chỗ nghỉ** — đánh boss với thanh máu rách thì không phải lựa chọn,
+  mà là bị ép;
+- **mọi node phải có đường ra VÀ đường vào** — thiếu vế sau là sinh ra node chết không ai tới.
+
+> **MẬT ĐỘ TRẬN ĐÁNH: hàng CHẴN bắt buộc toàn node có đánh nhau.** Không có luật này thì một
+> đường đi có thể gần như không đánh trận nào — đo được Beatrice tới boss region 1 với đúng
+> **2 trận, cấp 1, không thẻ nào**, rồi chết chắc. Hàng lẻ vẫn thoải mái cửa hàng / sự kiện /
+> kho báu nên route vẫn có cái để chọn.
+
+Tám loại node (§16) trong `ADV_NODES`: `battle · hard · elite · boss` có đánh nhau,
+`shop · treasure · event · rest` mở một bảng rồi đi tiếp. Ba region (`ADV_REG`) mỗi cái một
+sàn đấu, một tông màu, một **tier quái** và một cặp **tinh nhuệ / boss** riêng.
+
+**MÁU MANG THEO giữa các node** (§30) — `ADV.hp`. Không hồi đầy sau mỗi trận, nên chọn route
+mới có nghĩa. Đường hồi: chỗ nghỉ 55% · cửa hàng 34% · qua region 60%. **Thua** thì tiêu một
+mạng hồi sinh và đánh lại với nửa máu (§31); hết mạng là run kết thúc.
+
+> **`advResult()` chỉ được chốt MỘT LẦN cho mỗi trận** (`G.advDone`). `finish()` có nhiều
+> đường vào; chốt hai lần là cộng đôi phần thưởng và **đẩy region đi hai nấc**, lúc đó người
+> chơi rơi thẳng vào tier quái của region sau và chết oan. Đã dính đúng một lần lúc đo cân
+> bằng: log ra `boss✓` rồi chết ngay trận kế, mà sổ ghi region 3.
+
+> **`advEncounter()` có ĐỆM theo trận** (`ADV_ENC`) vì `advStatTick` gọi nó cho TỪNG địch MỖI
+> NHỊP. Xoá đệm ở `advEnter()`, `newGame()` và `advRestart()`. Test đổi loại node thì phải
+> gọi `__advEncClear()` trước khi đọc lại.
+
+### RELIC (§26) và RELIC BỊ NGUYỀN (§27)
+
+Relic là passive chạy **suốt run**, dùng đúng năm cửa của thẻ nâng cấp — chỉ khác **chỗ rơi
+ra**: kho báu · cửa hàng · tinh nhuệ · boss, chứ không phải lên cấp. Thẻ và relic đi chung
+`ADV_BY_ID` và chung chỉ mục hook, chỉ khác **chỗ cất**: thẻ vào `ADV.ups`, relic vào
+`ADV.relics`. Nhờ vậy màn chọn, `advTake()` và cả năm cửa dùng lại y nguyên.
+
+> **Relic bị nguyền KHÔNG bao giờ tự rơi ra.** Chúng chỉ bán ở **cửa hàng** — chỗ duy nhất
+> người chơi đọc được cái giá rồi mới quyết, đúng tinh thần risk/reward của §27. Kho báu chỉ
+> ra relic thường.
+
+`ADV.curseHp` là phần trăm máu tối đa bị lời nguyền ăn mất, đọc trong `advMaxHp()`. Nó nhận
+**số ÂM** để cộng máu — hướng thức tỉnh Thành Trì dùng đúng đường đó thay vì mở thêm một
+trường mới. Có sàn `.25` để không bao giờ rơi xuống một con số vô nghĩa.
+
+### AWAKENING (§13) và EVOLUTION CORE (§12)
+
+**Ba hướng thức tỉnh** (`ADV_AWAKE`) mở sau khi hạ boss region 2, **loại trừ nhau** qua
+`excl:'awake'`: Bão Đòn (combo + hồi chiêu) · Kẻ Phá Thế (khống chế + phá giáp) · Thành Trì
+(lì đòn + máu). Mỗi hướng kéo build đi một ngả hẳn, không phải "+20% damage".
+
+**Lõi tiến hoá** rơi từ boss. Tiêu lõi mở một thẻ `evo:true` — mấy thẻ nặng ký nhất bảng.
+`advPool()` **lọc hẳn `evo` ra** nên chúng không bao giờ rơi từ lên cấp thường.
+
+Bốn nguồn chọn đi chung **một hàng chờ** trong `advLevelCheck()`, xét theo thứ tự:
+lên cấp → lõi tiến hoá → thức tỉnh → relic. Một lúc chỉ mở MỘT màn.
+
+### BREAK GAUGE (§42 · §43) và BOSS NHIỀU PHA (§23)
+
+> §42: *"Boss không immune CC hoàn toàn. Thay vào đó Boss có CC Resistance Bar."*
+
+Chỉ tinh nhuệ và boss có `f.advBreakMax`. **Mỗi cú khống chế bào thanh** — cắm ngay đầu
+`stunFx()` nên MỌI đường gây choáng đều tính, kể cả chiêu gọi thẳng `stunFx`. Bào hết thì
+**VỠ THẾ**: đứng hình `ADV_BRK_T` và **ăn thêm 40% sát thương**. Hết vỡ thế thì thanh hồi đầy
+và có quãng MIỄN `ADV_BRK_HOLD` — **không stun-lock được boss**, đúng yêu cầu §42.
+
+**Boss ba pha** theo mốc máu 70 · 40 · 15%: mỗi mốc đóng băng một nhịp (telegraph) rồi bung
+một thứ khác — pha 2 nhanh tay, pha 3 **gọi thêm quân**, pha cuối nổi điên nhưng **thanh vỡ
+thế mỏng đi 40%** (nổi điên thì hở thế).
+
+### THẺ RIÊNG CỦA TỪNG NHÂN VẬT (§39)
+
+`ADV_FIGHTER` — **48 thẻ, bốn cho mỗi người**: ba thẻ thường và một thẻ TIẾN HOÁ. Cộng 29 thẻ
+chung thì bảng có **77 thẻ, 62% là thẻ riêng**.
+
+> **CẤM SỬA HẰNG SỐ CHUNG.** `SHIKA.lazyCap`, `GN.beamN`, `DORA.slCd`… dùng cho MỌI chế độ —
+> sửa chúng là phá cân bằng của đấu tay đôi, hỗn chiến và giải đấu, đúng cái §64 cấm. Mọi thẻ
+> riêng vì vậy chỉ đụng vào **trạng thái của riêng một fighter** (`f.rage`, `f.critBonus`,
+> `f.chakra`, `f.cds`, `f.copCd`…) hoặc đi qua năm cửa chung. Đã phải bỏ một vế của thẻ tiến
+> hoá Shikamaru vì nó định nới `SHIKA.lazyCap`. `t_player.js` soi thẳng `SHIKA.lazyCap`
+> trước/sau để chắc không ai lách luật này.
+
+Thẻ riêng đọc **`gnSoul||key`** (`advMine`) chứ không đọc `key`: sau cú CHANGE của Ginyu thì
+chiêu đi theo HỒN, nên thẻ cũng phải đi theo hồn.
+
+`f.advBaRate` (mấy thẻ "đánh nhanh hơn") **dựng lại về 1 mỗi nhịp** ở đầu `advOnTick` rồi mới
+để thẻ nâng lên — đúng lối `statusTick`. Không đặt lại thì hệ số tích mãi và đòn thường nhanh
+vô hạn.
+
+> **LỖI THẬT — mở bảng hành trình mà trận chạy ngầm sau lưng.** `#cselGo` gọi `arcFight()` với
+> điều kiện `!compOn()`, mà phiêu lưu thì `compOn()` false — nên mở bảng hành trình xong game
+> vẫn bật màn VS và cho trận chạy ngầm. Đúng họ với lỗi *"bấm Khai mạc giải mà chớp ra cặp đấu
+> trận trước"* đã ghi ở mục 2e. Gác thêm `PMODE!=='adv'`. Đo được: `vsOn` bật ⇒ `step()` return
+> ⇒ `G.t` đứng nguyên 0 trong khi bảng vẫn mở.
+
+### Cân bằng — mấy con số này ĐO RỒI MỚI CHỐT, đừng đoán
+
+Đường cong của bản 24-màn-thẳng cũ **quá dốc** khi chuyển sang bản đồ: một region có 8 hàng
+mà chỉ ~5 hàng là đánh nhau. Ghi lại cả đường đi để khỏi mò lại:
+
+| Lần đo | Kết quả |
+|---|---|
+| curve cũ + mob HP ×.28/nấc | tới boss region 1 mới **lv2~3, 1~3 thẻ** — chết sạch |
+| phẳng curve + thưởng kết trận + hàng chẵn toàn trận | **lv10~15, 7~13 thẻ** — qua được boss region 1 |
+| mob HP ×.28 (chưa sửa) | chết ngay **trận đầu region 2**: quái 3.2× máu mà sát thương gốc người chơi đứng yên |
+| mob HP ×.13, mob dmg ×.07, +7% dmg mỗi cấp | tới **region 2~3**, chết dần chứ không chết dốc |
+
+Ba chỗ đáng nhớ:
+1. **§21 — đừng thổi máu quái.** `advMobHp` chỉ `1+.13*(n-1)`. Cái làm địch khó dần là **LOẠI
+   QUÁI** (mỗi region một tier hẳn) và **SỐ LƯỢNG**, không phải thanh máu.
+2. **Sát thương gốc phải nhích theo cấp** (`ADV_LVDMG = .07`). Người dùng cấm lấy "+10%
+   damage" làm TRỤC CHÍNH — và nó không phải, trục chính là 29 thẻ cơ chế. Nhưng để nó đứng
+   yên hẳn thì late game thành cào mãi không chết.
+3. **Thưởng exp KẾT TRẬN (`ADV_XP_CLEAR`) tách khỏi exp từng con** — muốn người chơi tới boss
+   ở cấp nào thì vặn đúng bảng đó, khỏi đụng tới từng loại quái.
+
+Đo bằng `scratchpad/run.js` (đi trọn một run, bốc đường và bốc thẻ ngẫu nhiên).
+
+**Boss / tinh nhuệ** là nhân vật thật, hạ **cả máu lẫn sát thương** theo độ sâu
+(`advBossHp` .30→.90, `advBossDmg` .46→.92); tinh nhuệ còn nhẹ hơn boss cùng độ sâu một nấc
+(`ADV_ELITE_CUT`).
 
 > **Boss phải hạ CẢ MÁU LẪN SÁT THƯƠNG, đừng chỉ hạ máu.** Boss là nhân vật thật nên bộ chiêu
 > của họ cân theo 800 máu, trong khi người chơi ở màn 4 mới có ~370 máu — hạ máu boss mà để
@@ -2272,15 +2421,72 @@ càng về sau càng đông (2 → 5 con) và càng nặng đòn.
 > Quái thì **KHÔNG** đi qua đường này — sát thương của chúng đã scale riêng bằng `advMobDmg`,
 > cắt thêm lần nữa là nhân hai lần.
 
-**Hai thanh tiến trình ĐI RIÊNG**, đúng yêu cầu *"có điểm để nâng điểm các thuộc tính, rồi có
-điểm exp riêng để nâng skill"*:
+### Tiến trình đi bằng THẺ NÂNG CẤP, không đi bằng điểm
 
-| Thanh | Ăn từ đâu | Tiêu vào gì |
+> **Hai pool điểm cũ (`sp` thuộc tính / `sxp` skill) đã BỎ HẲN.** Người dùng bác thẳng:
+> *"Không được biến progression chủ yếu thành +10% damage / +5% HP. Phần thú vị nhất phải
+> là: thay đổi cơ chế skill; thêm hiệu ứng; synergy; combo; projectile; chain; mark; reset
+> cooldown; AoE; CC..."*. **Đừng dựng lại hai bảng mua điểm đó.**
+
+Giờ chỉ còn **một** thanh `exp`. Lên cấp ⇒ **dừng trận**, hiện **ba thẻ**, chọn một
+(`advPick3` → `advTake`). Chỉ số vẫn còn nhưng chỉ là mấy thẻ `common` nằm CHUNG một hũ với
+thẻ cơ chế — đo được: **29 thẻ, chỉ 4 thẻ chỉ số**, 19 thẻ cắm thật vào một cửa cơ chế.
+
+**Lên cấp xảy ra GIỮA TRẬN** (exp rơi ra từ mỗi con vừa hạ, `advGain` cộng ngay) nên cờ
+`advCards` phải **chặn thẳng `step()`** đúng lối `vsOn` — không thì mấy màn ra mắt và đồng hồ
+hiệu ứng vẫn chạy trong lúc người chơi đang đọc thẻ. Đo được: `G.t` đứng nguyên suốt lúc chọn.
+
+> **EXP cộng NGAY lúc từng con gục, và `advResult()` KHÔNG cộng lại.** Cộng ở cả hai chỗ là
+> ăn gấp đôi.
+
+### Lớp hiệu ứng (Adventure Modifier Layer) — NĂM CỬA, không sửa nhân vật nào
+
+Người dùng: *"Adventure phải là một layer riêng. Không làm thay đổi hoặc phá existing
+fighters, existing balance, existing game modes."* Vì vậy **tuyệt đối không sửa `think()` hay
+thân chiêu của mười hai nhân vật**. Mọi thẻ cắm vào đúng năm cửa chung:
+
+| cửa | ở đâu | dùng cho |
 |---|---|---|
-| `exp` | hạ địch | lên cấp ⇒ mỗi cấp **3 điểm thuộc tính** (`ADV_SP`) |
-| `sxp` | hạ địch | mở và **nâng bậc chiêu** |
+| `hit` | trong `hurt()`, **ngay trước khi trừ máu** | mark, dmg cộng thêm, nổ, hút máu, xử trảm |
+| `kill` | trong `defeat()` | lan mark, hồi chiêu, nổ xác |
+| `proj` | vòng duyệt `G.proj`, một lần mỗi viên (đi chung lối `p.gnSkew`) | xuyên, chia đạn, tốc bay, nổ |
+| `cast` | soi ô hồi chiêu vừa **nạp lại** trong `advOnTick` | combo, nạp pin chiêu |
+| `tick` | vòng duyệt fighter mỗi nhịp | hào quang, đồng hồ riêng |
 
-**Đừng gộp hai cái làm một** — lên cấp không tự mở chiêu, và nâng chiêu không tự lên cấp.
+- Cửa `hit` đặt **sau** mọi lớp chặn / né / giảm sát thương (nên thẻ không cứu được đòn đã bị
+  chặn) nhưng **trước** khi trừ máu (nên thẻ vẫn sửa được lượng sát thương).
+- **Ngoài chế độ phiêu lưu thì cả năm cửa trả nguyên giá trị về** — đo được: chưa có thẻ nào
+  thì `advOnHit(100)` ra đúng `100`, và `t_reg` vẫn 55/55 trận sạch lỗi.
+- Thêm nhân vật mới **không phải sửa lớp này**, chỉ thêm dòng vào bảng `ADV_UP`.
+
+> **CHẶN VÒNG LẶP VÔ HẠN (§72) — `advHurt2()`.** Đòn dội và cú nổ đều gọi lại `hurt()`, mà
+> `hurt()` lại chạy `advOnHit` — không chặn thì dội đẻ ra dội, nổ đẻ ra nổ, trận treo cứng.
+> Mọi sát thương PHÁI SINH phải đi qua `advHurt2()`: nó bật cờ `ADV_SEC` trong lúc gọi, và
+> `advOnHit` thấy cờ thì bỏ qua TOÀN BỘ hook. Đòn phái sinh vẫn gây sát thương bình thường
+> nhưng không đẻ thêm một lớp nữa. **Thêm thẻ nào sinh ra sát thương mới thì BẮT BUỘC gọi
+> `advHurt2`, đừng gọi thẳng `hurt`.**
+
+**MARK là trục synergy chung**, không phải dấu riêng của từng nhân vật: ai gắn cũng được
+(`advMark`), mọi thẻ khác đọc chung (`advMarked`), và thẻ nào tiêu nó thì gọi `advEatMark()`
+để hai thẻ không cùng ăn một cái dấu. Kẻ bị đánh dấu có một vòng hồng nhấp nháy dưới chân.
+
+**Bảng thẻ `ADV_UP`** đúng khung dữ liệu đã nêu: `id · fighter · slot · rar · tags · max ·
+req · excl · name{vi,en} · desc{vi,en}` cộng một trong năm handler (hoặc `on` cho hiệu ứng
+một lần). `fighter:null` = dùng chung cho mọi nhân vật, nên **nhân vật mới tự có sẵn cả bộ**.
+
+Ba luật bốc thẻ, làm đủ cả ba:
+- **§68** thẻ đã đủ bậc thì biến khỏi hũ (`advPool` lọc theo `max`);
+- **§69** đà build: thẻ trùng `tags` với thứ mình đã có thì nặng ký hơn một nhịp (trần +60%);
+- **§70** pity **ẩn**: mấy lượt liền không ra thẻ MỞ CHIÊU thì nó nặng ký dần (đo được
+  30 → 111 sau 3 lượt khô).
+
+Nhánh **loại trừ** qua `excl`: chọn một hướng đòn thường (Nạp Pin / Đòn Nặng / Tay Nhanh) thì
+hai hướng kia khoá hẳn. **Bốc lại** (`ADV.rr`) và **giữ một thẻ** qua lần bốc lại (chuột phải,
+`ADV.keep`) — đúng §9.
+
+> **Cân bằng đo lại bằng `bal.js` với build BỐC NGẪU NHIÊN** (mỗi cấp bốc từ đúng cái hũ
+> thật, ưu tiên thẻ mở chiêu khi nó ra): ChiChi 9/11, Konohamaru 10/11, Beatrice 11/11, mấy
+> trận boss cuối kết ở 6~20% máu. Màn quái vẫn thoải mái 79~100% — đúng chất màn farm.
 
 - **Máu lv1 THẤP hẳn**: `ADV_HP0 = 260`, cộng `14/cấp` và `18` mỗi điểm Thể lực. **Không đọc
   `HP[key]`** ở chế độ này — 800 máu thì quái màn 1 không gãi nổi.
@@ -3734,9 +3940,15 @@ node tools/t_player.js  # BẢN NGƯỜI CHƠI và chế độ PHIÊU LƯU: bả
                         # PHIÊU LƯU (lv1 máu thấp và chỉ có đòn thường — ba ô chiêu kia bấm
                         # không ăn, boss đúng ở mỗi màn thứ 4, quái đông và mạnh dần, đủ exp
                         # thì lên nhiều cấp một lượt, điểm thuộc tính ăn vào hệ số thật, điểm
-                        # skill mở rồi mới bấm được, bậc chiêu chỉ làm nhanh ĐÚNG ô đó, chưa
-                        # đủ cấp thì thừa điểm cũng khoá); và đánh thật một màn: hạ hết quái
-                        # thì ăn exp rồi sang màn kế, thua thì vẫn giữ phần đã farm
+                        # thẻ mở chiêu mới bấm được, bậc chiêu chỉ làm nhanh ĐÚNG ô đó);
+                        # BẢNG THẺ (29 thẻ đủ khung dữ liệu, thẻ cơ chế áp đảo thẻ chỉ số,
+                        # đủ bốn bậc hiếm, bốc ba thẻ không trùng, thẻ đủ bậc biến khỏi hũ,
+                        # nhánh loại trừ khoá nhau, pity ẩn kéo thẻ mở chiêu lên);
+                        # THẺ CHẠY THẬT trong trận (mark chỉ cộng dmg khi CÓ dấu, xuyên và
+                        # chia ba mũi ăn vào đạn thật, nổ vùng không đẻ vòng lặp vô hạn,
+                        # lên cấp giữa trận thì TRẬN ĐỨNG HẲN rồi mới cho chọn thẻ);
+                        # đánh thật một màn; và CƯỚP XÁC: bị Ginyu change thì người chơi
+                        # cầm THÂN XÁC GINYU chứ không cầm thân xác cũ
 node tools/t_modes.js   # ba chế độ đấu: 1v1 vẫn y như cũ (hai người, đúng hai đầu sàn),
                         # hỗn chiến (mỗi người một phe, hạ một người thì trận còn chạy,
                         # người cuối cùng thắng, băng-rôn gạch tên người đã bị hạ,
