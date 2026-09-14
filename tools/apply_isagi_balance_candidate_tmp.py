@@ -30,10 +30,12 @@ rep('ultDown:gs(1.2), ultDevourDown:gs(1.5), ultSpeed:BIC_SPD*1.03, ultKb:560,',
 
 rep('Up to ${rts(ISAGI.metaT)}s: +40% movement, tactical target selection,',
     'Up to ${rts(ISAGI.metaT)}s: +35% movement, tactical target selection,','Metavision description')
-rep('A real ${rts(ISAGI.blindT)}s flank run, no teleport: +120% movement, −40% damage taken,',
-    'A real ${rts(ISAGI.blindT)}s flank run, no teleport: +110% movement, −32% damage taken,','Blind description')
+rep('a real ${rts(ISAGI.blindT)}s flank run, no teleport: +120% movement, −40% damage taken,',
+    'a real ${rts(ISAGI.blindT)}s flank run, no teleport: +110% movement, −32% damage taken,','Blind description')
 rep("pw:{dmg:64,dur:42,mob:88,as:54,rng:74,cc:56,uti:92,con:70,cmb:34},",
     "pw:{dmg:58,dur:40,mob:84,as:52,rng:74,cc:52,uti:86,con:64,cmb:32},",'Power chart')
+rep("Vision comes from information, not time. Gain is capped at 30 per second and stops while hard-controlled.",
+    "Vision comes from information, not time. Gain is capped at 27 per second and stops while hard-controlled.",'DEX passive')
 rep("{tag:'2',name:'Direct Shot',vi:'66 damage. Perfect Timing improves accuracy and turns a genuine opening into 86 damage and a knockdown, but the shot can still miss.',en:'66 damage. Perfect Timing improves accuracy and turns a genuine opening into 86 damage and a knockdown, but the shot can still miss.'},",
     "{tag:'2',name:'Direct Shot',vi:'62 damage. Perfect Timing improves accuracy and turns a genuine opening into 80 damage and a shorter knockdown, but the shot can still miss.',en:'62 damage. Perfect Timing improves accuracy and turns a genuine opening into 80 damage and a shorter knockdown, but the shot can still miss.'},",'DEX Direct')
 rep("{tag:'3',name:'Puzzle Pieces',vi:'Analyze for 1s, gain 30 Vision and mark the target Analyzed for 6s.',en:'Analyze for 1s, gain 30 Vision and mark the target Analyzed for 6s.'},",
