@@ -36,7 +36,10 @@ function fileNhac() {
   /* ---------- hồ sơ nhân vật: đủ song ngữ cho cả tám người ---------- */
   const dex = await doc(() => {
     const out = { thieu: [], it: [] };
-    for (const k of Object.keys(window.__CHARS)) {
+    /* Chỉ soi NHÂN VẬT CHƠI ĐƯỢC. Quái của chế độ Phiêu lưu cũng nằm trong `CHARS` (để mọi
+       chỗ `CHARS[f.key]` chạy y nguyên) nhưng chúng KHÔNG có thẻ hồ sơ — chúng không bao giờ
+       hiện ở màn chọn nhân vật. `CKEYS` là danh sách đã lọc. */
+    for (const k of window.__CKEYS()) {
       const d = window.__DEX[k];
       if (!d) { out.thieu.push(k); continue; }
       const st = d.st || {};
@@ -47,7 +50,7 @@ function fileNhac() {
         (d.skills || []).every(s => s.name && s.vi && s.en);
       if (!duSt || !duNgu || (d.skills || []).length < 4) out.it.push(k);
     }
-    out.chars = Object.keys(window.__CHARS).length;
+    out.chars = window.__CKEYS().length;
     return out;
   });
   ok(dex.thieu.length === 0, `ca ${dex.chars} nhan vat deu co ho so (thieu: ${dex.thieu.join(',') || 'khong'})`);

@@ -1,8 +1,9 @@
 # Multiverse Battler
 
 Game đối kháng tự động vẽ bằng canvas 2D, **không cần cài gì, không có bước build**.
-Mười hai đấu thủ từ nhiều vũ trụ, mười hai màn đấu, ba chế độ (1v1 · hỗn chiến · đánh theo đội),
-giao diện **Việt / Anh** đổi được bằng một nút.
+Mười hai đấu thủ từ nhiều vũ trụ, mười hai màn đấu, và **hai bản chơi**: xem máy đánh với máy,
+hoặc tự cầm tay đánh bằng WASD + nút chiêu — kèm một chế độ **Phiêu lưu** farm quái lên cấp.
+Giao diện **Việt / Anh** đổi được bằng một nút.
 
 ## Có gì trong game
 
@@ -10,7 +11,9 @@ giao diện **Việt / Anh** đổi được bằng một nút.
 |---|---|
 | **12 đấu thủ** | mỗi người một hồ sơ: vai trò, chín trục sức mạnh, bộ chiêu mô tả gọn, và phần "xem chi tiết số liệu" cho ai muốn soi từng con số. Tanjiro dùng basic combo và nhịp melee tự nhiên; Satoru Gojo giữ cự ly trung bình, quản lý hai Infinity Charge hữu hạn và dùng Unlimited Void để kiểm soát không gian mà không gây damage |
 | **12 màn đấu** | Dojo · Night Street · Stadium · Forest · Deep Space · Sunset Roof · Volcano · Sky Temple · Frozen Peak · Desert Ruins · Crystal Cave · Sakura Garden — mỗi màn có một ô dán ảnh nền riêng |
-| **3 chế độ** | 1v1 · hỗn chiến 3–6 người · đánh đội 2–4 đội |
+| **2 bản chơi** | bấm PRESS START là chọn: **Xem máy đánh** (bản gốc) hoặc **Tự cầm tay đánh**. Bản người chơi bật nút W-A-S-D + bốn ô chiêu có vòng hồi chiêu ngay trên màn hình, và nới khung sàn rộng ra cho dễ nhìn |
+| **5 chế độ đấu** | 1v1 · hỗn chiến 3–6 người · đánh đội 2–4 đội · giải vòng tròn · giải loại trực tiếp |
+| **Phiêu lưu** *(chỉ bản người chơi)* | chọn một nhân vật rồi đi 24 màn: cấp 1 ít máu và **chỉ có đòn thường**, hạ quái ăn EXP để lên cấp (điểm thuộc tính) và điểm skill (mở / nâng bậc ba ô chiêu). Cứ màn thứ 4 là một BOSS — một đấu thủ thật trong bảng. Thua thì vẫn giữ phần đã farm |
 | **Giao diện hiện đại** | hệ màu graphite/navy, điểm nhấn cyan–gold tiết chế, màn chọn toàn màn hình, bảng hồ sơ gọn và HUD trong trận dễ đọc trên cả desktop lẫn điện thoại |
 | **2 ngôn ngữ** | Tiếng Việt / English, nút 🌐 ở thanh công cụ, trong màn chọn và trên màn tiêu đề |
 | **Nhạc nền của bạn** | mặc định **tắt**; nạp nhạc riêng cho từng màn ở trang xưởng rồi bật ở thanh công cụ |
@@ -19,7 +22,7 @@ giao diện **Việt / Anh** đổi được bằng một nút.
 
 | Trang | File | Ai dùng | Có gì |
 |---|---|---|---|
-| **Trang chơi** | `play.html` | mọi người | màn tiêu đề → chọn nhân vật → chọn màn → xem đánh. Không có bảng dán ảnh/tiếng |
+| **Trang chơi** | `play.html` | mọi người | màn tiêu đề → **chọn cách chơi** → chọn nhân vật → chọn màn → đánh. Không có bảng dán ảnh/tiếng |
 | **Trang xưởng** | `index.html` | mình bạn | đủ bảng dán ảnh, dán tiếng, nạp hàng loạt, nút thử chiêu, ghi hình, xuất gói |
 
 `play.html` **dựng ra từ `index.html`**, đừng sửa tay:

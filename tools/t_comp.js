@@ -99,6 +99,10 @@ async function daHet(page, tran) {
   }
 
   await page.click('#arcStart');
+  await page.waitForTimeout(250);
+  /* PRESS START hoi CACH CHOI truoc (ban auto / ban nguoi choi). Giai dau o day di duong
+     AUTO — dung bang cu. */
+  await page.click('#whoAuto');
   await page.waitForTimeout(400);
 
   /* ---------- LEAGUE ---------- */
