@@ -2153,6 +2153,166 @@ trận của giải vẫn là hai người đứng hai đầu sàn y như đấu
 
 Kiểm bằng `node tools/t_comp.js`.
 
+## 2c-ter. BẢN AUTO và BẢN NGƯỜI CHƠI — cộng chế độ PHIÊU LƯU
+
+Người dùng: *"lúc load bấm xong start game là chọn chế độ: auto và người chơi — phiên bản
+auto là pban hiện tại, ch cần thay đổi gì"*, kèm một chế độ mới: *"adventure là ng chơi chọn
+1 nhân vật… cho nhân vật mình đánh bot hay quái từng màn để lên cấp nâng cấp skill từ từ rồi
+ngày càng gặp các nhân vật khác"*, và *"khỏi cốt truyện đi, adventure bthg th cũng đc, miễn là
+có màn farm quái lên cấp là đc"*.
+
+> **KHÔNG có cốt truyện.** Người dùng bác thẳng. Đừng dựng lại phân cảnh kể chuyện, đừng
+> thêm lời thoại mở đầu / kết thúc cho từng nhân vật. Đây là một chuỗi màn FARM.
+
+### Hai bản chia bằng `PLAYKIND`, không chia bằng `mode`
+
+`PRESS START` không vào thẳng màn chọn nhân vật nữa mà mở `#arcWho` — hai thẻ AUTO / NGƯỜI
+CHƠI. Hai biến **khác việc nhau, đừng gộp**:
+
+| Biến | Là gì | Giá trị |
+|---|---|---|
+| `mode` | AI điều khiển fighter nào — **có từ trước** | `auto` · `p1` · `p2` |
+| `PLAYKIND` | người chơi đang ở BẢN nào — **mới** | `auto` · `human` |
+
+`setPlayKind(kind)` là cửa duy nhất, và nó chỉ đổi đúng bốn thứ: cờ `.human` trên `<body>`,
+`mode` (`auto` ↔ `p1`), `autoSkill`, và lớp nút bấm. Nhờ vậy **bản auto đi đúng đường cũ** —
+đó là điều kiện người dùng nêu đầu tiên.
+
+- **Phần điều khiển tay đã có sẵn từ lâu, đừng viết lại**: cả mười ba nhân vật đã có nhánh
+  `keys['j'/'k'/'l'/'u']` trong `think()`, `playerVec()` đã ăn WASD, và `autoSkill` đã có ô
+  chọn trong xưởng. Bản người chơi chỉ **bật** mấy thứ đó lên.
+- **Bản người chơi TẮT `autoSkill`**: để bật thì máy tự tung hết chiêu, nút bấm thành vô nghĩa.
+- `t_play.js` và mọi test đi qua `#arcStart` phải chèn **một cú `#whoAuto`** (đã sửa
+  `t_play` · `t_comp` · `t_dex`). Test đi qua xưởng (`openGame`) thì KHÔNG đụng gì — xưởng
+  không có màn này.
+
+### Nút bấm trên màn hình — `#padWrap`
+
+Người dùng chốt đúng hình dáng: *"w trên cùng a bên trái dưới, s giữa dưới w và d bên phải
+dưới"*. Nên hàng dưới là **A · S · D** và **W nằm một mình phía trên, thẳng cột với S**.
+`t_player.js` đo thẳng `getBoundingClientRect()` để chắc hình dáng đó.
+
+- Đặt **NGAY DƯỚI canvas, đừng đè lên sàn**: ở chế độ phiêu lưu người chơi đứng sát mép dưới
+  sàn, lớp nút đè lên là che mất chính nhân vật mình đang cầm.
+- Bốn ô chiêu đọc tên THẲNG từ mảng `CHARS[key].skills` qua `padName()` (bóc phần
+  `<b>1</b> Tên chiêu`), nên thêm nhân vật mới là nút tự có chữ.
+- **Vòng hồi chiêu là một mảng tối dâng từ dưới lên**, chiều cao đặt qua biến `--cd`. Dùng
+  `height`, **không dùng `transform:scaleY`** — luật ở mục 2h.
+- Mốc quy ra phần trăm đi qua `cdBase()`: hồi chiêu được đặt rải rác trong `think()` của từng
+  nhân vật nên không có bảng nào tra được, vì vậy nó **nhớ con số lớn nhất đã thấy** ở ô đó.
+  Xấu về lý thuyết nhưng đúng về mắt: vòng luôn đi từ đầy về rỗng.
+- `padBuild()` gọi trong `newGame()` (gác ở `isHuman()`) để nút luôn đúng nhân vật của trận
+  NÀY — thiếu chỗ đó thì đổi nhân vật xong nút vẫn ghi tên chiêu của người trước.
+- Bấm giữ = giữ phím, qua `pointerdown/up` + `setPointerCapture` (trượt ngón ra ngoài nút vẫn
+  nhả đúng phím). Trước đợt này cả game **không có một `touchstart` nào**.
+
+### Khung sàn rộng ra — chỉ nới phần NHÌN
+
+Người dùng: *"chế độ người chơi làm màn hình vs khung rộng rộng ra để dễ nhìn hơn"*.
+
+> **`W` / `H` vẫn là 620, tuyệt đối đừng đụng.** Mọi hằng cân bằng đo theo hai con số đó —
+> lực đẩy tính theo % chiều dài sàn, tầm đánh, bán kính AoE, chỗ đứng lúc vào trận. Nới
+> chúng là lệch cả bảng cân bằng.
+
+Chỉ nới CSS: `body.human canvas#arena{width:min(92vw,calc(100vh - 230px),860px)}`. Hai chỗ
+dễ sai, đã dính đủ cả hai:
+1. **`max-width:none` là BẮT BUỘC** — luật `canvas{…;max-width:600px}` ở đầu file vẫn kẹp lại
+   dù `width` đã nới. Thiếu dòng đó thì khung đứng nguyên 600px.
+2. **Đo theo `vw`/`vh`, ĐỪNG đo theo `%`** — `.stage` là `width:fit-content` nên nó lấy bề
+   ngang từ canvas, mà canvas lại lấy `100%` từ `.stage`: hai bên hỏi nhau và kết quả rơi về
+   đúng bề ngang cũ. Đo được: 600 → **770px**.
+
+### Quái — trong `CHARS` nhưng KHÔNG trong `CKEYS`
+
+Năm loại tự vẽ: `m_slime` · `m_bat` · `m_scare` · `m_wisp` · `m_golem` (bảng `MOBS`).
+
+> **Chúng đổ THẲNG vào `CHARS`** để mọi chỗ `CHARS[f.key]` (think / gauge / vector / hồi
+> chiêu) chạy y nguyên, không phải thêm một nhánh tra bảng nào. Đổi lại **`CKEYS` phải lọc
+> chúng ra**: `CKEYS` là danh sách NHÂN VẬT CHƠI ĐƯỢC, dùng cho lưới chọn nhân vật, ô máu,
+> ô màu và trần người chơi của giải vòng tròn — lọt quái vào đó là hiện quái trong màn chọn
+> và xếp quái vào giải. `Object.keys(CHARS)` là **chỗ duy nhất** phải sửa.
+>
+> Kéo theo: `t_ui.js` và `t_dex.js` soi hồ sơ `DEX` / biểu đồ sức mạnh thì phải đọc
+> `CKEYS`, đừng đọc `Object.keys(CHARS)` — quái không có thẻ hồ sơ và không bao giờ hiện ở
+> màn chọn. Đã sửa cả hai.
+
+- Đòn tay qua `mobStrike()`, đạn qua `mobShot()` (`type:'mobshot'`). **Vòng va chạm không phải
+  sửa gì** — nó có nhánh chung cuối cùng (`hurt(f,p.dmg,p.owner,…)`); chỉ cần một nhánh VẼ
+  trong `drawProj()`.
+- Quái dùng **thanh máu NHỎ** (đi chung nhánh `f.ally` trong `drawBars`), để mấy con đứng sát
+  nhau vẫn đọc được.
+- Không nội tại, không ultimate, không thanh phụ — chúng là mục tiêu để farm.
+
+### Phiêu lưu — `PMODE='adv'`
+
+**Một màn = MỘT trận**: người chơi phe 0, cả đám địch phe 1. Nhờ vậy nó dùng lại nguyên bộ
+máy đã có — `defeat()` đếm phe còn sống rồi tự gọi `finish()` khi chỉ còn một phe, `foeOf()`
+vốn đã lo phần nhắm mục tiêu ở trận nhiều người. **Đừng dựng thêm vòng lặp trận nào.**
+
+Màn chọn nhân vật dùng lại **đúng bước `p1`** của đấu tay đôi (chọn một người, cùng lưới cùng
+thẻ hồ sơ) — `cselSteps()` cho `adv` trả về `['mode','p1','stage']`. Vì vậy `cselRefresh()`
+phải cho `adv` đi chung nhánh `duel` (`#duelPane`), không thì lưới `#listA` không bao giờ hiện.
+
+**24 màn, cứ màn thứ 4 là một BOSS** ⇒ sáu boss (`ADV_BOSS`, mạnh dần). Màn thường là quái,
+càng về sau càng đông (2 → 5 con) và càng nặng đòn.
+
+> **Boss phải hạ CẢ MÁU LẪN SÁT THƯƠNG, đừng chỉ hạ máu.** Boss là nhân vật thật nên bộ chiêu
+> của họ cân theo 800 máu, trong khi người chơi ở màn 4 mới có ~370 máu — hạ máu boss mà để
+> nguyên sát thương thì họ vẫn ba đòn là xong người chơi. Hai hàm đi cùng nhau:
+> `advBossHp` (45% → 100%) và `advBossDmg` (**60% → 100%**).
+>
+> Đo bằng `tools/` probe cân bằng (cho AI cầm hộ, chạy từng màn ở đúng cấp người chơi lẽ ra
+> đang có): bản chỉ hạ máu ⇒ **ChiChi thua liền ba boss ở màn 4 · 8 · 12**; thêm phần cắt sát
+> thương ⇒ ChiChi **10/11**, Konohamaru · Superman · Beatrice **11/11**, mấy trận boss cuối
+> kết ở 13~20% máu (căng nhưng thắng được). Màn quái thì thoải mái 78~100% máu — đúng chất
+> màn farm.
+>
+> **Viện binh của boss cũng phải chịu đúng phần cắt đó**, bắt qua `f.master` trong
+> `advStatTick`: Kamehameha 400 dmg mà không cắt thì một phát là xong người chơi ở màn 8.
+> Quái thì **KHÔNG** đi qua đường này — sát thương của chúng đã scale riêng bằng `advMobDmg`,
+> cắt thêm lần nữa là nhân hai lần.
+
+**Hai thanh tiến trình ĐI RIÊNG**, đúng yêu cầu *"có điểm để nâng điểm các thuộc tính, rồi có
+điểm exp riêng để nâng skill"*:
+
+| Thanh | Ăn từ đâu | Tiêu vào gì |
+|---|---|---|
+| `exp` | hạ địch | lên cấp ⇒ mỗi cấp **3 điểm thuộc tính** (`ADV_SP`) |
+| `sxp` | hạ địch | mở và **nâng bậc chiêu** |
+
+**Đừng gộp hai cái làm một** — lên cấp không tự mở chiêu, và nâng chiêu không tự lên cấp.
+
+- **Máu lv1 THẤP hẳn**: `ADV_HP0 = 260`, cộng `14/cấp` và `18` mỗi điểm Thể lực. **Không đọc
+  `HP[key]`** ở chế độ này — 800 máu thì quái màn 1 không gãi nổi.
+- Bốn thuộc tính (`ADV_ST`): Sức mạnh +2% dmg · Thể lực +18 máu · Nhanh nhẹn +1.5% tốc chạy ·
+  Tập trung +1.5% tốc hồi chiêu. `advStatTick(f)` **phải nhân SAU `statusTick`** — hàm đó dựng
+  lại hệ số từ đầu mỗi nhịp, nhân trước là mất trắng (đúng cái bẫy của `tsuPinTick`).
+- **Ô `j` luôn có sẵn** — với cả mười ba nhân vật thì `keys['j']` chính là đòn thường, nên
+  đúng câu *"lv1 … ko có skill và chỉ có basic atk"*. Ba ô `k` / `l` / `u` mở bằng điểm skill,
+  kèm cấp tối thiểu (`ADV_SLOTS`: cấp 2 / 5 / 9).
+- **Chiêu chưa mở thì coi như không bấm** — `advLockKeys()` gác ngay trước vòng `think()`
+  trong `step()`. Cách này **không phải sửa `think()` của mười ba nhân vật** và tự đúng với
+  mọi nhân vật thêm về sau.
+- **Bậc chiêu ăn vào NHỊP TRÔI hồi chiêu của đúng ô đó** (`advSlotRate`, −8% mỗi bậc). Vòng
+  trừ hồi chiêu trong `step()` là một chỗ duy nhất cho mọi người nên chỉ phải cắm ở đấy.
+- **Nội tại theo NGƯỠNG MÁU đi chung cửa với ô `u`.** Goku/Gohan của ChiChi, Wings of the
+  Eagle, lãnh địa Nara, ba form của Horikita… đều là tuyệt chiêu, nên chưa mở ô `u` thì chưa
+  có. Không gác thì nhân vật lv1 với 260 máu tụt xuống 20% trong mấy giây rồi gọi Kamehameha
+  400 dmg — cả màn quái bay sạch mà người chơi chưa tiêu một điểm skill nào.
+- **Ăn điểm NGAY lúc con đó gục** (`advGain` gọi từ `defeat()`), không đợi hết màn: thua giữa
+  màn vẫn giữ được phần đã farm nên đánh lại không mất trắng. Thắng thì mới sang màn kế tiếp.
+- `advResult(win)` gọi từ `finish()` **đúng chỗ `compResult()` được gọi** — ra khỏi hàm đó là
+  đội hình vừa đánh không đọc lại được nữa.
+- Hành trình lưu ở khoá `cfg_adv`. Đọc bằng `.then()` chứ **đừng `await`** — thêm một nhịp
+  IndexedDB vào giữa `loadSaved()` là dính đúng lỗi ở mục 9.
+- Đổi sang nhân vật khác thì **bắt đầu lại từ màn 1**: mỗi nhân vật một mạch riêng, mang cấp
+  của người này sang người kia thì vô nghĩa.
+- Vào màn thì **hỏi sàn trước** qua `stagePickOpen()`, đúng lối mỗi trận một sàn của giải đấu.
+- Hết màn thì dải nút sau trận đổi thành đúng **một nút về bảng hành trình** (`#arcAdv`) —
+  "Đánh lại" giữa hành trình là đá lại đúng màn vừa xong, vô nghĩa.
+
+Kiểm bằng `node tools/t_player.js`.
+
 ## 2d. Mười hai màn đấu và sàn đấu đã tân trang
 
 Người dùng: *"thiết kế như game street fighter… có screen chọn màn với chọn nhân vật luôn"*
@@ -3564,6 +3724,19 @@ node tools/t_reg.js     # 55 cặp đấu, chạy theo đợt, bắt lỗi trang
 node tools/t_perf.js    # nhịp vẽ: một vệt bóng mờ không được tốn quá 8ms, tám vệt không được
                         # làm lượt vẽ nặng gấp ba, bóng nướng sẵn phải cắt sát mép, và nhánh
                         # vẽ vệt tuyệt đối không đặt lại ctx.filter (xem mục 7)
+node tools/t_player.js  # BẢN NGƯỜI CHƠI và chế độ PHIÊU LƯU: bản AUTO không đổi một nhịp nào
+                        # (PRESS START hỏi cách chơi, chọn auto thì mode vẫn 'auto', vẫn tự
+                        # dùng chiêu, không thấy thẻ Phiêu lưu, trận máy vs máy chạy như thường);
+                        # bản người chơi (mode sang p1, tắt tự dùng chiêu, bốn ô W-A-S-D đúng
+                        # hình dáng người dùng chốt, bấm ô W thì nhân vật đi lên, khung sàn nới
+                        # từ 600 lên 770px mà W/H trong ruột game vẫn 620);
+                        # quái nằm trong CHARS nhưng KHÔNG lọt vào CKEYS, mỗi loại vẽ ra hình thật;
+                        # PHIÊU LƯU (lv1 máu thấp và chỉ có đòn thường — ba ô chiêu kia bấm
+                        # không ăn, boss đúng ở mỗi màn thứ 4, quái đông và mạnh dần, đủ exp
+                        # thì lên nhiều cấp một lượt, điểm thuộc tính ăn vào hệ số thật, điểm
+                        # skill mở rồi mới bấm được, bậc chiêu chỉ làm nhanh ĐÚNG ô đó, chưa
+                        # đủ cấp thì thừa điểm cũng khoá); và đánh thật một màn: hạ hết quái
+                        # thì ăn exp rồi sang màn kế, thua thì vẫn giữ phần đã farm
 node tools/t_modes.js   # ba chế độ đấu: 1v1 vẫn y như cũ (hai người, đúng hai đầu sàn),
                         # hỗn chiến (mỗi người một phe, hạ một người thì trận còn chạy,
                         # người cuối cùng thắng, băng-rôn gạch tên người đã bị hạ,
@@ -3728,6 +3901,14 @@ node tools/t_tanjiro.js # Tanjiro: HP đọc từ HP_STD, màn vào sân 1.5s, O
                         # AI dùng vector melee chung như ChiChi, Water Wheel chờ nhịp riêng
                         # và chỉ tiếp cận khi ở xa; power chart khớp nhịp chiến đấu mới
 ```
+
+> **`t_beatrice.js` mục 10 (bước chân của Beatrice) từng SỐNG NHỜ MAY.** Mấy mục trên nó
+> đánh thật, nên trận có thể đã KẾT THÚC trước khi tới đó (ChiChi gục) — mà trận xong thì
+> không ai đi lại nữa, phép đo bước chân đọc ra 0 và cả ba mục dưới đổ oan. Đặt lại `hp` là
+> **KHÔNG ĐỦ**: phải bật lại `alive` và xoá `G.over` / `G.endT` / `G.kos`, không thì `step()`
+> vẫn coi là trận đã xong. Chỉ cần trang nặng thêm một nhịp (đợt này thêm lớp nút bấm và hai
+> lớp phủ) là ChiChi gục sớm hơn và mục đó đổ — đã sửa để nó dựng lại trận cho sống rồi mới đo.
+> **Mục nào đo hành vi AI thì phải tự dựng lại trạng thái, đừng trông vào phần trên để lại.**
 
 > **`t_buff.js` có một mục CHẬP CHỜN sẵn từ trước, không phải lỗi của ai mới đụng vào.**
 > Mục *"Drive Shot hất lùi khoảng 20% sàn (~124px)"* đo bằng cách bám cú dịch xa nhất

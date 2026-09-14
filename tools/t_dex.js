@@ -16,7 +16,10 @@ const ok = (dk, msg) => { console.log(`${dk ? ' dat  ' : ' HONG '} ${msg}`); if 
   /* ---------- dữ liệu chấm điểm ---------- */
   const so = await doc(() => {
     const out = { truc: window.__PW_AXES.length, thieu: [], ngoai: [], ten: [], tb: {} };
-    for (const k of Object.keys(window.__CHARS)) {
+    /* Chỉ soi NHÂN VẬT CHƠI ĐƯỢC — `CKEYS` đã lọc quái của chế độ Phiêu lưu ra. Quái nằm
+       trong `CHARS` để mọi chỗ `CHARS[f.key]` chạy y nguyên, nhưng chúng không có biểu đồ
+       sức mạnh và không bao giờ hiện ở màn chọn nhân vật. */
+    for (const k of window.__CKEYS()) {
       const pw = (window.__DEX[k] || {}).pw;
       if (!pw) { out.thieu.push(k); continue; }
       for (const ax of window.__PW_AXES) {
@@ -222,6 +225,8 @@ const ok = (dk, msg) => { console.log(`${dk ? ' dat  ' : ' HONG '} ${msg}`); if 
   await page2.goto('file://' + buildPlay(), { waitUntil: 'domcontentloaded' });
   await page2.waitForTimeout(700);
   await page2.click('#arcStart');                 // trang chơi vào bằng màn tiêu đề
+  await page2.waitForTimeout(250);
+  await page2.click('#whoAuto');                  // rồi chọn cách chơi: đây đi đường AUTO
   await page2.waitForTimeout(300);
   await page2.click('#cselGo');                   // bước đầu là CHỌN CHẾ ĐỘ, chốt rồi mới tới nhân vật
   await page2.waitForTimeout(350);

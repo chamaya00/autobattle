@@ -91,7 +91,8 @@ async function quayTrangChoi() {
     document.addEventListener('click', e => { if (e.target.tagName === 'A') e.preventDefault(); }, true);
   });
   const co = await page.evaluate(() => !!document.getElementById('arcRec'));
-  await page.click('#arcStart'); await page.waitForTimeout(300);
+  await page.click('#arcStart'); await page.waitForTimeout(250);
+  await page.click('#whoAuto'); await page.waitForTimeout(300);  // PRESS START hỏi cách chơi trước
   await page.click('#cselGo'); await page.waitForTimeout(250);   // bước đầu là CHỌN CHẾ ĐỘ
   await page.click('#listA .cTile[data-key="kono"]'); await page.click('#cselGo'); await page.waitForTimeout(200);
   await page.click('#listB .cTile[data-key="chichi"]'); await page.click('#cselGo'); await page.waitForTimeout(200);

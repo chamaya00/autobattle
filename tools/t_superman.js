@@ -36,7 +36,10 @@ function ok(name, pass, note) {
 
     const spd = await page.evaluate(() => {
       const C = window.__CHARS;
-      const others = Object.keys(C).filter(k => k !== 'superman').map(k => C[k].speed);
+      /* Trung bình của NHÂN VẬT CHƠI ĐƯỢC. `CHARS` giờ còn chứa quái của chế độ Phiêu lưu
+         (chúng chậm hẳn: 46~124) nên đọc `Object.keys(CHARS)` là kéo tụt trung bình xuống
+         và Superman đọc ra nhanh hơn cả bảng tới +16%. `CKEYS` là danh sách đã lọc. */
+      const others = window.__CKEYS().filter(k => k !== 'superman').map(k => C[k].speed);
       return { sup: C.superman.speed, avg: others.reduce((a, b) => a + b, 0) / others.length };
     });
     ok('chạy nhanh hơn mức trung bình của cả bảng khoảng 10%',

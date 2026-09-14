@@ -67,8 +67,24 @@ function wavUrl() {
   ok(!await page.locator('#charSelect').isVisible(), 'chua bam start thi chua mo man chon');
 
   await page.click('#arcStart');
+  await page.waitForTimeout(250);
+  /* ---------- PRESS START hoi CACH CHOI truoc ----------
+     Nguoi dung: "luc load bam xong start game la chon che do: auto va nguoi choi".
+     Ban AUTO la dung ban cu, nen test nay di tiep bang #whoAuto va moi muc ben duoi
+     phai ra y nguyen nhu truoc. */
+  ok(await page.locator('#arcWho').isVisible(), 'bam START thi hoi CACH CHOI truoc');
+  ok(!await page.locator('#charSelect').isVisible(), 'chua chon cach choi thi chua mo man chon');
+  ok(await page.evaluate(() =>
+       [...document.querySelectorAll('#arcWho .whoCard')].filter(b => b.offsetParent).length) === 2,
+     'man hoi cach choi co dung hai the');
+  await page.click('#whoAuto');
   await page.waitForTimeout(300);
+  ok(await page.evaluate(() => window.__PLAYKIND()) === 'auto', 'chon ban AUTO thi PLAYKIND=auto');
   ok(await page.locator('#charSelect').isVisible(), 'bam START thi mo man chon nhan vat');
+  /* Ban AUTO khong duoc thay the Phieu luu, va van du dung nam the che do cu. */
+  ok(await page.evaluate(() =>
+       getComputedStyle(document.getElementById('mTabAdv')).display) === 'none',
+     'ban AUTO khong thay the Phieu luu');
   /* ---------- BƯỚC ĐẦU TIÊN LÀ CHỌN CHẾ ĐỘ ----------
      Người dùng: "vào game ấn phát là chọn trc chế độ chơi, xong rồi mới vào phần chọn
      nhân vật". Dải năm nút chế độ giờ nở ra thành một màn riêng, và mấy bước sau thì

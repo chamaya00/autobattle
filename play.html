@@ -1360,6 +1360,134 @@
     body.arcade .dexPop{padding:8px}
     body.arcade .dexPopBox{width:100%;max-height:calc(100vh - 16px);border-radius:17px}
   }
+
+  /* ==================== BẢN NGƯỜI CHƠI ====================
+     Ba khối: màn hỏi cách chơi, nút bấm trên màn hình, và bảng Phiêu lưu.
+     Luật cũ vẫn nguyên giá trị (mục 2h/2i của CLAUDE.md): mọi chuyển động LẶP MÃI chỉ được
+     đổi `opacity` / `box-shadow` / `background-position` / `filter`, và NÚT MÀ TEST PHẢI BẤM
+     thì tuyệt đối đừng gắn `animation … infinite`. Cả khối này không có một animation lặp nào. */
+
+  /* ---------- màn hỏi cách chơi ---------- */
+  .whoH{font-family:var(--fd);font-size:clamp(22px,5.4vw,40px);letter-spacing:.06em;margin:0 0 18px;
+    text-shadow:-2px 0 var(--cyan),2px 0 var(--mag),0 5px 0 #0A0718}
+  .whoH span{color:var(--gold)}
+  .whoRow{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:560px){ .whoRow{grid-template-columns:1fr} }
+  .whoCard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    min-height:172px;padding:20px 14px;border:0;border-radius:18px;cursor:pointer;
+    background:linear-gradient(180deg,var(--s2),var(--s1));color:#EAF0FF;
+    box-shadow:inset 0 0 0 1px var(--line),0 10px 26px rgba(0,0,0,.42);
+    transition:box-shadow .18s var(--ease),background .18s var(--ease)}
+  .whoCard::after{content:attr(data-ico);order:-1;font-size:40px;line-height:1;
+    filter:drop-shadow(0 0 12px color-mix(in srgb,var(--mc) 70%,transparent))}
+  .whoCard b{font-family:var(--fd);font-size:17px;letter-spacing:.02em}
+  .whoCard i{font-style:normal;font-size:12px;opacity:.72;line-height:1.35;max-width:22ch}
+  .whoCard:hover,.whoCard:focus-visible{background:linear-gradient(180deg,
+      color-mix(in srgb,var(--mc) 18%,var(--s2)),var(--s1));
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mc) 60%,var(--line)),0 14px 32px rgba(0,0,0,.5)}
+
+  /* Thẻ Phiêu lưu chỉ có ở bản người chơi. */
+  .mAdv{display:none}
+  body.human .mAdv{display:flex}
+
+  /* ---------- nút bấm trên màn hình ----------
+     Đặt NGAY DƯỚI canvas chứ không đè lên sàn: ở chế độ Phiêu lưu người chơi đứng sát mép
+     dưới sàn, lớp nút đè lên là che mất chính nhân vật mình đang cầm. */
+  .pad{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;
+    margin-top:10px;flex-wrap:wrap}
+  .pad.off{display:none}
+  .padDir{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .padBot{display:flex;gap:6px}
+  .padK{width:52px;height:46px;border:0;border-radius:12px;cursor:pointer;
+    font-family:var(--fd);font-size:16px;letter-spacing:.04em;color:#EAF0FF;
+    background:linear-gradient(180deg,var(--s3),var(--s2));
+    box-shadow:inset 0 0 0 1px var(--line),0 4px 12px rgba(0,0,0,.4);
+    touch-action:none;user-select:none;-webkit-user-select:none}
+  .padK.on,.padK:active{background:linear-gradient(180deg,var(--gold),#C89412);color:#161006;
+    box-shadow:inset 0 0 0 1px var(--gold),0 0 14px rgba(255,197,66,.45)}
+  .padSk{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .padBtn{position:relative;width:74px;min-height:62px;border:0;border-radius:13px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:6px 4px;overflow:hidden;color:#EAF0FF;
+    background:linear-gradient(180deg,var(--s3),var(--s2));
+    box-shadow:inset 0 0 0 1px var(--line),0 4px 12px rgba(0,0,0,.4);
+    touch-action:none;user-select:none;-webkit-user-select:none}
+  .padBtn u{font-family:var(--fd);font-size:15px;text-decoration:none;letter-spacing:.04em;color:var(--cyan)}
+  .padBtn s{text-decoration:none;font-size:9.5px;line-height:1.15;opacity:.78;text-align:center;
+    max-width:9ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Vòng hồi chiêu: một mảng tối dâng TỪ DƯỚI LÊN, chiều cao đặt bằng JS qua --cd.
+     Dùng `height` chứ không dùng `transform:scaleY` — xem luật ở mục 2h. */
+  .padBtn::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--cd,0%);
+    background:rgba(8,6,20,.72);pointer-events:none}
+  .padBtn.rdy{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cyan) 55%,var(--line)),0 0 14px rgba(77,226,255,.28)}
+  .padBtn.on,.padBtn:active{background:linear-gradient(180deg,var(--gold),#C89412);color:#161006}
+  .padBtn.on u,.padBtn:active u{color:#161006}
+  .padBtn.lock{opacity:.4;cursor:not-allowed}
+  .padBtn.lock u{color:#8892A8}
+  .padCd{font-family:var(--fd);font-size:11px;color:var(--gold);min-height:12px}
+  @media(max-width:560px){
+    .padK{width:46px;height:42px}
+    .padBtn{width:62px;min-height:56px}
+    .pad{gap:8px}
+  }
+
+  /* ---------- khung sàn RỘNG RA ở bản người chơi ----------
+     Người dùng: *"chế độ người chơi làm màn hình vs khung rộng rộng ra để dễ nhìn hơn"*.
+     Chỉ nới phần NHÌN — `W`/`H` vẫn là 620 vì mọi hằng cân bằng (lực đẩy tính theo % chiều
+     dài sàn, tầm đánh, bán kính AoE) đều đo theo hai con số đó. Đụng vào chúng là lệch cả
+     bảng cân bằng. */
+  body.human .stage{width:fit-content;margin-inline:auto}
+  /* Đo theo VIEWPORT (vw/vh), ĐỪNG đo theo `%`: `.stage` là `width:fit-content` nên nó lấy
+     bề ngang từ canvas, mà canvas lấy `100%` từ `.stage` — hai bên hỏi nhau và kết quả rơi
+     về đúng bề ngang cũ 600px. Đã dính đúng một lần (đo ra 600 trên mốc 860). */
+  /* `max-width:none` là BẮT BUỘC: luật `canvas{…;max-width:600px}` ở đầu file vẫn kẹp lại
+     dù `width` đã nới, nên thiếu dòng này thì khung đứng nguyên 600px. Đã dính đúng một lần. */
+  body.human canvas#arena{width:min(92vw,calc(100vh - 230px),860px);max-width:none;height:auto}
+  @media(max-width:820px){
+    body.human canvas#arena{width:min(96vw,calc(100vh - 260px));max-width:none}
+  }
+  @media(min-width:1040px){
+    body.human.arcade .wrap{grid-template-columns:minmax(0,1fr) 300px}
+  }
+
+  /* ---------- bảng Phiêu lưu ---------- */
+  .advTop{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;
+    padding:12px;border-radius:14px;background:var(--s2);box-shadow:inset 0 0 0 1px var(--line)}
+  .advFace{width:64px;height:64px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    font-size:34px;overflow:hidden;background:var(--s3);box-shadow:inset 0 0 0 1px var(--line)}
+  .advFace img{width:100%;height:100%;object-fit:contain}
+  .advWho{text-align:left;min-width:0}
+  .advWho b{font-family:var(--fd);font-size:17px;display:block}
+  .advLv{font-family:var(--fd);color:var(--gold);font-size:13px;margin-bottom:5px}
+  .advMeter{height:12px;border-radius:7px;background:var(--ink2);overflow:hidden;
+    box-shadow:inset 0 0 0 1px var(--line);margin-bottom:4px}
+  .advMeter i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),#6BE39A)}
+  .advMeta{font-size:11px;opacity:.78;display:flex;gap:12px;flex-wrap:wrap}
+  .advH{font-family:var(--fd);font-size:13px;letter-spacing:.05em;color:var(--gold);
+    margin:16px 0 8px;text-align:left}
+  .advPts{font-size:11px;opacity:.8;font-family:var(--fd);color:var(--cyan)}
+  .advList{display:grid;gap:7px}
+  .advRow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+    padding:9px 11px;border-radius:12px;background:var(--s2);box-shadow:inset 0 0 0 1px var(--line);text-align:left}
+  .advRow>div{min-width:0}
+  .advRow b{font-family:var(--fd);font-size:13px;display:block}
+  .advRow s{text-decoration:none;font-size:10.5px;opacity:.7}
+  .advVal{font-family:var(--fd);font-size:14px;color:var(--gold);min-width:52px;text-align:right}
+  .advBuy{width:34px;height:30px;border:0;border-radius:9px;cursor:pointer;
+    font-family:var(--fd);font-size:15px;color:#161006;background:var(--gold)}
+  .advBuy:disabled{background:var(--s3);color:#697388;cursor:not-allowed}
+  .advPips{display:flex;gap:3px;justify-content:flex-end;margin-top:3px}
+  .advPips i{width:11px;height:5px;border-radius:3px;background:var(--ink2);
+    box-shadow:inset 0 0 0 1px var(--line)}
+  .advPips i.on{background:var(--gold);box-shadow:none}
+  .advStage{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+  .advCell{padding:7px 4px;border-radius:10px;font-family:var(--fd);font-size:11px;
+    background:var(--s2);box-shadow:inset 0 0 0 1px var(--line);opacity:.55}
+  .advCell.done{background:color-mix(in srgb,#6BE39A 26%,var(--s2));opacity:1}
+  .advCell.now{background:var(--gold);color:#161006;opacity:1}
+  .advCell.boss{box-shadow:inset 0 0 0 1px var(--mag)}
+  .advNote{font-size:11.5px;opacity:.8;margin-top:10px;line-height:1.5}
+
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   }
@@ -1411,7 +1539,22 @@
     <!-- Dòng báo tải gói, ĐẶT ĐÈ LÊN SÀN: dòng trong màn tiêu đề (#arcLoad) biến mất
          ngay khi bấm PRESS START, mà gói mấy chục MB thì còn tải cả chục giây nữa —
          người chơi vào trận thấy model vector và tưởng mất ảnh. -->
-    <div class="loadChip" id="loadChip" style="display:none"></div></div>
+    <div class="loadChip" id="loadChip" style="display:none"></div>
+    <!-- NÚT BẤM TRÊN MÀN HÌNH, chỉ hiện ở bản người chơi.
+         Người dùng chốt đúng hình dáng: "w trên cùng, a bên trái dưới, s giữa dưới w và d
+         bên phải dưới" — nên hàng dưới là A · S · D và W nằm một mình ở trên, ngay phía
+         trên chữ S. Bốn ô chiêu bên phải hiện rõ tên chiêu, chữ phím và VÒNG HỒI CHIÊU. -->
+    <div class="pad off" id="padWrap">
+      <div class="padDir">
+        <button class="padK padUp" data-key="w" type="button">W</button>
+        <div class="padBot">
+          <button class="padK" data-key="a" type="button">A</button>
+          <button class="padK" data-key="s" type="button">S</button>
+          <button class="padK" data-key="d" type="button">D</button>
+        </div>
+      </div>
+      <div class="padSk" id="padSk"></div>
+    </div></div>
 
   
 
@@ -1456,6 +1599,22 @@
     <div class="arcLoad" id="arcLoad" style="display:none"></div>
   </div>
 </div>
+<!-- Bấm PRESS START thì hỏi trước: xem máy đánh, hay tự cầm tay đánh.
+     Bản AUTO là đúng bản cũ, không đổi một nhịp nào. Bản NGƯỜI CHƠI mở thêm chế độ Phiêu
+     lưu, bật nút bấm trên màn hình và nới khung sàn rộng ra. -->
+<div class="arc off" id="arcWho" style="z-index:71">
+  <div style="width:100%;max-width:760px">
+    <h2 class="whoH" data-i18n="whoH">CHỌN <span>CÁCH CHƠI</span></h2>
+    <div class="whoRow">
+      <button class="whoCard" id="whoAuto" data-ico="🤖" style="--mc:#4DE2FF" type="button">
+        <b data-i18n="whoAuto">Xem máy đánh</b><i data-i18n="whoAutoSub">Máy vs máy — bản gốc, ngồi xem</i></button>
+      <button class="whoCard" id="whoHuman" data-ico="🎮" style="--mc:#FFC542" type="button">
+        <b data-i18n="whoHuman">Tự cầm tay đánh</b><i data-i18n="whoHumanSub">WASD + nút chiêu · có chế độ Phiêu lưu</i></button>
+    </div>
+    <div style="margin-top:16px"><button type="button" data-lang-toggle title="Vietnamese / English">🌐 English</button></div>
+  </div>
+</div>
+
 <!-- Màn VS trước trận, kiểu Street Fighter: mặt hai bên rõ ràng rồi mới vào đánh.
      Chạm là vào ngay, không chạm thì tự vào sau VS_HOLD giây. Chỉ có ở TRANG CHƠI. -->
 <div class="arc off" id="arcVs" style="z-index:66">
@@ -1486,6 +1645,8 @@
   <button id="arcPick" type="button" data-i18n="repick">⚔ Đổi nhân vật / màn</button>
   <!-- Giữa giải thì hai nút trên nhường chỗ cho đúng một nút đi tiếp. -->
   <button id="arcComp" class="primary" type="button" style="display:none" data-i18n="arcBoard">▶ Bảng xếp hạng</button>
+  <!-- Phiêu lưu: hết màn thì về bảng hành trình để tiêu điểm, chứ không "đánh lại". -->
+  <button id="arcAdv" class="primary" type="button" style="display:none" data-i18n="arcAdvBtn">▶ Bảng hành trình</button>
 </div>
 
 <!-- Bảng xếp hạng / sơ đồ nhánh, hiện GIỮA hai trận của giải. Dùng lại vỏ .csel của màn
@@ -1504,6 +1665,22 @@
   </div>
 </div>
 
+<!-- Bảng Phiêu lưu: cấp, hai thanh điểm, bảng thuộc tính, bảng chiêu và nút vào màn.
+     Dùng lại vỏ `.csel` + `.cselBox` của bảng giải đấu, đừng dựng kiểu lớp phủ thứ hai. -->
+<div class="csel off" id="advBoard" style="z-index:67">
+  <div class="cselBox">
+    <h2 id="advTitle">ADVENTURE</h2>
+    <div class="cselSub" id="advSub"></div>
+    <div class="cselBody"><div id="advBody"></div></div>
+    <div class="cselBar">
+      <button id="advGo" class="primary" type="button">▶</button>
+      <button id="advPick" type="button" data-i18n="advPick">⚔ Đổi nhân vật</button>
+      <button id="advQuit" type="button" data-i18n="advQuit">✕ Bỏ hành trình</button>
+      <button type="button" data-lang-toggle title="Vietnamese / English">🌐 English</button>
+    </div>
+  </div>
+</div>
+
 <div class="csel off" id="charSelect">
   <div class="cselBox">
     <h2>CHỌN <span>NHÂN VẬT</span></h2>
@@ -1513,6 +1690,8 @@
       <button class="mTab" id="mTabTeam" data-ico="🛡" style="--mc:#6BE39A" data-mode="team" type="button"><b data-i18n="mTeam">Đánh theo đội</b><i data-i18n="mTeamSub">2–4 đội · tối đa 8 người</i></button>
       <button class="mTab" id="mTabLeague" data-ico="🏆" style="--mc:#FFC542" data-mode="league" type="button"><b data-i18n="mLeague">Giải vòng tròn</b><i data-i18n="mLeagueSub">3–10 người · tính điểm</i></button>
       <button class="mTab" id="mTabCup" data-ico="🥇" style="--mc:#FF4FA3" data-mode="cup" type="button"><b data-i18n="mCup">Giải loại trực tiếp</b><i data-i18n="mCupSub">4 hoặc 8 người · bracket</i></button>
+      <!-- Chỉ có ở bản NGƯỜI CHƠI; CSS giấu nó đi khi body không mang .human. -->
+      <button class="mTab mAdv" id="mTabAdv" data-ico="🗺" style="--mc:#8BE36B" data-mode="adv" type="button"><b data-i18n="mAdv">Phiêu lưu</b><i data-i18n="mAdvSub">1 người · farm quái lên cấp</i></button>
     </div>
     <div class="cselSub" id="cselCount">Chọn một nhân vật cho mỗi bên</div>
     <div class="cselOpts">
@@ -1642,6 +1821,24 @@ const L={
     mTeam:'Đánh theo đội', mTeamSub:'2–4 đội · tối đa 8 người',
     sideL:'Bên trái', sideR:'Bên phải', stagePick:'Chọn màn đấu',
     again:'↻ Đánh lại', repick:'⚔ Đổi nhân vật / màn',
+    /* ---------- bản người chơi + phiêu lưu ---------- */
+    whoH:'CHỌN <span>CÁCH CHƠI</span>',
+    whoAuto:'Xem máy đánh', whoAutoSub:'Máy vs máy — bản gốc, ngồi xem',
+    whoHuman:'Tự cầm tay đánh', whoHumanSub:'WASD + nút chiêu · có chế độ Phiêu lưu',
+    mAdv:'Phiêu lưu', mAdvSub:'1 người · farm quái lên cấp',
+    subAdv:'Chọn nhân vật để đi phiêu lưu · {n} đấu thủ',
+    advTitle:'PHIÊU LƯU', advPick:'⚔ Đổi nhân vật', advQuit:'✕ Bỏ hành trình',
+    arcAdvBtn:'▶ Bảng hành trình',
+    advSubMob:'Màn {n}/{of} · {who}', advSubBoss:'Màn {n}/{of} · BOSS: {who}',
+    advMobs:'{c} con quái', advDone:'Đã đi hết hành trình — đánh lại màn cuối tuỳ ý',
+    advLv:'Cấp {lv}', advHp:'Máu', advSp:'Điểm thuộc tính:', advSxp:'Điểm skill:',
+    advKills:'Đã hạ:', advStats:'THUỘC TÍNH', advSkills:'CHIÊU THỨC', advRoad:'HÀNH TRÌNH',
+    advLeft:'còn {n} điểm', advLeftS:'còn {n} điểm skill',
+    advBasic:'Đòn thường — luôn có sẵn', advOpen:'Đã mở', advLock:'Khoá',
+    advMax:'Đã nâng tối đa', advNeedLv:'Cần cấp {lv}', advUnlock:'Mở khoá · {c} điểm skill',
+    advUp:'Nâng bậc · {c} điểm skill', advCdCut:'hồi chiêu',
+    advGo:'▶ Vào màn {n}', advReplay:'▶ Đánh lại màn cuối',
+    advHint:'Hạ quái để ăn EXP và điểm skill. Lên cấp cho điểm thuộc tính; điểm skill dùng để mở và nâng bậc chiêu. Thua thì vẫn giữ phần đã farm.',
     recGo:'⏺ Quay 9:16 · 1080p', recStop:'⏹ Dừng quay ({t})', recWait:'⏳ Đang dựng video…',
     recTip:'Quay sàn đấu thành video dọc 9:16 · 1080p — vừa khung TikTok / Reels / Shorts',
     arcHint:'Chọn nhân vật, chọn màn rồi ngồi xem máy đánh với máy',
@@ -1712,6 +1909,24 @@ const L={
     mTeam:'Team battle', mTeamSub:'2–4 teams · up to 8 fighters',
     sideL:'Left side', sideR:'Right side', stagePick:'Select stage',
     again:'↻ Rematch', repick:'⚔ Change fighter / stage',
+    /* ---------- player build + adventure ---------- */
+    whoH:'CHOOSE <span>HOW TO PLAY</span>',
+    whoAuto:'Watch the AI', whoAutoSub:'CPU vs CPU — the original, sit back',
+    whoHuman:'Play it yourself', whoHumanSub:'WASD + skill buttons · unlocks Adventure',
+    mAdv:'Adventure', mAdvSub:'1 player · farm monsters, level up',
+    subAdv:'Pick a fighter for the run · {n} fighters',
+    advTitle:'ADVENTURE', advPick:'⚔ Change fighter', advQuit:'✕ Abandon run',
+    arcAdvBtn:'▶ Run board',
+    advSubMob:'Stage {n}/{of} · {who}', advSubBoss:'Stage {n}/{of} · BOSS: {who}',
+    advMobs:'{c} monsters', advDone:'Run complete — replay the last stage as you like',
+    advLv:'Level {lv}', advHp:'HP', advSp:'Stat points:', advSxp:'Skill points:',
+    advKills:'Defeated:', advStats:'ATTRIBUTES', advSkills:'SKILLS', advRoad:'THE ROAD',
+    advLeft:'{n} left', advLeftS:'{n} skill points left',
+    advBasic:'Basic attack — always available', advOpen:'Unlocked', advLock:'Locked',
+    advMax:'Fully upgraded', advNeedLv:'Needs level {lv}', advUnlock:'Unlock · {c} skill points',
+    advUp:'Upgrade · {c} skill points', advCdCut:'cooldown',
+    advGo:'▶ Enter stage {n}', advReplay:'▶ Replay last stage',
+    advHint:'Beat monsters for EXP and skill points. Levels give attribute points; skill points unlock and upgrade skills. Lose a stage and you still keep what you farmed.',
     recGo:'⏺ Record 9:16 · 1080p', recStop:'⏹ Stop ({t})', recWait:'⏳ Building video…',
     recTip:'Record the arena as a 9:16 · 1080p vertical video — fits TikTok / Reels / Shorts',
     arcHint:'Pick your fighter, pick a stage, then watch the CPUs go at it',
@@ -1784,6 +1999,7 @@ function applyLang(){
   if(pl&&pl.textContent) pl.textContent=running?t('pause'):(G&&G.t>0?t('resume'):t('play'));
   if(typeof cselRefresh==='function'&&typeof TMP!=='undefined'){ buildStages(); cselRefresh(); }
   if(typeof compPaint==='function'&&typeof COMP!=='undefined'&&COMP) compPaint();
+  if(typeof advPaint==='function'&&typeof ADV!=='undefined'&&ADV) advPaint();
 }
 function setLang(v){
   LANG=(v==='en')?'en':'vi';
@@ -1872,6 +2088,16 @@ const PICK={a:'kono',b:'chichi'};
    Chế độ 'duel' phải dựng ra đúng cùng một đội hình như bản cũ — mọi test hiện có đi
    qua đường này. */
 let PMODE='duel';
+/* ---------- bản AUTO và bản NGƯỜI CHƠI ----------
+   Bấm PRESS START thì hỏi trước: xem máy đánh, hay tự cầm tay đánh.
+     'auto'  — đúng bản cũ, không đổi một nhịp nào. `mode` giữ nguyên 'auto'.
+     'human' — mở thêm chế độ 'adv' (phiêu lưu), bật nút bấm trên màn hình, khung sàn
+               rộng ra, và `mode` chuyển sang 'p1' để playerVec() ăn WASD.
+   KHÔNG gộp hai thứ này vào `mode`: `mode` là "ai điều khiển fighter nào" (auto/p1/p2),
+   còn PLAYKIND là "người chơi đang ở bản nào" — bản người chơi vẫn dùng lại đúng
+   `mode='p1'` có sẵn, nên mọi nhánh điều khiển tay cũ chạy y nguyên. */
+let PLAYKIND='auto';
+const isHuman=()=>PLAYKIND==='human';
 /* Hỗn chiến: 3~6 người. Đánh đội: SỐ ĐỘI cũng tuỳ chọn — 2~4 đội, mỗi đội 1~3 người,
    nhưng cả sàn không quá TEAM_TOTAL người (620×620 mà nhét chín người thì thanh máu
    chồng lên nhau, đọc không ra ai với ai). */
@@ -2841,7 +3067,77 @@ const CHARS={
   }
 
 };
-const CKEYS=Object.keys(CHARS);
+/* ==================== QUÁI của chế độ Phiêu lưu ====================
+   Năm loại quái tự vẽ, dùng cho mấy màn thường; boss thì vẫn là mười ba nhân vật có sẵn.
+   Chúng đổ THẲNG vào bảng `CHARS` để mọi chỗ đọc `CHARS[f.key]` (think / gauge / vector /
+   hồi chiêu) chạy y nguyên, không phải thêm một nhánh tra bảng nào. Đổi lại `CKEYS` phải
+   LỌC chúng ra: `CKEYS` là danh sách NHÂN VẬT CHƠI ĐƯỢC, dùng cho lưới chọn nhân vật, ô
+   máu, ô màu và trần người chơi của giải vòng tròn — lọt quái vào đó là hiện quái trong
+   màn chọn và xếp quái vào giải.
+   Máu / sát thương ở đây là mốc của MÀN 1; `advScale()` nhân lên theo số màn. */
+const MOBS={
+  slime:{ name:'Slime',       color:'#6BE39A', hp:60,  dmg:6,  speed:56,  r:20, h:58,  role:'melee',  cd:1.2, dodge:.15, xp:7,  sxp:1, reach:14 },
+  bat:{   name:'Night Bat',   color:'#B98CFF', hp:42,  dmg:5,  speed:124, r:16, h:46,  role:'melee',  cd:.85, dodge:.70, xp:8,  sxp:1, reach:10 },
+  scare:{ name:'Scarecrow',   color:'#E0B457', hp:85,  dmg:8,  speed:60,  r:22, h:92,  role:'ranged', cd:1.9, dodge:.25, xp:11, sxp:2, want:250 },
+  wisp:{  name:'Wisp',        color:'#9FE8FF', hp:70,  dmg:7,  speed:88,  r:19, h:70,  role:'melee',  cd:1.4, dodge:.50, xp:12, sxp:2, reach:16, slow:true },
+  golem:{ name:'Stone Golem', color:'#9AA3B2', hp:190, dmg:15, speed:46,  r:30, h:104, role:'melee',  cd:2.2, dodge:.05, xp:22, sxp:4, reach:20, kb:true }
+};
+const MOB_KEYS=Object.keys(MOBS).map(k=>'m_'+k);
+const isMobKey=k=>!!k&&k.slice(0,2)==='m_'&&!!MOBS[k.slice(2)];
+
+/* Đòn tay của quái. Cùng lối `melee()` của ChiChi: gọi `hurt()` rồi mới xét giá trị trả
+   về, nên né được là không dính hiệu ứng ăn theo (luật ở mục 6 của CLAUDE.md). */
+function mobStrike(f,e){
+  const M=MOBS[f.key.slice(2)];
+  setPose(f,'atk1',cm(.3)); aim(f,e,.9); sfx('punch');
+  const landed=hurt(e,f.mobDmg,f,false);
+  G.fx.push({type:'punch',x:(f.x+e.x)/2,y:(f.y+e.y)/2,life:.16,ml:.16});
+  if(!landed) return;
+  sfx('hit');
+  if(M.slow){ e.dis=Math.max(e.dis,gnCc(f,1.2)); }          // Wisp: chạm vào là nặng chân
+  if(M.kb){                                                  // Golem: cú nện có lực đẩy
+    const d=dist(f,e)||1;
+    knock(e,(e.x-f.x)/d,(e.y-f.y)/d,W*.10*6);
+    stunFx(e,gnCc(f,.4),'spark');
+  }
+}
+/* Đạn của quái — kiểu `mobshot`. Vòng va chạm của `G.proj` có nhánh chung cuối cùng
+   (`hurt(f,p.dmg,p.owner,…)`) nên loại mới không phải thêm nhánh nào ở đó; chỉ cần một
+   nhánh VẼ trong `drawProj()`. */
+function mobShot(f,e){
+  setPose(f,'atk1',cm(.45)); aim(f,e,1);
+  later(cm(.2),()=>{
+    if(!f.alive||G.over||G.freeze>0)return;
+    sfx('throw');
+    const a=Math.atan2(e.y-f.y,e.x-f.x)+rnd(-.13,.13);
+    G.proj.push({type:'mobshot',team:f.team,owner:f,x:f.x+Math.cos(a)*22,y:f.y+Math.sin(a)*22,
+      vx:Math.cos(a)*270,vy:Math.sin(a)*270,r:9,dmg:f.mobDmg,life:2.4,ang:a,tint:MOBS[f.key.slice(2)].color});
+  });
+}
+/* Quái nghĩ rất đơn giản: vào tầm rồi nện. Không nội tại, không ultimate, không thanh phụ —
+   chúng là mục tiêu để farm chứ không phải đấu thủ. `auto` bỏ qua vì quái không bao giờ
+   do người chơi cầm. */
+function mobThink(f,e,d){
+  if(f.cds.s1>0) return;
+  const M=MOBS[f.key.slice(2)];
+  if(M.role==='ranged'){
+    if(d<(M.want||250)*1.25){ f.cds.s1=cm(M.cd); mobShot(f,e); }
+    return;
+  }
+  if(d<f.r+e.r+(M.reach||14)){ f.cds.s1=cm(M.cd); mobStrike(f,e); }
+}
+for(const mk of Object.keys(MOBS)){
+  const M=MOBS[mk];
+  CHARS['m_'+mk]={
+    mob:true, name:M.name, short:M.name, tag:'Monster', emoji:'👾',
+    color:M.color, alt:M.color, role:M.role, want:M.want, speed:M.speed,
+    dodge:M.dodge, spriteH:M.h, male:true, skills:[],
+    init(f){ f.mob=true; f.mobKind=mk; f.mobDmg=M.dmg; f.r=M.r; f.cds={s1:cm(rnd(.4,1.3))}; },
+    think:mobThink
+  };
+}
+/* Danh sách NHÂN VẬT CHƠI ĐƯỢC — quái bị lọc ra, xem ghi chú ngay trên. */
+const CKEYS=Object.keys(CHARS).filter(k=>!CHARS[k].mob);
 
 /* ---------- hồ sơ nhân vật ----------
    Người dùng: *"các nhân vật sẽ xem được thông số và mô tả skill nhìn cho đẹp mắt vào"*.
@@ -3264,6 +3560,22 @@ async function loadSaved(){
        đội hình họ vừa mở. Đọc rời thì chỉ vẽ lại hai thẻ hồ sơ, không đụng tới phần còn lại. */
     Store.get('cfg_dexview').then(dv=>{
       if((dv==='simple'||dv==='full')&&typeof dexView==='function') dexView(dv);
+    }).catch(()=>{});
+    /* Hành trình phiêu lưu đang đi dở. Đọc bằng `.then()` chứ ĐỪNG `await` — thêm một nhịp
+       IndexedDB vào giữa `loadSaved()` là dính đúng lỗi ở mục 9 (lượt `cselRefresh()` cuối
+       hàm bị đẩy lùi và quét sạch khung đội hình vừa mở). */
+    Store.get(ADV_SAVE).then(raw=>{
+      if(!raw) return;
+      try{
+        const a=JSON.parse(raw);
+        if(a&&a.key&&CHARS[a.key]&&!CHARS[a.key].mob){
+          ADV=Object.assign(advNew(a.key),a);
+          ADV.st=Object.assign({pow:0,vit:0,agi:0,foc:0},a.st||{});
+          ADV.sk=Object.assign({k:0,l:0,u:0},a.sk||{});
+          ADV.stage=Math.max(1,Math.min(ADV_STAGES,ADV.stage|0||1));
+          ADV.lv=Math.max(1,Math.min(ADV_LVMAX,ADV.lv|0||1));
+        }
+      }catch(_){}
     }).catch(()=>{});
     applyColors(); applyHp();
     if(typeof cselRefresh==='function'){
@@ -5155,6 +5467,7 @@ function aimTarget(f){
    Hỗn chiến: mỗi người MỘT phe riêng, nên ai cũng là địch của tất cả những người còn lại.
    Đánh đội: vẫn đúng hai phe 0 và 1, mỗi phe nhiều người. */
 function buildRoster(){
+  if(PMODE==='adv'&&ADV) return advRoster();   // phiêu lưu: một người phe 0, cả đám địch phe 1
   if(PMODE==='ffa')  return ROSTERS.ffa.map((key,i)=>({key,team:i}));
   if(PMODE==='team'){
     const out=[];
@@ -5168,6 +5481,16 @@ function buildRoster(){
 function spawnSpots(roster){
   const n=roster.length;
   if(n===2&&duelLike(PMODE)) return [{x:W/2,y:PAD+120},{x:W/2,y:H-PAD-120}];
+  /* Phiêu lưu: người chơi luôn đứng giữa mép DƯỚI (nút bấm trên màn hình nằm dưới nên mắt
+     người chơi đã ở đó), lũ địch dàn thành một hàng so le ở mép trên. */
+  if(PMODE==='adv'){
+    const out=[{x:W/2,y:H-PAD-80}], en=n-1;
+    for(let i=0;i<en;i++){
+      const fx=en===1?W/2:PAD+56+(W-2*PAD-112)*(i/(en-1));
+      out.push({x:clamp(fx,PAD+34,W-PAD-34), y:PAD+92+(i%2)*44});
+    }
+    return out;
+  }
   const cx=W/2, top=PAD+96, bot=H-PAD-70, cy=(top+bot)/2;
   if(PMODE==='team'){
     const out=new Array(n);
@@ -5225,6 +5548,9 @@ function newGame(){
      Ô màu, ô máu, chế độ điều khiển tay và camera phân cảnh đều đọc qua hai cái này. */
   G.k=G.fighters[0];
   G.c=G.fighters.find(f=>f.team!==G.k.team)||G.fighters[1]||G.fighters[0];
+  /* Phiêu lưu: siết máu người chơi theo cấp và máu / sát thương địch theo số màn, rồi mở
+     sổ đếm exp của lượt này. Phải nằm SAU khi G.fighters đã dựng xong. */
+  if(PMODE==='adv'&&ADV){ G.advXp=0; G.advSxp=0; advTune(); }
   if(typeof resetSfxPos==='function') resetSfxPos();
   const englishMatch=G.fighters.some(f=>(f.key==='tanjiro'||f.key==='gojo'||f.key==='conan')&&!f.summon);
   if(englishMatch&&PMODE==='team')     say(`Team battle ready. ${teamLabel(0)} vs ${teamLabel(1)}.`,'g');
@@ -5235,6 +5561,10 @@ function newGame(){
   else                             say(`Trận đấu sẵn sàng. ${G.k.name} vs ${G.c.name}.`,'g');
   // ô màu / ô máu / nhãn chế độ điều khiển đọc theo đội hình vừa dựng
   applyColors(); applyHp();
+  /* Nút chiêu phải dựng lại theo nhân vật của trận NÀY — không thì đổi nhân vật xong nút
+     vẫn ghi tên chiêu của người trước. Đặt ở đây để mọi cửa vào trận đều đi qua (đấu tay
+     đôi, hỗn chiến, đánh đội, giải đấu, phiêu lưu). */
+  if(isHuman()&&typeof padBuild==='function') padBuild();
   paintLog(); draw();
 }
 function say(m,c){ G.logs.unshift({m,c:c||'m'}); if(G.logs.length>50)G.logs.pop(); paintLog(); }
@@ -5544,6 +5874,9 @@ function koFx(loser){
 function defeat(t,src){
   if(!t||!t.alive)return;
   t.alive=false; t.hp=0;
+  /* Phiêu lưu: ăn điểm NGAY lúc con đó gục, không đợi hết màn — thua giữa màn vẫn giữ được
+     phần đã farm, nên đánh lại không mất trắng. */
+  advGain(t);
   t.dash=null; t.lock=0; t.bind=null; t.domain=null;
   t.supCone=null; t.supHv=null; t.supFb=null; t.supMs=null; t.supCombo=null; t.drCone=null;
   t.tanAct=null; t.tanUlt=false; t.tanTrails=[];
@@ -5615,6 +5948,7 @@ function finish(w){
   /* Đang đánh một trận của giải thì ghi kết quả NGAY tại đây — G còn nguyên đội hình
      vừa đánh, ra khỏi hàm này là mấy con số sát thương không đọc lại được nữa. */
   if(compLive) compResult(win);
+  advResult(win);
 }
 
 /* ---------- giải đấu: LEAGUE (vòng tròn tính điểm) và TOURNAMENT (loại trực tiếp) ----------
@@ -5649,6 +5983,193 @@ let COMP=null;                   // giải đang chạy; null là không có gi�
 let lgAnim=null, cupAnim=null;
 let compLive=false;              // đang ở TRONG một trận của giải
 
+/* ==================== CHẾ ĐỘ PHIÊU LƯU (Adventure) ====================
+   Chỉ có ở BẢN NGƯỜI CHƠI. Người dùng chốt: *"khỏi cốt truyện đi, adventure bthg th cũng
+   đc, miễn là có màn farm quái lên cấp là đc"* — nên đây là một chuỗi màn farm, không có
+   phân cảnh kể chuyện nào.
+
+   Một màn = MỘT trận: người chơi (phe 0) đánh với cả đám địch (phe 1). Nhờ vậy nó dùng lại
+   nguyên bộ máy đã có — `defeat()` đếm phe còn sống rồi tự gọi `finish()` khi chỉ còn một
+   phe, `foeOf()` vốn đã lo phần nhắm mục tiêu ở trận nhiều người. KHÔNG dựng thêm vòng lặp
+   trận nào.
+
+   Hai thanh tiến trình ĐI RIÊNG, đúng yêu cầu *"có điểm để nâng điểm các thuộc tính, rồi có
+   điểm exp riêng để nâng skill"*:
+     `exp` → lên cấp → mỗi cấp cho `ADV_SP` điểm THUỘC TÍNH (`sp`);
+     `sxp` → điểm SKILL, rơi ra từ chính lũ địch, tiêu để mở và nâng bậc chiêu.
+   Đừng gộp hai cái làm một — lên cấp không tự mở chiêu, và nâng chiêu không tự lên cấp. */
+const ADV_SAVE='cfg_adv';
+const ADV_STAGES=24;                  // 24 màn, cứ màn thứ 4 là một BOSS ⇒ sáu boss
+const ADV_LVMAX=30;
+const ADV_SP=3;                       // mỗi cấp: 3 điểm thuộc tính
+/* Máu lúc lv1 để THẤP hẳn — người dùng: *"ban đầu nhân vật lv1 và có ít máu"*. Không đọc
+   `HP[key]` ở chế độ này: 800 máu thì mấy con quái màn 1 không gãi nổi. */
+const ADV_HP0=260, ADV_HPLV=14;
+const ADV_POW=.02, ADV_VIT=18, ADV_AGI=.015, ADV_FOC=.015;
+const ADV_ST=[
+  {k:'pow', vi:'Sức mạnh',   en:'Power',     s:{vi:`+${ADV_POW*100}% sát thương gây ra`,   en:`+${ADV_POW*100}% damage dealt`}},
+  {k:'vit', vi:'Thể lực',    en:'Vitality',  s:{vi:`+${ADV_VIT} máu tối đa`,               en:`+${ADV_VIT} max HP`}},
+  {k:'agi', vi:'Nhanh nhẹn', en:'Agility',   s:{vi:`+${ADV_AGI*100}% tốc chạy`,            en:`+${ADV_AGI*100}% move speed`}},
+  {k:'foc', vi:'Tập trung',  en:'Focus',     s:{vi:`+${ADV_FOC*100}% tốc hồi chiêu`,       en:`+${ADV_FOC*100}% cooldown rate`}}
+];
+/* Ba ô chiêu mở bằng điểm skill. Ô `j` KHÔNG có trong bảng này: với cả mười ba nhân vật thì
+   `keys['j']` chính là đòn thường (shuriken của Konohamaru, cú đấm của ChiChi…), nên nó luôn
+   có sẵn — đúng câu *"lv1 … ko có skill và chỉ có basic atk"*.
+   `lv` là cấp tối thiểu mới được mở, `cost` là số điểm skill phải trả. */
+const ADV_SLOTS=[
+  {k:'k', n:2, lv:2, cost:2},
+  {k:'l', n:3, lv:5, cost:3},
+  {k:'u', n:4, lv:9, cost:5}
+];
+const ADV_RANKMAX=5, ADV_RANKCD=.08;   // mỗi bậc: ô chiêu đó hồi nhanh thêm 8%
+const advNeed=lv=>Math.round(30+lv*16+lv*lv*5);           // exp cần để lên cấp kế tiếp
+let ADV=null;
+
+const advOn=()=>PMODE==='adv'&&!!ADV;
+const advRank=k=>(ADV&&ADV.sk&&ADV.sk[k])|0;
+const advSlot=k=>ADV_SLOTS.find(s=>s.k===k);
+/* Người chơi đang cầm ai. Ở chế độ này chỉ có ĐÚNG MỘT người thuộc phe 0. */
+const advHero=()=>G&&G.fighters.find(f=>f&&!f.summon&&f.team===0)||null;
+function advNew(key){
+  return {key, lv:1, exp:0, sp:0, sxp:0, st:{pow:0,vit:0,agi:0,foc:0}, sk:{k:0,l:0,u:0},
+          stage:1, best:0, kills:0};
+}
+const advMaxHp=()=>Math.round(ADV_HP0+(ADV.lv-1)*ADV_HPLV+ADV.st.vit*ADV_VIT);
+function advSave(){ if(ADV) Store.set(ADV_SAVE,JSON.stringify(ADV)); }
+function advWipe(){ ADV=null; Store.del(ADV_SAVE); }
+
+/* ---------- màn đấu ----------
+   Cứ màn thứ 4 là một BOSS — một nhân vật thật trong bảng. Mấy màn còn lại là quái, càng
+   về sau càng đông và càng nặng đòn. */
+const ADV_BOSS=['kono','tsubasa','shika','dora','ginyu','superman'];
+const ADV_TIER=[['m_slime'],['m_slime','m_bat'],['m_slime','m_bat','m_scare'],
+                ['m_bat','m_scare','m_wisp'],['m_scare','m_wisp','m_golem'],['m_wisp','m_golem']];
+const advIsBoss=n=>n%4===0;
+/* Hệ số nhân máu / sát thương của quái theo số màn. Tách ra hàm cho test đo được. */
+const advMobHp =n=>1+.28*(n-1);
+const advMobDmg=n=>1+.16*(n-1);
+/* Boss cũng phải lên dần: boss đầu (màn 4) chỉ còn 45% máu chuẩn, boss cuối thì đủ 100%. */
+const advBossIdx=n=>Math.min(ADV_BOSS.length-1,Math.max(0,Math.floor(n/4)-1));
+function advBossHp(n){ return .45+.11*advBossIdx(n); }
+/* ...và SÁT THƯƠNG của boss cũng phải lên dần theo, đừng chỉ hạ máu.
+   Boss là nhân vật thật nên bộ chiêu của họ cân theo 800 máu, trong khi người chơi ở màn 4
+   mới có ~370 máu — hạ máu boss mà để nguyên sát thương thì họ vẫn ba đòn là xong người
+   chơi. Đo được (`tools/` probe cân bằng): ChiChi thua liền ba boss ở màn 4 · 8 · 12 đúng vì
+   chỗ này. Boss đầu còn 60% sát thương, boss cuối đủ 100%. */
+function advBossDmg(n){ return .6+.08*advBossIdx(n); }
+function advStageDef(n){
+  if(advIsBoss(n)){
+    const i=Math.min(ADV_BOSS.length-1,Math.max(0,Math.floor(n/4)-1));
+    let key=ADV_BOSS[i];
+    if(ADV&&key===ADV.key) key=ADV_BOSS[(i+1)%ADV_BOSS.length];   // đừng bắt đánh với chính mình
+    return {boss:true, enemies:[key]};
+  }
+  const tier=ADV_TIER[Math.min(ADV_TIER.length-1,Math.floor((n-1)/4))];
+  const cnt=Math.min(5,2+Math.floor(n/5));
+  const out=[];
+  for(let i=0;i<cnt;i++) out.push(tier[i%tier.length]);
+  return {boss:false, enemies:out};
+}
+function advRoster(){
+  const d=advStageDef(ADV.stage);
+  return [{key:ADV.key,team:0}].concat(d.enemies.map(k=>({key:k,team:1})));
+}
+/* Dựng xong đội hình thì siết lại chỉ số: máu người chơi theo cấp, còn máu / sát thương của
+   địch theo số màn. Gọi từ `newGame()` sau khi `G.fighters` đã có. */
+function advTune(){
+  const n=ADV.stage, d=advStageDef(n);
+  for(const f of G.fighters){
+    if(f.summon) continue;
+    if(f.team===0){ f.maxHp=advMaxHp(); f.hp=f.maxHp; continue; }
+    if(f.mob){
+      const M=MOBS[f.mobKind];
+      f.maxHp=Math.round(M.hp*advMobHp(n)); f.hp=f.maxHp;
+      f.mobDmg=Math.round(M.dmg*advMobDmg(n));
+    }else{
+      f.maxHp=Math.round((HP[f.key]||HP_STD)*advBossHp(n)); f.hp=f.maxHp;
+    }
+  }
+}
+/* ---------- thuộc tính ----------
+   `statusTick()` DỰNG LẠI mấy hệ số này từ đầu mỗi nhịp, nên phần của phiêu lưu phải nhân
+   vào SAU nó — đúng cái bẫy đã ghi ở mục Tsubasa (`tsuPinTick` gọi sau `statusTick`). */
+function advStatTick(f){
+  if(!advOn()||!f) return;
+  /* Bên ĐỊCH: hệ số sát thương của boss phải nhân LẠI mỗi nhịp vì `statusTick()` dựng
+     `dmgOut` từ đầu. Viện binh của boss (Goku / Gohan / phân thân) cũng phải chịu đúng phần
+     đó — chúng mang `f.summon` và `team` của chủ, nên bắt qua `master` chứ đừng bỏ qua:
+     Kamehameha 400 dmg mà không cắt thì một phát là xong người chơi ở màn 8. */
+  if(f.team!==0){
+    const own=f.summon?(f.master||f):f;
+    if(!own.mob&&advIsBoss(ADV.stage)) f.dmgOut*=advBossDmg(ADV.stage);
+    return;
+  }
+  if(f.summon) return;                 // viện binh của CHÍNH người chơi giữ nguyên
+  f.moveMul*=1+ADV.st.agi*ADV_AGI;
+  f.castMul*=1+ADV.st.foc*ADV_FOC;
+  f.dmgOut *=1+ADV.st.pow*ADV_POW;
+}
+/* Bậc chiêu ăn vào NHỊP TRÔI hồi chiêu của đúng ô đó. Vòng trừ hồi chiêu trong `step()` là
+   một chỗ duy nhất cho mọi người nên chỉ phải cắm ở đây; không đụng vào `think()` của ai. */
+function advSlotRate(f,cdKey){
+  if(!advOn()||!f||f.team!==0||f.summon) return 1;
+  const m={s2:'k',s3:'l',s4:'u'}[cdKey];
+  if(!m) return 1;
+  const r=advRank(m);
+  return r>1?1+(r-1)*ADV_RANKCD:1;
+}
+/* Chiêu chưa mở thì COI NHƯ KHÔNG BẤM. Gác ngay trước vòng `think()` trong `step()`: cách
+   này không phải sửa `think()` của mười ba nhân vật, và nó tự đúng với mọi nhân vật thêm về
+   sau. Chỉ xoá ô CHƯA MỞ, nên ô đã mở vẫn giữ được kiểu bấm-giữ. */
+function advLockKeys(){
+  if(!advOn()) return;
+  for(const s of ADV_SLOTS) if(!advRank(s.k)) keys[s.k]=false;
+}
+/* ---------- điểm thưởng ----------
+   Hạ được con nào thì ăn điểm con đó NGAY, nên thua giữa màn vẫn giữ được phần đã farm. */
+function advGain(t){
+  if(!advOn()||!t||t.summon||t.team===0) return;
+  const M=t.mob?MOBS[t.mobKind]:null;
+  const xp  = M?Math.round(M.xp *(1+.18*(ADV.stage-1))) : Math.round(90+ADV.stage*14);
+  const sxp = M?M.sxp : 6;
+  G.advXp=(G.advXp|0)+xp; G.advSxp=(G.advSxp|0)+sxp; ADV.kills++;
+}
+/* Lên cấp: có thể lên NHIỀU cấp một lượt nếu ăn đủ exp, nên phải chạy vòng while. */
+function advLevel(){
+  let up=0;
+  while(ADV.lv<ADV_LVMAX&&ADV.exp>=advNeed(ADV.lv)){ ADV.exp-=advNeed(ADV.lv); ADV.lv++; ADV.sp+=ADV_SP; up++; }
+  if(ADV.lv>=ADV_LVMAX) ADV.exp=0;
+  return up;
+}
+/* Gọi từ `finish()` — đúng chỗ `compResult()` được gọi, vì ra khỏi hàm đó là đội hình vừa
+   đánh không đọc lại được nữa. */
+function advResult(win){
+  if(!advOn()) return;
+  const heroWin=!!win&&win.team===0;
+  ADV.exp+=(G.advXp|0); ADV.sxp+=(G.advSxp|0);
+  const ups=advLevel();
+  if(heroWin){
+    ADV.best=Math.max(ADV.best,ADV.stage);
+    if(ADV.stage<ADV_STAGES) ADV.stage++;
+    else ADV.done=true;
+  }
+  ADV.lastWin=heroWin; ADV.lastXp=(G.advXp|0); ADV.lastSxp=(G.advSxp|0); ADV.lastUp=ups;
+  advSave();
+}
+/* ---------- tiêu điểm ---------- */
+function advBuyStat(k){
+  if(!ADV||ADV.sp<=0||!ADV_ST.some(s=>s.k===k)) return false;
+  ADV.sp--; ADV.st[k]=(ADV.st[k]|0)+1; advSave(); return true;
+}
+function advBuySkill(k){
+  const S=advSlot(k); if(!S||!ADV) return false;
+  const r=advRank(k);
+  if(r>=ADV_RANKMAX) return false;
+  if(ADV.lv<S.lv) return false;
+  const cost=r===0?S.cost:S.cost+r;      // mở thì trả giá gốc, nâng bậc thì đắt dần
+  if(ADV.sxp<cost) return false;
+  ADV.sxp-=cost; ADV.sk[k]=r+1; advSave(); return true;
+}
 const duelLike=m=>m==='duel'||m==='league'||m==='cup';
 const compOn=()=>!!COMP;
 
@@ -10536,6 +11057,7 @@ function step(dt){
     // hệ số nhân của Ginyu và của Doraemon bám vào mọi người: dựng lại cho từng người
     // mỗi nhịp, qua đúng một cửa
     statusTick(f,dt);
+    advStatTick(f);            // phải nhân SAU statusTick: hàm đó dựng lại hệ số từ đầu
     /* SAU `statusTick`: hàm đó DỰNG LẠI `moveMul` từ đầu mỗi nhịp, nhân trước là mất trắng. */
     if(f.key==='tsubasa'&&!f.summon&&!f.swapAs) tsuPinTick(f,dt);
     if(f.key==='shika'&&!f.summon&&f.alive&&!f.swapAs){ shikaPassive(f,dt); bindTick(f,dt); domainTick(f,dt); }
@@ -10727,9 +11249,10 @@ function step(dt){
          still affect it as before; only his own Mark cast bonus is replaced by Mark attack speed. */
       const ownCast=(f.key==='tanjiro'&&f.tanMarked)?TAN.markCast:1;
       const r=(f.key==='tanjiro'&&key==='basic')?base*((f.castMul||1)/ownCast)*(f.tanMarked?TAN.markAtk:1):rate;
-      f.cds[key]=Math.max(0,f.cds[key]-r);
+      f.cds[key]=Math.max(0,f.cds[key]-r*advSlotRate(f,key));
     }
   }
+  advLockKeys();             // chiêu chưa mở thì coi như không bấm
   for(const f of MAIN){
     if(!f.alive||f.stun>0||f.lock>0||f.infoOverload>0||f.conanSleep>0)continue;
     const auto=!isPlayer(f)||autoSkill;
@@ -10746,6 +11269,12 @@ function step(dt){
   for(const f of MAIN){
     if(!f.alive||f.hp<=0)continue;
     if(f.swapAs)continue;                       // Ginyu đã cướp xác: nội tại của thân xác tắt hẳn
+    /* PHIÊU LƯU: mấy nội tại bung ra theo NGƯỠNG MÁU cũng là tuyệt chiêu (Goku/Gohan của
+       ChiChi, Wings of the Eagle, lãnh địa Nara, ba form của Horikita…), nên chúng đi chung
+       một cửa với ô chiêu 'u': chưa mở ô đó thì chưa có. Không gác thì nhân vật lv1 với 260
+       máu tụt xuống 20% trong mấy giây rồi gọi Kamehameha 400 dmg — cả màn quái bay sạch,
+       mà người chơi thì chưa tiêu một điểm skill nào. */
+    if(advOn()&&f.team===0&&!advRank('u'))continue;
     if(f.key==='chichi' && !f.summonDone && f.hp<=f.maxHp*.20){
       ring(f.x,f.y,120,'#FFD400',.45);
       G.flashScreen=Math.max(G.flashScreen,.07);
@@ -11510,8 +12039,107 @@ function conanVector(f){
   ctx.restore();
 }
 
+/* ---------- quái của chế độ Phiêu lưu ----------
+   Vẽ thẳng bằng vector, không có ô dán ảnh (`SPR[f.key]` trả về `{}` nên `sprite()` tự lùi
+   về đây). Mỗi loại một hình khối rõ ràng để nhìn cái là biết đang đánh con gì. */
+function mobVector(f){
+  const M=MOBS[f.mobKind]||MOBS.slime, t=G.t*10, hit=f.pose==='atk1';
+  const bob=Math.sin(t*(f.moving?1:.5))*(f.mobKind==='bat'?5:2.2);
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  const eyes=(ex,ey,r,col)=>{
+    ctx.fillStyle=col||'#12101C';
+    ctx.beginPath(); ctx.arc(-ex,ey,r,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc( ex,ey,r,0,7); ctx.fill();
+  };
+  if(f.mobKind==='slime'){
+    const sq=hit?1.18:1+Math.sin(t)*.06, hh=34/sq;
+    ctx.fillStyle=M.color; ctx.globalAlpha=.92;
+    ctx.beginPath(); ctx.ellipse(0,-hh+bob,22*sq,hh,0,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.ellipse(-7,-hh*1.3+bob,6,4,-.5,0,7); ctx.fill();
+    eyes(7,-hh-2+bob,3.2);
+    if(f.injured){ ctx.strokeStyle='#1C6B3F'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-10,-hh+bob); ctx.lineTo(-2,-hh+7+bob); ctx.stroke(); }
+    return;
+  }
+  if(f.mobKind==='bat'){
+    const flap=Math.sin(t*2.4)*14, y0=-40+bob;
+    ctx.fillStyle='#2A1F3D';
+    ctx.beginPath(); ctx.moveTo(-6,y0);
+    ctx.quadraticCurveTo(-26,y0-10+flap,-34,y0+8+flap); ctx.quadraticCurveTo(-20,y0+2,-6,y0+6); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(6,y0);
+    ctx.quadraticCurveTo(26,y0-10-flap,34,y0+8-flap); ctx.quadraticCurveTo(20,y0+2,6,y0+6); ctx.fill();
+    ctx.fillStyle=M.color;
+    ctx.beginPath(); ctx.ellipse(0,y0+2,10,12,0,0,7); ctx.fill();
+    ctx.fillStyle='#2A1F3D';                           // hai tai nhọn
+    ctx.beginPath(); ctx.moveTo(-7,y0-9); ctx.lineTo(-3,y0-19); ctx.lineTo(0,y0-9); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(7,y0-9);  ctx.lineTo(3,y0-19);  ctx.lineTo(0,y0-9); ctx.fill();
+    eyes(4,y0,2.6,'#FFE44D');
+    return;
+  }
+  if(f.mobKind==='scare'){
+    const y0=-56+bob, lean=hit?.22:0;
+    ctx.save(); ctx.rotate(lean);
+    ctx.strokeStyle='#6B4A22'; ctx.lineWidth=6;        // cây cọc
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,y0+14); ctx.stroke();
+    ctx.lineWidth=5;                                    // thanh ngang làm hai tay
+    ctx.beginPath(); ctx.moveTo(-22,y0+4); ctx.lineTo(22,y0+4); ctx.stroke();
+    ctx.fillStyle='#4A3A5C';                            // áo tơi
+    ctx.beginPath(); ctx.moveTo(-16,y0+2); ctx.lineTo(16,y0+2); ctx.lineTo(11,y0+34); ctx.lineTo(-11,y0+34); ctx.fill();
+    ctx.fillStyle=M.color;                              // đầu bao bố
+    ctx.beginPath(); ctx.arc(0,y0-10,12,0,7); ctx.fill();
+    ctx.strokeStyle='#6B4A22'; ctx.lineWidth=2.2;       // túm rơm
+    for(let i=-2;i<=2;i++){ ctx.beginPath(); ctx.moveTo(i*4,y0-21); ctx.lineTo(i*6,y0-30); ctx.stroke(); }
+    ctx.fillStyle='#1B1428';                            // mắt chỉ là hai vết khâu chéo
+    ctx.lineWidth=2; ctx.strokeStyle='#1B1428';
+    for(const sx of [-5,5]){
+      ctx.beginPath(); ctx.moveTo(sx-3,y0-14); ctx.lineTo(sx+3,y0-8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx+3,y0-14); ctx.lineTo(sx-3,y0-8); ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+  if(f.mobKind==='wisp'){
+    const y0=-44+bob;
+    ctx.globalAlpha=.30; ctx.fillStyle=M.color;         // quầng sáng ngoài
+    ctx.beginPath(); ctx.arc(0,y0,26,0,7); ctx.fill();
+    ctx.globalAlpha=.85;
+    ctx.beginPath(); ctx.moveTo(0,y0-18);               // thân như một ngọn lửa lạnh
+    ctx.quadraticCurveTo(15,y0-2,9,y0+14);
+    ctx.quadraticCurveTo(0,y0+24,-9,y0+14);
+    ctx.quadraticCurveTo(-15,y0-2,0,y0-18); ctx.fill();
+    ctx.globalAlpha=1;
+    eyes(5,y0-2,2.8,'#10202B');
+    ctx.strokeStyle=M.color; ctx.globalAlpha=.5; ctx.lineWidth=2;   // đuôi tan dần
+    for(let i=0;i<3;i++){
+      const a=t*.7+i*2.1;
+      ctx.beginPath(); ctx.arc(Math.cos(a)*20,y0+Math.sin(a)*16,2.4,0,7); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+    return;
+  }
+  // golem
+  const y0=-62+bob, sw=f.moving?Math.sin(t)*3:0;
+  ctx.fillStyle='#6E7787';
+  ctx.fillRect(-16,y0+40,12,22+sw); ctx.fillRect(4,y0+40,12,22-sw);   // hai chân đá
+  ctx.fillStyle=M.color;
+  ctx.fillRect(-20,y0+6,40,38);                                        // thân khối
+  ctx.fillStyle='#7E8796';
+  ctx.fillRect(hit?-34:-30,y0+10,14,26); ctx.fillRect(hit?20:16,y0+10,14,26);
+  ctx.fillStyle=M.color;
+  ctx.fillRect(-13,y0-16,26,22);                                       // đầu
+  ctx.fillStyle='#5B6472';                                             // khe nứt trên thân
+  ctx.fillRect(-6,y0+14,4,18); ctx.fillRect(6,y0+20,3,12);
+  eyes(6,y0-6,3.2,'#FF9A3C');
+  if(f.injured){
+    ctx.strokeStyle='#3C434F'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(-18,y0+12); ctx.lineTo(-4,y0+26); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10,y0-12); ctx.lineTo(14,y0-2); ctx.stroke();
+  }
+}
 function vector(f){
   const t=G.t*10, y=-18, sw=f.moving?Math.sin(t)*3:0;
+  if(f.mob){ mobVector(f); return; }
   if(f.key==='tanjiro'){ tanVector(f); return; }
   if(f.key==='gojo'){ gojoVector(f); return; }
   if(f.key==='conan'){ conanVector(f); return; }
@@ -12619,8 +13247,8 @@ function drawBars(f){
   if(f.beaHide)return;                          // Beatrice còn ở trong Forbidden Library
   if(f.drHide)return;                          // Doraemon còn trong lòng Anywhere Door
   if(f.supHide)return;                         // Superman còn là bóng người trên cao
-  if(f.ally){
-    // đồng minh dùng thanh nhỏ hơn hẳn, để ba người đứng sát nhau vẫn đọc được ai là ai
+  if(f.ally||f.mob){
+    // đồng minh và QUÁI dùng thanh nhỏ hơn hẳn, để mấy con đứng sát nhau vẫn đọc được
     const w=84,h=16,x=clamp(f.x-w/2,12,W-w-12),y=f.y+28;
     ctx.textAlign='center';
     ctx.font='900 10px "Space Mono",monospace';
@@ -14113,6 +14741,17 @@ function drawProj(p){
       ctx.beginPath(); ctx.moveTo(-18,o); ctx.lineTo(-48-i*8,o*1.4); ctx.stroke(); }
     ctx.restore(); return;
   }
+  /* Đạn của quái: một mũi rơm/tinh thể nhỏ, tô theo màu con quái bắn ra. Vòng va chạm
+     dùng nhánh chung nên chỗ này chỉ phải lo phần VẼ. */
+  if(p.type==='mobshot'){
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.ang||Math.atan2(p.vy,p.vx));
+    ctx.fillStyle=p.tint||'#E0B457';
+    ctx.beginPath(); ctx.moveTo(11,0); ctx.lineTo(-6,4.5); ctx.lineTo(-3,0); ctx.lineTo(-6,-4.5); ctx.fill();
+    ctx.globalAlpha=.45;
+    ctx.beginPath(); ctx.moveTo(-5,0); ctx.lineTo(-18,2.6); ctx.lineTo(-18,-2.6); ctx.fill();
+    ctx.globalAlpha=1; ctx.restore();
+    return;
+  }
   if(p.type==='shuriken'){
     ctx.translate(p.x,p.y); ctx.rotate(p.spin); ctx.fillStyle=p.bounced?'#FFE100':'#E9EEF7'; ctx.strokeStyle='#000'; ctx.lineWidth=1.5;
     for(let i=0;i<4;i++){ ctx.rotate(Math.PI/2); ctx.beginPath(); ctx.moveTo(0,-3.5); ctx.lineTo(11,0); ctx.lineTo(0,3.5); ctx.closePath(); ctx.fill(); ctx.stroke(); }
@@ -15238,6 +15877,7 @@ function loop(now){
   const raw=Math.min(.05,(now-last)/1000); last=now;
   if(running){ acc+=raw*speedMul; let guard=0; while(acc>=1/120 && guard++<600){ step(1/120); acc-=1/120; } }
   draw(); recTick();                        // khung dọc + đẩy khung vào bộ mã hoá, chỉ khi đang ghi
+  padTick();                                // vòng hồi chiêu trên nút bấm, chỉ ở bản người chơi
   requestAnimationFrame(loop);
 }
 /* ---------- ghi hình sàn đấu ---------- */
@@ -16337,6 +16977,7 @@ function tmpReady(){
   /* Loại trực tiếp phải ĐÚNG 4 hoặc 8 người, không thì nhánh lệch — 5 người vẫn nằm trong
      khoảng 4~8 nên phải chặn riêng chứ vòng bên dưới không bắt được. */
   if(TMP.mode==='cup') return CUP_SIZES.indexOf(TMP.comp.length)>=0;
+  if(TMP.mode==='adv') return !!TMP.a;
   const gs=modeGroups(TMP.mode);
   if(TMP.mode==='team'&&(gs.length<TEAM_MIN_N||gs.length>TEAM_MAX_N)) return false;
   let tong=0;
@@ -16458,7 +17099,10 @@ function dexCard(key,view){
     `</div></div>`;
 }
 function cselRefresh(){
-  const duel=TMP.mode==='duel';
+  /* Phiêu lưu đi chung khung với đấu tay đôi: nó chọn ĐÚNG MỘT nhân vật qua bước 'p1', nên
+     dùng lưới `#listA` + thẻ hồ sơ của `#duelPane`, không phải khung đội hình. */
+  const adv=TMP.mode==='adv';
+  const duel=TMP.mode==='duel'||adv;
   el('duelPane').classList.toggle('off',!duel);
   el('multiPane').classList.toggle('off',duel);
   for(const t of document.querySelectorAll('.mTab')) t.classList.toggle('on',t.dataset.mode===TMP.mode);
@@ -16480,7 +17124,8 @@ function cselRefresh(){
   const sub=el('cselCount'), vs=el('cselVs'), go=el('cselGo');
   if(duel){
     if(sub) sub.textContent=cselSubText();
-    if(vs) vs.innerHTML=`<b>${CHARS[TMP.a].name}</b> vs <b>${CHARS[TMP.b].name}</b>`;
+    if(vs) vs.innerHTML=adv?`<b>${CHARS[TMP.a].name}</b>`
+                           :`<b>${CHARS[TMP.a].name}</b> vs <b>${CHARS[TMP.b].name}</b>`;
   }else if(TMP.mode==='ffa'){
     if(sub) sub.textContent=ARCADE?cselSubText():tf('subFfa',{lo:FFA_MIN,hi:FFA_MAX});
     if(vs) vs.innerHTML=TMP.ffa.length?TMP.ffa.map(k=>`<b>${nm(k)}</b>`).join(' · ')
@@ -16605,6 +17250,9 @@ function buildCsel(){
   for(const t of document.querySelectorAll('.mTab'))
     t.addEventListener('click',()=>{ sfx('ui_tap'); TMP.mode=t.dataset.mode; cselRefresh(); });
   buildStages();
+  /* Bốn ô hướng là HTML tĩnh nên buộc đúng một lần; bốn ô chiêu do `padBuild()` dựng lại
+     mỗi khi đổi nhân vật nên nó tự buộc lấy. */
+  for(const b of document.querySelectorAll('.padDir [data-key]')) padBind(b);
   cselRefresh();
 }
 function openCsel(){
@@ -16633,8 +17281,230 @@ function startPicked(){
     compOpen();
     return;
   }
+  /* Phiêu lưu cũng KHÔNG vào trận ngay: mở bảng hành trình để tiêu điểm rồi mới bấm vào
+     màn. Đổi sang nhân vật khác thì bắt đầu lại hành trình từ màn 1 — mỗi nhân vật một
+     mạch riêng, chứ mang cấp của người này sang người kia thì vô nghĩa. */
+  if(PMODE==='adv'){
+    compClear();
+    if(!ADV||ADV.key!==TMP.a) ADV=advNew(TMP.a);
+    advSave();
+    newGame(); running=false; el('play').textContent=t('play');
+    advOpen();
+    return;
+  }
   compClear();
   newGame(); running=false; el('play').textContent=t('play');
+}
+
+/* ---------- BẢN NGƯỜI CHƠI: bật / tắt ----------
+   `PLAYKIND` chỉ đổi đúng ba thứ: cờ `.human` trên <body> (CSS đọc để nới khung sàn và mở
+   thẻ Phiêu lưu), `mode` (để `isPlayer()` trả về true cho fighter bên trái), và lớp nút bấm.
+   Bản AUTO đi qua đây với `human=false` nên mọi thứ trở về đúng bản cũ. */
+function setPlayKind(kind){
+  PLAYKIND=kind==='human'?'human':'auto';
+  document.body.classList.toggle('human',isHuman());
+  mode=isHuman()?'p1':'auto';
+  const sel=document.getElementById('mode'); if(sel) sel.value=mode;
+  /* Bản người chơi thì TỰ BẤM chiêu — để `autoSkill` bật thì máy tự tung hết, nút chiêu
+     trên màn hình thành vô nghĩa. Bản auto trả lại đúng mặc định cũ. */
+  autoSkill=!isHuman();
+  const ck=document.getElementById('autoskill'); if(ck) ck.checked=autoSkill;
+  const pad=document.getElementById('padWrap'); if(pad) pad.classList.toggle('off',!isHuman());
+  if(isHuman()) padBuild();
+}
+/* ---------- nút bấm trên màn hình ----------
+   Bốn ô chiêu đọc THẲNG mảng `CHARS[key].skills` để lấy tên, nên thêm nhân vật mới là nút
+   tự có chữ. Ô nào chưa mở (chế độ Phiêu lưu) thì xám lại và bấm không ăn. */
+const PAD_SK=[{k:'j',cd:'s1',n:1},{k:'k',cd:'s2',n:2},{k:'l',cd:'s3',n:3},{k:'u',cd:'s4',n:4}];
+/* Tên ngắn của một ô chiêu, bóc từ dòng HTML trong mảng `skills` (nó mở đầu bằng
+   "<b>1</b> Tên chiêu — …"). Không có thì ghi số ô. */
+function padName(key,n){
+  const C=CHARS[key]; if(!C||!C.skills) return 'Skill '+n;
+  for(const raw of C.skills){
+    const m=/^<b>(\d)<\/b>\s*([^—·<]+)/.exec(raw);
+    if(m&&+m[1]===n) return m[2].trim().replace(/&amp;/g,'&');
+  }
+  return n===4?'Ultimate':'Skill '+n;
+}
+function padHero(){
+  if(!G) return null;
+  return G.fighters.find(f=>f&&!f.summon&&isPlayer(f))||null;
+}
+function padBuild(){
+  const box=document.getElementById('padSk'); if(!box) return;
+  const h=padHero(), key=h?(h.gnSoul||h.key):(PMODE==='adv'&&ADV?ADV.key:TMP.a||PICK.a);
+  box.innerHTML=PAD_SK.map(S=>
+    `<button class="padBtn" data-key="${S.k}" data-cd="${S.cd}" type="button">`+
+    `<u>${S.k.toUpperCase()}</u><s>${padName(key,S.n)}</s><span class="padCd"></span></button>`).join('');
+  padWire(box);
+}
+/* Bấm giữ = giữ phím. Dùng pointer event cho cả chuột lẫn ngón tay, và `setPointerCapture`
+   để trượt ngón ra ngoài nút vẫn nhả đúng phím. */
+function padWire(box){
+  for(const b of box.querySelectorAll('[data-key]')) padBind(b);
+}
+function padBind(b){
+  const k=b.dataset.key;
+  const down=e=>{
+    if(b.classList.contains('lock')) return;
+    e.preventDefault(); keys[k]=true; b.classList.add('on');
+    try{ b.setPointerCapture(e.pointerId); }catch(_){}
+  };
+  const up=e=>{ e.preventDefault(); keys[k]=false; b.classList.remove('on'); };
+  b.addEventListener('pointerdown',down);
+  b.addEventListener('pointerup',up);
+  b.addEventListener('pointercancel',up);
+  b.addEventListener('lostpointercapture',up);
+  b.addEventListener('contextmenu',e=>e.preventDefault());
+}
+/* Vẽ lại trạng thái nút mỗi khung hình: vòng hồi chiêu, ô đã mở chưa, và sáng lên khi bấm
+   bằng bàn phím thật. Gọi từ `loop()`, nên phải rẻ — chỉ gán khi giá trị thật sự đổi. */
+function padTick(){
+  if(!isHuman()) return;
+  const box=document.getElementById('padSk'); if(!box) return;
+  const h=padHero();
+  for(const b of box.querySelectorAll('[data-key]')){
+    const k=b.dataset.key, cdk=b.dataset.cd;
+    const lock=advOn()&&advSlot(k)&&!advRank(k);
+    if(b.classList.contains('lock')!==!!lock) b.classList.toggle('lock',!!lock);
+    let pct=0, txt='';
+    if(lock){
+      const S=advSlot(k);
+      txt=ADV.lv<S.lv?('Lv'+S.lv):'🔒';
+      pct=100;
+    }else if(h&&h.cds&&h.cds[cdk]>0){
+      const left=h.cds[cdk];
+      pct=Math.min(100,Math.round(left/Math.max(left,cdBase(h,cdk))*100));
+      txt=rts(left)+'s';
+    }
+    const ps=pct+'%';
+    if(b.style.getPropertyValue('--cd')!==ps) b.style.setProperty('--cd',ps);
+    const sp=b.querySelector('.padCd');
+    if(sp&&sp.textContent!==txt) sp.textContent=txt;
+    const rdy=!lock&&pct===0;
+    if(b.classList.contains('rdy')!==rdy) b.classList.toggle('rdy',rdy);
+    if(!b.classList.contains('on')&&keys[k]) b.classList.add('on');
+    else if(b.classList.contains('on')&&!keys[k]) b.classList.remove('on');
+  }
+  /* Bốn ô hướng cũng sáng theo bàn phím thật, để người chơi thấy mình đang bấm gì. */
+  for(const b of document.querySelectorAll('.padDir [data-key]')){
+    const on=!!keys[b.dataset.key];
+    if(b.classList.contains('on')!==on) b.classList.toggle('on',on);
+  }
+}
+/* Mốc để quy vòng hồi chiêu ra phần trăm. Hồi chiêu được đặt ở trong `think()` của từng
+   nhân vật nên không có bảng nào tra được; vì vậy NHỚ LẠI con số lớn nhất đã thấy ở ô đó
+   và lấy nó làm mốc. Xấu về lý thuyết nhưng đúng về mắt: vòng luôn đi từ đầy về rỗng. */
+const CD_TOP={};
+function cdBase(f,cdk){
+  const id=(f.gnSoul||f.key)+'/'+cdk, v=f.cds[cdk]||0;
+  if(!(CD_TOP[id]>=v)) CD_TOP[id]=v;
+  return CD_TOP[id]||1;
+}
+
+/* ---------- BẢNG HÀNH TRÌNH (Phiêu lưu) ----------
+   Chỉ có ba khối xếp dọc, cùng lối bảng xếp hạng của giải đấu (người dùng: "đừng bị rối"):
+   thẻ nhân vật + hai thanh điểm ở trên, thuộc tính và chiêu ở giữa, dải màn ở dưới. */
+function advOpen(){
+  if(!ADV) return;
+  const b=document.getElementById('advBoard'); if(b) b.classList.remove('off');
+  sfx('ui_board');
+  advPaint();
+}
+function advClose(){
+  const b=document.getElementById('advBoard'); if(b) b.classList.add('off');
+}
+const advBoardOn=()=>{ const b=document.getElementById('advBoard'); return !!b&&!b.classList.contains('off'); };
+function advPaint(){
+  if(!ADV) return;
+  const body=document.getElementById('advBody'); if(!body) return;
+  const C=CHARS[ADV.key], n=ADV.stage, d=advStageDef(n);
+  const ttl=document.getElementById('advTitle');
+  if(ttl) ttl.textContent=t('advTitle');
+  const sub=document.getElementById('advSub');
+  if(sub) sub.textContent=ADV.done?t('advDone')
+      :tf(d.boss?'advSubBoss':'advSubMob',{n,of:ADV_STAGES,
+         who:d.boss?CHARS[d.enemies[0]].name:tf('advMobs',{c:d.enemies.length})});
+  const need=ADV.lv>=ADV_LVMAX?0:advNeed(ADV.lv);
+  const pct=need?Math.round(ADV.exp/need*100):100;
+
+  let h=`<div class="advTop">
+    <div class="advFace">${avaHtml(ADV.key)}</div>
+    <div class="advWho">
+      <b>${C.name}</b>
+      <div class="advLv">${tf('advLv',{lv:ADV.lv})} · ${t('advHp')} ${advMaxHp()}</div>
+      <div class="advMeter"><i style="width:${pct}%"></i></div>
+      <div class="advMeta">
+        <span>EXP ${ADV.exp}${need?' / '+need:''}</span>
+        <span>${t('advSp')} <b style="color:var(--gold)">${ADV.sp}</b></span>
+        <span>${t('advSxp')} <b style="color:var(--cyan)">${ADV.sxp}</b></span>
+        <span>${t('advKills')} ${ADV.kills}</span>
+      </div>
+    </div>
+  </div>`;
+
+  // ---- thuộc tính ----
+  h+=`<div class="advH">${t('advStats')} <span class="advPts">${tf('advLeft',{n:ADV.sp})}</span></div><div class="advList">`;
+  for(const S of ADV_ST){
+    const v=ADV.st[S.k]|0, can=ADV.sp>0;
+    h+=`<div class="advRow"><div><b>${tr({vi:S.vi,en:S.en})}</b><s>${tr(S.s)}</s></div>`+
+       `<div class="advVal">${v>0?'+'+v:'—'}</div>`+
+       `<button class="advBuy" data-st="${S.k}" type="button"${can?'':' disabled'}>+</button></div>`;
+  }
+  h+='</div>';
+
+  // ---- chiêu ----
+  h+=`<div class="advH">${t('advSkills')} <span class="advPts">${tf('advLeftS',{n:ADV.sxp})}</span></div><div class="advList">`;
+  h+=`<div class="advRow"><div><b>J · ${padName(ADV.key,1)}</b><s>${t('advBasic')}</s></div>`+
+     `<div class="advVal">${t('advOpen')}</div><div></div></div>`;
+  for(const S of ADV_SLOTS){
+    const r=advRank(S.k), lvOk=ADV.lv>=S.lv, maxed=r>=ADV_RANKMAX;
+    const cost=r===0?S.cost:S.cost+r;
+    const can=!maxed&&lvOk&&ADV.sxp>=cost;
+    let note;
+    if(maxed)       note=t('advMax');
+    else if(!lvOk)  note=tf('advNeedLv',{lv:S.lv});
+    else            note=tf(r===0?'advUnlock':'advUp',{c:cost});
+    let pips='<div class="advPips">';
+    for(let i=0;i<ADV_RANKMAX;i++) pips+=`<i class="${i<r?'on':''}"></i>`;
+    pips+='</div>';
+    h+=`<div class="advRow"${r?'':' style="opacity:.72"'}><div>`+
+       `<b>${S.k.toUpperCase()} · ${padName(ADV.key,S.n)}</b><s>${note}`+
+       (r>1?` · ${t('advCdCut')} −${Math.round((r-1)*ADV_RANKCD*100)}%`:'')+`</s></div>`+
+       `<div class="advVal">${r?('★'+r):t('advLock')}${pips}</div>`+
+       `<button class="advBuy" data-sk="${S.k}" type="button"${can?'':' disabled'}>+</button></div>`;
+  }
+  h+='</div>';
+
+  // ---- dải màn ----
+  h+=`<div class="advH">${t('advRoad')}</div><div class="advStage">`;
+  for(let i=1;i<=ADV_STAGES;i++){
+    const cls=[ 'advCell' ];
+    if(advIsBoss(i)) cls.push('boss');
+    if(i<ADV.stage||(ADV.done&&i===ADV_STAGES)) cls.push('done');
+    else if(i===ADV.stage&&!ADV.done) cls.push('now');
+    h+=`<div class="${cls.join(' ')}">${advIsBoss(i)?'★':''}${i}</div>`;
+  }
+  h+='</div>';
+  h+=`<div class="advNote">${t('advHint')}</div>`;
+  body.innerHTML=h;
+
+  const go=document.getElementById('advGo');
+  if(go){
+    go.textContent=ADV.done?t('advReplay'):tf('advGo',{n:ADV.stage});
+    go.disabled=false;
+  }
+  for(const b of body.querySelectorAll('[data-st]'))
+    b.addEventListener('click',()=>{ if(advBuyStat(b.dataset.st)){ sfx('ui_tap'); advPaint(); } });
+  for(const b of body.querySelectorAll('[data-sk]'))
+    b.addEventListener('click',()=>{ if(advBuySkill(b.dataset.sk)){ sfx('ui_next'); advPaint(); padBuild(); } });
+}
+/* Vào màn: hỏi sàn trước (đúng lối mỗi trận một sàn của giải đấu) rồi mới dựng trận. */
+function advPlay(){
+  if(!ADV) return;
+  if(ADV.done) ADV.stage=Math.max(1,Math.min(ADV_STAGES,ADV.stage));
+  advClose();
+  stagePickOpen(()=>{ newGame(); padBuild(); arcFight(); });
 }
 
 /* ---------- màn bảng xếp hạng / sơ đồ nhánh ----------
@@ -16832,6 +17702,9 @@ function cselSteps(){
      Xưởng KHÔNG có bước này (`dataset.page='all'`), mọi test cũ bấm #cselGo một phát
      là vào trận. */
   if(TMP.mode==='duel') return ['mode','p1','p2','stage'];
+  /* Phiêu lưu chọn ĐÚNG MỘT nhân vật, nên dùng lại nguyên bước 'p1' của đấu tay đôi —
+     cùng lưới nhân vật, cùng thẻ hồ sơ, CSS đã giấu cột B ở bước đó từ trước. */
+  if(TMP.mode==='adv') return ['mode','p1','stage'];
   if(TMP.mode==='team') return ['mode'].concat(TMP.teams.map((_,i)=>'t'+i),'stage');
   /* GIẢI ĐẤU KHÔNG có bước chọn màn ở đây — người dùng: *"có việc lặp lại chọn
      background 2 lần ở chế độ league và tournament… 2 chế độ này chỉ chọn background ở
@@ -16870,6 +17743,7 @@ function setTeamCount(n){
    từ `cselPaint()` nữa, không thì bấm "Tiếp" xong chữ vẫn đứng ở bước trước. */
 function cselSubText(){
   if(ARCADE&&cselPage==='mode') return t('subMode');
+  if(ARCADE&&TMP.mode==='adv'&&cselPage==='p1') return tf('subAdv',{n:CKEYS.length});
   if(ARCADE&&(cselPage==='p1'||cselPage==='p2'))
     return tf('subPick',{who:cselPage==='p1'?t('p1'):t('p2'),n:CKEYS.length});
   const i=teamStep();
@@ -17172,13 +18046,35 @@ newGame(); requestAnimationFrame(loop);
 if(ARCADE){
   document.body.classList.add('arcade');
   el('arcTitle').classList.remove('off');
+  /* PRESS START không vào thẳng màn chọn nhân vật nữa: hỏi cách chơi trước.
+     Người dùng: *"lúc load bấm xong start game là chọn chế độ: auto và người chơi"*. */
   el('arcStart').addEventListener('click',()=>{
     ac();                                    // cú bấm đầu tiên mở đường cho âm thanh
     sfx('ui_start');
     el('arcTitle').classList.add('off');
+    el('arcWho').classList.remove('off');
+  });
+  /* Từ màn hỏi cách chơi đi tiếp. Hai nhánh chỉ khác nhau ở `setPlayKind()`; phần sau
+     dùng chung, nên bản auto đi đúng đường cũ. */
+  function whoGo(kind){
+    sfx('ui_next');
+    setPlayKind(kind);
+    el('arcWho').classList.add('off');
     /* Còn giải đá dở (mở lại trang giữa chừng) thì vào thẳng bảng xếp hạng, đừng bắt
        người ta chọn lại dàn đấu thủ từ đầu. */
     if(COMP&&!compDone()){ compOpen(); return; }
+    /* Bản người chơi mà còn hành trình đang đi dở thì về thẳng bảng hành trình. */
+    if(kind==='human'&&ADV&&!ADV.done){ PMODE='adv'; TMP.mode='adv'; TMP.a=ADV.key; advOpen(); return; }
+    if(kind!=='human'&&PMODE==='adv'){ PMODE='duel'; TMP.mode='duel'; }   // auto không có phiêu lưu
+    cselPage=cselSteps()[0]; openCsel();
+  }
+  el('whoAuto').addEventListener('click',()=>whoGo('auto'));
+  el('whoHuman').addEventListener('click',()=>whoGo('human'));
+  el('arcAdv').addEventListener('click',()=>advOpen());
+  el('advGo').addEventListener('click',advPlay);
+  el('advPick').addEventListener('click',()=>{ advClose(); TMP.mode='adv'; cselPage=cselSteps()[0]; openCsel(); });
+  el('advQuit').addEventListener('click',()=>{
+    advClose(); advWipe(); PMODE='duel'; TMP.mode='duel';
     cselPage=cselSteps()[0]; openCsel();
   });
   el('arcAgain').addEventListener('click',()=>{ stagePickOpen(()=>{ newGame(); arcFight(); }); });
@@ -17198,13 +18094,14 @@ if(ARCADE){
     const open=!el('charSelect').classList.contains('off');
     const board=!(document.getElementById('compBoard')||{classList:{contains:()=>true}})
       .classList.contains('off');
-    el('arcOver').classList.toggle('off',!done||open||board||vsOn);
+    el('arcOver').classList.toggle('off',!done||open||board||advBoardOn()||vsOn);
     /* Đang có giải thì "Đánh lại / Đổi nhân vật" nhường chỗ cho đúng MỘT nút đi tiếp —
        bấm Đánh lại giữa giải là đá lại đúng trận vừa xong, vô nghĩa. */
-    const giai=compOn();
+    const giai=compOn(), adv=advOn();
     /* Chỉ gán khi ĐỔI. Gán lại `style.display` mỗi 250ms là bắt trình duyệt tính lại kiểu
        liên tục, và Playwright coi phần tử là "chưa đứng yên" nên không bấm được (mục 9). */
-    show(el('arcAgain'),!giai); show(el('arcPick'),!giai); show(el('arcComp'),giai);
+    show(el('arcAgain'),!giai&&!adv); show(el('arcPick'),!giai&&!adv);
+    show(el('arcComp'),giai); show(el('arcAdv'),adv);
   },250);
 }else{
   openCsel();                     // xưởng: mở màn chọn nhân vật ngay khi vào

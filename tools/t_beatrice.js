@@ -486,7 +486,15 @@ const near = (a, b, eps) => Math.abs(a - b) <= eps;
     const G = window.__G();
     const f = G.fighters.find(x => x.key === 'beatrice');
     const e = G.fighters.find(x => x.key === 'chichi');
-    f.hp = f.maxHp; e.hp = e.maxHp;
+    /* DỰNG LẠI TRẬN CHO SỐNG rồi mới đo. Mấy mục trên đánh thật nên trận có thể đã KẾT
+       THÚC trước khi tới đây (ChiChi gục) — mà trận xong thì không ai đi lại nữa, nên phép
+       đo bước chân đọc ra 0 và cả ba mục dưới đổ oan. Đặt lại `hp` là KHÔNG ĐỦ: phải bật
+       lại `alive` và xoá `G.over` / `G.endT` / `G.kos`, không thì `step()` vẫn coi là trận
+       đã xong. (Đây là chỗ phép đo trước đây sống nhờ may: chỉ cần trang nặng thêm một nhịp
+       là ChiChi gục sớm hơn và cả mục này đổ.) */
+    G.over = null; G.winner = null; G.winTeam = null; G.endT = 0; G.announced = false;
+    G.kos.length = 0; G.freeze = 0; G.freezeAt = null; G.callBanner = null;
+    for (const o of [f, e]) { o.alive = true; o.hp = o.maxHp; o.dots.length = 0; o.pose = 'idle'; }
     f.beaEmt = 0; f.beaMurak = 0; f.stun = 0;
     G.proj.length = 0;
     // đặt địch ra XA hẳn ngoài tầm rồi ghim chân họ lại
