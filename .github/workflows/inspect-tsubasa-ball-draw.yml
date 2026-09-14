@@ -1,0 +1,25 @@
+name: Inspect Tsubasa ball draw
+
+on:
+  push:
+    branches:
+      - balance/isagi-ball-nerf
+
+jobs:
+  inspect:
+    if: github.event.head_commit.message == 'Inspect Tsubasa ball draw'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: balance/isagi-ball-nerf
+      - name: Inspect draw code
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          for n in ["p.type==='ball'", "p.type==='drive'", "p.type==='twin'", "p.spin"]:
+              i=s.find(n, s.find('function drawProj'))
+              print('\n===== '+n+' =====')
+              print(s[max(0,i-900):i+3000] if i>=0 else 'NOT FOUND')
+          PY
