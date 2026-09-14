@@ -1,0 +1,47 @@
+name: Isagi cast balance benchmark
+on:
+  push:
+    branches: [balance/isagi-ball-nerf]
+permissions:
+  contents: write
+jobs:
+  benchmark:
+    if: github.event.head_commit.message == 'Run Isagi cast benchmark'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Apply cast-time nerf and regenerate
+        run: |
+          python3 tools/apply_isagi_cast_nerf_tmp.py
+          python3 tools/mk_play.py
+      - name: Validate game
+        run: |
+          node tools/t_isagi.js
+          node tools/t_conan.js
+          node tools/t_play.js
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess,tempfile,os
+          for f in ['index.html','play.html']:
+              text=Path(f).read_text()
+              for js in re.findall(r'<script[^>]*>(.*?)</script>',text,flags=re.S|re.I):
+                  fd,path=tempfile.mkstemp(suffix='.js'); os.close(fd)
+                  Path(path).write_text(js)
+                  subprocess.run(['node','--check',path],check=True,stdout=subprocess.DEVNULL)
+                  os.unlink(path)
+          PY
+      - name: Commit cast-time balance change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html play.html tools/t_isagi.js
+          git commit -m "Reduce Isagi skill cast times"
+          git push origin HEAD:balance/isagi-ball-nerf
+      - name: Run 160-match Isagi simulation
+        run: node tools/t_isagi_matchups_tmp.js
