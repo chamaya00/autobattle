@@ -2042,13 +2042,13 @@ vốn đã ngắn hơn sàn.
   > **Hai bản Internal Bleeding KHÔNG cộng dồn**: `sakIbOn()` xoá lớp cũ rồi mới đẩy lớp
   > mới, và bản **yếu không ghi đè bản mạnh** (giữ `dps` cao hơn, chỉ làm mới thời gian).
 - **3 · Medical Ninjutsu** — hồi chiêu `gs(18)`, kết ấn `gs(1)` đứng yên, **vẫn ăn đòn và vẫn bị khống chế**;
-  bị cắt ngang ⇒ chỉ chờ `gs(4)`. Xong cast thì **5 nhịp** cách nhau `gs(.5)` hồi **7% lượng
-  máu ĐÃ MẤT** mỗi nhịp (tổng **35%**), và cô **đi lại / đánh nhau bình thường** trong lúc
+  bị cắt ngang ⇒ chỉ chờ `gs(4)`. Xong cast thì **5 nhịp** cách nhau `gs(.5)` hồi **6.2% lượng
+  máu ĐÃ MẤT** mỗi nhịp (tổng **31%**), và cô **đi lại / đánh nhau bình thường** trong lúc
   nó chạy.
   - **Lượng máu đã mất CHỤP LẠI đúng lúc cast xong**, không tính lại sau mỗi nhịp.
-  - Có đồng đội thì hệ số chia đôi: **3.5% cho cô, 3.5% cho đồng đội máu thấp nhất**, và
-    **tính RIÊNG lượng máu đã mất của từng người**. Đo được: cô thiếu 400 ⇒ 14/nhịp, đồng
-    đội thiếu 600 ⇒ 21/nhịp.
+  - Có đồng đội thì hệ số chia đôi: **3.1% cho cô, 3.1% cho đồng đội máu thấp nhất**, và
+    **tính RIÊNG lượng máu đã mất của từng người**. Đo được: cô thiếu 400 ⇒ 12.4/nhịp, đồng
+    đội thiếu 600 ⇒ 18.6/nhịp.
   - **Đồng đội chết giữa chừng thì phần của họ MẤT HẲN**, không dồn sang ai.
   - Không overheal, không hồi sinh, không tự giải khống chế.
 
@@ -2064,13 +2064,14 @@ lượng hồi máu — mấy con số đó người dùng đã chốt cứng t�
 | Cherry Blossom Burst (`cbCd`) | `gs(9)` | `gs(13)` | `gs(11)` | **`gs(11)`** |
 | Chakra-Enhanced Punch (`cpCd`) | `gs(12)` | `gs(16)` | `gs(13)` | **`gs(13)`** |
 | Medical Ninjutsu (`mnCd`) | `gs(9)` | `gs(20)` | `gs(18)` | **`gs(18)`** |
-| lượng hồi mỗi nhịp (`mnSolo`) | 5% | 5% | 5.4% | **7%** (tổng 25% → **35%**) |
-| chia đôi khi có đồng đội (`mnShare`) | 2.5% | 2.5% | 2.7% | **3.5%** |
+| lượng hồi mỗi nhịp (`mnSolo`) | 5% | 5% | 5.4% | **6.2%** (tổng 25% → **31%**) |
+| chia đôi khi có đồng đội (`mnShare`) | 2.5% | 2.5% | 2.7% | **3.1%** |
 
-> **Lượt cắt 1 quá tay một nấc, người dùng nới lại hai lần.** Lần đầu: *"Cooldown hồi máu
-> 20→18s, lượng máu hồi tăng lên đôi chút (tăng cỡ 5-10% so vs hiện tại) — punch vs burst hồi
-> chiêu 13s và 11s th"* ⇒ hồi lấy +8% thành 5.4%. Lần sau họ chốt thẳng một con số:
-> *"Lượng hồi máu tăng lên 7% máu đã mất"*. `mnShare` luôn giữ đúng bằng nửa `mnSolo`.
+> **Lượt cắt 1 quá tay một nấc, người dùng nới lại rồi hạ xuống một nấc — ba lượt cả thảy.**
+> Lần đầu: *"Cooldown hồi máu 20→18s, lượng máu hồi tăng lên đôi chút (tăng cỡ 5-10% so vs
+> hiện tại) — punch vs burst hồi chiêu 13s và 11s th"* ⇒ hồi lấy +8% thành 5.4%. Lần hai họ
+> chốt thẳng **7%**. Xem xong họ hạ lại: *"Giảm xuống hồi 6.2% máu đi, 7% khá mạnh quá"* ⇒
+> **6.2%**. `mnShare` luôn giữ đúng bằng nửa `mnSolo`.
 
 > **Lượng hồi và lượng sát thương KHÔNG phải chỗ để cân bằng theo cảm tính** — mấy con số đó
 > người dùng chốt cứng từ bản mô tả gốc và chỉ chính họ nới. Cắt sức thì cắt bằng **hồi chiêu**.
@@ -2203,7 +2204,8 @@ Kiểm bằng `node tools/t_sakura.js` (97 mục, phần lớn ĐO THẬT trong 
 > | `gs(9)` · 5% (bản đầu) | hoà vĩnh viễn, dao động 390~525 |
 > | `gs(20)` · 5% (lượt cắt 1) | **giảm đều**: giây 18 `585/570` · 45 `478/347` · 93 `288/256` |
 > | `gs(18)` · 5.4% (nới lại) | **hoà lại**: giây 45 `362/415` · 120 `386/325` · 200 `265/393` · 280 `320/323` · 360 `338/409` |
-> | **`gs(18)` · 7% (chốt)** | **vẫn hoà**, dải nhích cao hơn: giây 45 `421/397` · 120 `415/438` · 200 `426/460` · 280 `454/339` · 360 `356/533` |
+> | `gs(18)` · 7% | **vẫn hoà**, dải nhích cao hơn: giây 45 `421/397` · 120 `415/438` · 200 `426/460` · 280 `454/339` · 360 `356/533` |
+> | **`gs(18)` · 6.2% (chốt)** | **vẫn hoà**, dải tụt lại một nấc: giây 45 `384/459` · 120 `452/367` · 200 `307/439` · 280 `342/398` · 360 `292/376` |
 >
 > Ranh giới nằm đâu đó **giữa 18 và 20 giây ở mức hồi 5%**, và nó rất hẹp — đúng kiểu đường
 > cong dốc đã ghi ở mục Beatrice. Muốn nó có hồi kết lại thì **chỉ đụng `SAK.mnCd`**, đừng

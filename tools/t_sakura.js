@@ -213,8 +213,8 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
     ok(r.ibCount===1,'Internal Bleeding không cộng dồn — chỉ một lớp');
     near(r.hampMove,.75,.01,'Hampered −25% tốc chạy');
     near(r.hampCast,1,.01,'Hampered KHÔNG đụng tốc thi triển');
-    ok(r.mnTick===28&&r.mnN===5,`Medical Ninjutsu 5 nhịp × 7% máu đã mất (đo ${r.mnTick}/nhịp trên 400 thiếu)`);
-    ok(r.mnTotal===140,`Medical Ninjutsu hồi tổng 35% máu đã mất (đo ${r.mnTotal}/400)`);
+    ok(r.mnTick===25&&r.mnN===5,`Medical Ninjutsu 5 nhịp × 6.2% máu đã mất (đo ${r.mnTick}/nhịp trên 400 thiếu)`);
+    ok(r.mnTotal===124,`Medical Ninjutsu hồi tổng 31% máu đã mất (đo ${r.mnTotal}/400)`);
     ok(r.noOverheal,'Medical Ninjutsu không bao giờ overheal');
     assert(!errors.length,'lỗi trang: '+errors.join(' | '));
     await browser.close();
@@ -346,9 +346,9 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
       return o;
     });
     ok(r.low==='tsubasa','Medical Ninjutsu chọn đồng đội có tỉ lệ máu thấp nhất');
-    ok(r.selfTick===14&&r.allyTick===21,
-       `hệ số 7% chia đôi, tính RIÊNG máu đã mất của từng người (${r.selfTick} / ${r.allyTick})`);
-    ok(r.selfTotal===70&&r.allyTotal===105,'mỗi người nhận đủ 17.5% máu đã mất của chính mình');
+    ok(r.selfTick===12&&r.allyTick===19,
+       `hệ số 6.2% chia đôi, tính RIÊNG máu đã mất của từng người (${r.selfTick} / ${r.allyTick})`);
+    ok(r.selfTotal===62&&r.allyTotal===93,'mỗi người nhận đủ 15.5% máu đã mất của chính mình');
     ok(r.deadGains===0,'đồng đội chết giữa chừng thì phần hồi của họ mất hẳn, không dồn sang ai');
     ok(r.kSelf===10&&r.kAlly===10,'Katsuyu bên Sakura và Katsuyu Fragment bên đồng đội');
     near(r.allyRegen,16,.2,'đồng đội chỉ nhận Katsuyu (2% máu tối đa), không nhận Byakugo');
