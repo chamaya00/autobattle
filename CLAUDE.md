@@ -2412,6 +2412,22 @@ sân**, ngăn bằng `›`. Ba trạng thái dùng lại đúng cờ sẵn có, 
 Dải màu dưới đáy khung lọc `!g.small` nên chỉ **người đang đánh** mới có vạch màu — nhìn một
 cái là ra đúng cặp đang trên sàn. `winnerBanner()` ghi `WINNING TEAM` như đánh đội.
 
+> **GẠCH TÊN THEO HỒN, KHÔNG THEO THÂN XÁC — lỗi thật đã sửa.** Người dùng: *"khi change thì
+> thân xác kono hồn Ginyu win nhưng lại ghi nhận Ginyu thua"*. Ô đã gục thì `e.f` bị xoá, nên
+> băng-rôn tra ngược `CHARS[e.key]` = nhân vật GỐC CỦA THÂN XÁC. Sau cú CHANGE của Ginyu thì
+> thân xác và hồn không còn đi chung nhau: thân xác Ginyu do hồn Konohamaru điều khiển mà gục
+> thì nó gạch tên **CAPTAIN GINYU**, trong khi hồn Ginyu đang thắng ở thân xác bên kia — đo
+> được đúng băng-rôn `CAPTAIN GINYU✕ · CHICHI VS CAPTAIN GINYU · TSUBASA`, một cái tên vừa bị
+> gạch vừa đang đánh.
+>
+> Cách sửa: `relayOut(cur,f)` **chụp lại `f.name` / `f.color` ngay lúc ngã xuống** thay vì tra
+> ngược về sau — `f.name` vốn đã đi theo hồn (`ginyuPossess()` tráo `name`). Cùng một luật với
+> `compSoul()` của giải đấu ở mục 2c-bis: **thắng thua tính theo HỒN**. Đo lại:
+> `KONOHAMARU✕ · CHICHI✕ VS CAPTAIN GINYU · TSUBASA`.
+>
+> **Hai chỗ đánh dấu `out` phải đi chung `relayOut()`** — `relayFall()` và nhánh người cuối
+> cùng trong `defeat()`. Thêm chỗ thứ ba thì nhớ gọi nó, đừng gán `st='out'` bằng tay.
+
 ### Màn chọn — dùng CHUNG khung với đánh đội
 
 `'team'` và `'relay'` đi chung mọi khung UI (khung đội, hàng chọn số đội, từng bước `t0` →
@@ -4363,8 +4379,11 @@ node tools/t_relay.js   # ĐÁNH TUẦN TỰ: mỗi đội chỉ MỘT người 
                         # còn người mới thì đầy máu, cái xác được dọn khỏi sàn và dot/choáng
                         # của họ tắt theo (dot của người khác thì giữ), chỉ khi một đội hết
                         # sạch người trận mới kết thúc, băng-rôn liệt kê cả hai hàng chờ và
-                        # gạch tên ai đã gục, trần đội hình tách hẳn khỏi đánh đội, và ba đội
-                        # thì quét sạch một đội mà còn hai đội là trận vẫn chạy
+                        # gạch tên ai đã gục, trần đội hình tách hẳn khỏi đánh đội, ba đội
+                        # thì quét sạch một đội mà còn hai đội là trận vẫn chạy, người chơi
+                        # cầm tay thì thay ca xong cầm NGƯỜI MỚI chứ không ôm cái xác, và sau
+                        # cú CHANGE của Ginyu thì hàng chờ gạch tên theo HỒN vừa ngã chứ không
+                        # theo thân xác
 node tools/t_modes.js   # ba chế độ đấu: 1v1 vẫn y như cũ (hai người, đúng hai đầu sàn),
                         # hỗn chiến (mỗi người một phe, hạ một người thì trận còn chạy,
                         # người cuối cùng thắng, băng-rôn gạch tên người đã bị hạ,

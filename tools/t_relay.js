@@ -250,9 +250,39 @@ const chay = (page, giay) => page.evaluate(s => {
      'đúng một người mang cờ human, và đó là người vừa ra sân', tay.cam.join(',') || 'không ai');
   ok(tay.cAlive === true, 'G.c cũng trỏ vào người còn sống của đội kia');
 
-  const loi = errors.concat(ba.errors);
+  // ---------------------------------------------------------------- 10. CHANGE
+  muc('10. Cú CHANGE của Ginyu: hàng chờ gạch tên theo HỒN, không theo thân xác');
   await ba.browser.close();
-  muc('10. Không có lỗi trang');
+  const gn = await openMulti('relay', [['ginyu', 'chichi'], ['kono', 'tsubasa']]);
+  const chg = await gn.page.evaluate(() => {
+    const G = window.__G(), b = 1 / 120;
+    const g = G.fighters.find(f => f.key === 'ginyu'), k = G.fighters.find(f => f.key === 'kono');
+    window.__ginyuPossess(g, k);          // hồn Ginyu sang thân xác Konohamaru (đội 2)
+    const doi = { gName: g.name, gSoul: g.gnSoul, kName: k.name, kSoul: k.gnSoul };
+    // THÂN XÁC Ginyu (giờ do hồn Konohamaru điều khiển) gục xuống
+    window.__defeat(g, k);
+    let n = 0;
+    while (n++ < 900 && !G.fighters.some(f => f.key === 'chichi')) window.__step(b);
+    const ten = window.__vsSegments(false)
+      .filter(s => !s.small || s.out || s.dim)
+      .map(s => ({ txt: s.txt.trim(), out: !!s.out }));
+    return { doi, ten, o0: G.relay[0][0] };
+  });
+  console.log('   ' + chg.ten.map(s => s.txt + (s.out ? '✕' : '')).join('  '));
+  ok(chg.doi.kName === 'Captain Ginyu' && chg.doi.kSoul === 'ginyu',
+     'hồn Ginyu đã sang thân xác Konohamaru', `${chg.doi.kName} (${chg.doi.kSoul})`);
+  const gucRa = chg.ten.find(s => s.out);
+  ok(gucRa && /KONOHAMARU/.test(gucRa.txt),
+     'ô bị gạch mang tên HỒN vừa ngã (Konohamaru), không phải tên thân xác',
+     gucRa ? gucRa.txt : 'không có ô nào bị gạch');
+  ok(!chg.ten.some(s => s.out && /GINYU/.test(s.txt)),
+     'KHÔNG gạch tên Ginyu — hồn anh vẫn đang đánh ở thân xác bên kia');
+  ok(chg.ten.some(s => !s.out && /GINYU/.test(s.txt)),
+     'Ginyu vẫn hiện là người đang đánh trên băng-rôn');
+
+  const loi = errors.concat(ba.errors, gn.errors);
+  await gn.browser.close();
+  muc('11. Không có lỗi trang');
   ok(loi.length === 0, 'không có lỗi JS nào', loi.join(' | ') || 'sạch');
 
   console.log(`\n${fail ? 'HONG' : 'DAT'}  ${pass} dat, ${fail} hong`);
