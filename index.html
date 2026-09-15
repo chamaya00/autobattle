@@ -6138,6 +6138,17 @@ function relayTeamsLeft(){
   return [...s];
 }
 const relayLeft=team=>relayOn()?(G.relay[team]||[]).filter(e=>e.st==='wait').length:0;
+/* Một ô trong hàng chờ vừa gục. Phải CHỤP LẠI tên và màu của người thật sự ngã xuống chứ
+   không để băng-rôn tra ngược `CHARS[e.key]`: sau cú CHANGE của Ginyu thì thân xác và hồn
+   không còn đi chung nhau nữa, mà THẮNG THUA TÍNH THEO HỒN (cùng luật với `compSoul()` của
+   giải đấu). Thân xác Ginyu do hồn Konohamaru điều khiển mà gục thì phải gạch tên
+   KONOHAMARU, chứ gạch tên Ginyu là báo hồn Ginyu thua trong khi anh đang thắng ở thân xác
+   bên kia — đo được đúng cảnh đó. `f.name` vốn đã đi theo hồn nên chỉ việc đọc nó. */
+function relayOut(cur,f){
+  if(!cur)return;
+  cur.st='out'; cur.f=null;
+  if(f){ cur.outName=f.name; cur.outColor=f.color; cur.soul=f.gnSoul||f.key; }
+}
 /* Người vừa gục rời sàn thì mọi thứ họ để lại trên người khác cũng tắt theo: sát thương
    duy trì (cháy, chảy máu, độc), dải bóng đang trói, dấu của Al Shamac. Một cái xác không
    được phép hạ nốt người còn lại trong lúc chờ thay ca. */
@@ -6174,8 +6185,7 @@ function relaySync(){
 function relayFall(t){
   const q=(G.relay||[])[t.team];
   if(!q)return;
-  const cur=q.find(e=>e.f===t);
-  if(cur){ cur.st='out'; cur.f=null; }
+  relayOut(q.find(e=>e.f===t),t);
   const nx=q.find(e=>e.st==='wait');
   if(!nx){
     say(`${t.name} gục xuống — đội ${t.team+1} không còn ai để thay!`,'m');
@@ -6638,10 +6648,8 @@ function defeat(t,src){
     return;
   }
   // chỉ còn một phe: chọn người thắng trong phe đó
-  if(relayOn()){
-    const q=G.relay[t.team]||[], cur=q.find(e=>e.f===t);
-    if(cur){ cur.st='out'; cur.f=null; }      // để băng-rôn gạch nốt tên người cuối cùng
-  }
+  // để băng-rôn gạch nốt tên người cuối cùng, và gạch đúng HỒN vừa ngã chứ không phải thân xác
+  if(relayOn()) relayOut((G.relay[t.team]||[]).find(e=>e.f===t),t);
   const rest=aliveMains();
   let win=null;
   if(src&&!src.summon&&src.alive&&src.hp>0) win=src;
@@ -18346,6 +18354,7 @@ function vsSegments(shortNames){
            `name` mà không đổi thân xác, nên tra `CHARS[e.key]` là băng-rôn ghi một đằng
            thanh máu ghi một nẻo. Người còn ngồi chờ thì chưa có fighter, phải tự ghép. */
         const txt=e.f?label(e.f)
+          :e.outName?e.outName.toUpperCase()
           :((shortNames?((C&&(C.short||C.name))||e.key):((C&&C.name)||e.key))
             +(DUP_SUFFIX[e.dup||0]||'')).toUpperCase();
         push(txt, e.st==='out'?VS_OUT:(e.f?e.f.color:dupColor(C,e.key,e.dup||0)),
