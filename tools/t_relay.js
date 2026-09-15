@@ -280,9 +280,43 @@ const chay = (page, giay) => page.evaluate(s => {
   ok(chg.ten.some(s => !s.out && /GINYU/.test(s.txt)),
      'Ginyu vẫn hiện là người đang đánh trên băng-rôn');
 
-  const loi = errors.concat(ba.errors, gn.errors);
+  // ---------------------------------------------------------------- 11. phe theo hồn
+  muc('11. PHE đi theo HỒN: Ginyu vẫn đánh cho đội của anh, không quay ra đánh thuê');
   await gn.browser.close();
-  muc('11. Không có lỗi trang');
+  const gn2 = await openMulti('relay', [['ginyu', 'chichi'], ['kono', 'tsubasa']]);
+  const phe = await gn2.page.evaluate(() => {
+    const G = window.__G();
+    const g = G.fighters.find(f => f.key === 'ginyu');
+    const doiGinyu = g.team;                       // đội Ginyu được xếp vào lúc chọn
+    const k = G.fighters.find(f => f.key === 'kono' && f.team !== doiGinyu);
+    window.__ginyuPossess(g, k);
+    const hon = f => f.gnSoul || f.key;
+    const xacGinyu = G.fighters.find(f => hon(f) === 'ginyu');   // thân xác đang chứa hồn Ginyu
+    const xacKono = G.fighters.find(f => hon(f) === 'kono');
+    // đồng đội cùng hàng chờ với Ginyu (ChiChi) có phải địch của anh không
+    const qGinyu = G.relay[doiGinyu];
+    return {
+      doiGinyu, honGinyuODoi: xacGinyu.team, honKonoODoi: xacKono.team,
+      than: `${xacGinyu.key} mang hồn ginyu`,
+      oGinyu: qGinyu.map(e => `${e.key}→${e.f ? e.f.name : '-'}`),
+      // đội hình còn lại của hàng chờ Ginyu có ai là địch của anh không
+      dongDoiLaDich: qGinyu.filter(e => e.f && e.f !== xacGinyu)
+                           .some(e => e.f.team !== xacGinyu.team),
+      summonLech: G.fighters.some(f => f.summon && f.master && f.team !== f.master.team)
+    };
+  });
+  ok(phe.honGinyuODoi === phe.doiGinyu,
+     'hồn Ginyu vẫn ở ĐÚNG đội đã xếp anh vào, dù đang mượn thân xác địch',
+     `đội ${phe.honGinyuODoi + 1} (${phe.than})`);
+  ok(phe.honKonoODoi !== phe.doiGinyu,
+     'hồn bị cướp xác về đánh cho đội của CHÍNH HỌ', 'đội ' + (phe.honKonoODoi + 1));
+  ok(!phe.dongDoiLaDich,
+     'đồng đội cùng hàng chờ KHÔNG trở thành địch của Ginyu', phe.oGinyu.join('  '));
+  ok(!phe.summonLech, 'viện binh / đồng minh đổi phe theo chủ, không quay lại bắn chủ');
+
+  const loi = errors.concat(ba.errors, gn.errors, gn2.errors);
+  await gn2.browser.close();
+  muc('12. Không có lỗi trang');
   ok(loi.length === 0, 'không có lỗi JS nào', loi.join(' | ') || 'sạch');
 
   console.log(`\n${fail ? 'HONG' : 'DAT'}  ${pass} dat, ${fail} hong`);
