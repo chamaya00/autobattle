@@ -164,15 +164,15 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
       return o;
     });
     near(r.cbCast,.75,.01,'Cherry Blossom Burst gồng đúng 0.75s');
-    ok(r.cdBurst===13&&r.cdPunch===16&&r.cdHeal===20,
+    ok(r.cdBurst===11&&r.cdPunch===13&&r.cdHeal===18,
        `hồi chiêu đã nới: burst ${r.cdBurst}s · punch ${r.cdPunch}s · heal ${r.cdHeal}s`);
-    ok(r.cdHeal>=2*9,`Medical Ninjutsu hồi chiêu hơn GẤP ĐÔI bản đầu (9s ⇒ ${r.cdHeal}s) — hết hồi máu liên tục`);
+    ok(r.cdHeal>=2*9,`Medical Ninjutsu hồi chiêu GẤP ĐÔI bản đầu (9s ⇒ ${r.cdHeal}s) — hết hồi máu liên tục`);
     ok(r.cbDmg===25,`Cherry Blossom Burst gây đúng 25 dmg (đo ${r.cbDmg})`);
     near(r.cbStun,3,.02,'Cherry Blossom Burst choáng 3s');
     ok(r.cbBroken,'bị choáng lúc gồng thì Cherry Blossom Burst đứt');
-    near(r.cbBreakCd,4,.02,'Cherry Blossom Burst đứt thì chỉ chờ 4s chứ không phải cả 9s');
+    near(r.cbBreakCd,4,.02,'Cherry Blossom Burst đứt thì chỉ chờ 4s chứ không phải cả 11s');
     ok(r.mnBroken,'bị choáng lúc kết ấn thì Medical Ninjutsu đứt');
-    near(r.mnBreakCd,4,.02,'Medical Ninjutsu đứt thì chỉ chờ 4s chứ không phải cả 9s');
+    near(r.mnBreakCd,4,.02,'Medical Ninjutsu đứt thì chỉ chờ 4s chứ không phải cả 18s');
     ok(r.cpDmg===30,`Chakra-Enhanced Punch gây đúng 30 dmg (đo ${r.cpDmg})`);
     near(r.cpStun,3.5,.02,'Chakra-Enhanced Punch choáng 3.5s');
     near(r.cpIbDps,5,.01,'Internal Bleeding của chiêu 2 là 5 dmg/s');
@@ -189,8 +189,8 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
     ok(r.ibCount===1,'Internal Bleeding không cộng dồn — chỉ một lớp');
     near(r.hampMove,.75,.01,'Hampered −25% tốc chạy');
     near(r.hampCast,1,.01,'Hampered KHÔNG đụng tốc thi triển');
-    ok(r.mnTick===20&&r.mnN===5,`Medical Ninjutsu 5 nhịp × 5% máu đã mất (đo ${r.mnTick}/nhịp)`);
-    ok(r.mnTotal===100,`Medical Ninjutsu hồi tổng 25% máu đã mất (đo ${r.mnTotal}/400)`);
+    ok(r.mnTick===22&&r.mnN===5,`Medical Ninjutsu 5 nhịp × 5.4% máu đã mất (đo ${r.mnTick}/nhịp trên 400 thiếu)`);
+    ok(r.mnTotal===108,`Medical Ninjutsu hồi tổng 27% máu đã mất (đo ${r.mnTotal}/400)`);
     ok(r.noOverheal,'Medical Ninjutsu không bao giờ overheal');
     assert(!errors.length,'lỗi trang: '+errors.join(' | '));
     await browser.close();
@@ -322,9 +322,9 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
       return o;
     });
     ok(r.low==='tsubasa','Medical Ninjutsu chọn đồng đội có tỉ lệ máu thấp nhất');
-    ok(r.selfTick===10&&r.allyTick===15,
-       `hệ số 5% chia đôi, tính RIÊNG máu đã mất của từng người (${r.selfTick} / ${r.allyTick})`);
-    ok(r.selfTotal===50&&r.allyTotal===75,'mỗi người nhận đủ 12.5% máu đã mất của chính mình');
+    ok(r.selfTick===11&&r.allyTick===16,
+       `hệ số 5.4% chia đôi, tính RIÊNG máu đã mất của từng người (${r.selfTick} / ${r.allyTick})`);
+    ok(r.selfTotal===54&&r.allyTotal===81,'mỗi người nhận đủ 13.5% máu đã mất của chính mình');
     ok(r.deadGains===0,'đồng đội chết giữa chừng thì phần hồi của họ mất hẳn, không dồn sang ai');
     ok(r.kSelf===10&&r.kAlly===10,'Katsuyu bên Sakura và Katsuyu Fragment bên đồng đội');
     near(r.allyRegen,16,.2,'đồng đội chỉ nhận Katsuyu (2% máu tối đa), không nhận Byakugo');
