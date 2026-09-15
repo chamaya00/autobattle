@@ -1875,6 +1875,7 @@
       <button class="mTab on" id="mTabDuel" data-ico="⚔" style="--mc:#4DE2FF" data-mode="duel" type="button"><b data-i18n="mDuel">Đấu tay đôi</b><i data-i18n="mDuelSub">1 vs 1</i></button>
       <button class="mTab" id="mTabFfa" data-ico="🔥" style="--mc:#FF7A4F" data-mode="ffa" type="button"><b data-i18n="mFfa">Hỗn chiến</b><i data-i18n="mFfaSub">3–6 người · last man standing</i></button>
       <button class="mTab" id="mTabTeam" data-ico="🛡" style="--mc:#6BE39A" data-mode="team" type="button"><b data-i18n="mTeam">Đánh theo đội</b><i data-i18n="mTeamSub">2–4 đội · tối đa 8 người</i></button>
+      <button class="mTab" id="mTabRelay" data-ico="🔁" style="--mc:#C08CFF" data-mode="relay" type="button"><b data-i18n="mRelay">Đánh tuần tự</b><i data-i18n="mRelaySub">2–4 đội · thắng thì ở lại sân</i></button>
       <button class="mTab" id="mTabLeague" data-ico="🏆" style="--mc:#FFC542" data-mode="league" type="button"><b data-i18n="mLeague">Giải vòng tròn</b><i data-i18n="mLeagueSub">3–10 người · tính điểm</i></button>
       <button class="mTab" id="mTabCup" data-ico="🥇" style="--mc:#FF4FA3" data-mode="cup" type="button"><b data-i18n="mCup">Giải loại trực tiếp</b><i data-i18n="mCupSub">4 hoặc 8 người · bracket</i></button>
       <!-- Chỉ có ở bản NGƯỜI CHƠI; CSS giấu nó đi khi body không mang .human. -->
@@ -2006,6 +2007,7 @@ const L={
     mDuel:'Đấu tay đôi', mDuelSub:'1 vs 1',
     mFfa:'Hỗn chiến', mFfaSub:'3–6 người · last man standing',
     mTeam:'Đánh theo đội', mTeamSub:'2–4 đội · tối đa 8 người',
+    mRelay:'Đánh tuần tự', mRelaySub:'2–4 đội · thắng thì giữ máu ở lại sân',
     sideL:'Bên trái', sideR:'Bên phải', stagePick:'Chọn màn đấu',
     again:'↻ Đánh lại', repick:'⚔ Đổi nhân vật / màn',
     /* ---------- bản người chơi + phiêu lưu ---------- */
@@ -2054,6 +2056,9 @@ const L={
     cselTeamN:'CHỌN <span>ĐỘI {n}</span>', cselFfa:'CHỌN <span>ĐỘI HÌNH</span>',
     goTeamN:'Tiếp ▸ Đội {n}', teamN:'Đội {n}', teamCount:'Số đội', ffaHead:'Đấu thủ',
     subTeamStep:'Chọn {lo}–{hi} người cho đội {n} · {cur}/{max} người trên sàn',
+    subRelay:'Đánh tuần tự — {n} đội ({lo}–{hi}), mỗi đội {tlo}–{thi} người · {cur}/{max} người',
+    subRelayStep:'Xếp {lo}–{hi} người cho đội {n} theo THỨ TỰ ra sân · {cur}/{max} người',
+    cselRelayN:'XẾP <span>ĐỘI {n}</span>',
     rosterHint:'Bấm vào ô bên dưới để thêm người (tối thiểu {lo})',
     rmTeam:'✕ Bỏ đội', addTeam:'+ Thêm đội', rmFighter:'Bỏ ra khỏi đội hình',
     mLeague:'Giải vòng tròn', mLeagueSub:'3–10 người · tính điểm',
@@ -2111,6 +2116,7 @@ const L={
     mDuel:'Duel', mDuelSub:'1 vs 1',
     mFfa:'Free-for-all', mFfaSub:'3–6 fighters · last one standing',
     mTeam:'Team battle', mTeamSub:'2–4 teams · up to 8 fighters',
+    mRelay:'Relay battle', mRelaySub:'2–4 teams · winner stays on, HP and all',
     sideL:'Left side', sideR:'Right side', stagePick:'Select stage',
     again:'↻ Rematch', repick:'⚔ Change fighter / stage',
     /* ---------- player build + adventure ---------- */
@@ -2159,6 +2165,9 @@ const L={
     cselTeamN:'SELECT <span>TEAM {n}</span>', cselFfa:'SELECT <span>LINE-UP</span>',
     goTeamN:'Next ▸ Team {n}', teamN:'Team {n}', teamCount:'Teams', ffaHead:'Fighters',
     subTeamStep:'Pick {lo}–{hi} fighters for team {n} · {cur}/{max} on the field',
+    subRelay:'Relay battle — {n} teams ({lo}–{hi}), {tlo}–{thi} each · {cur}/{max} fighters',
+    subRelayStep:'Line up {lo}–{hi} fighters for team {n} IN ENTRY ORDER · {cur}/{max} fighters',
+    cselRelayN:'LINE UP <span>TEAM {n}</span>',
     rosterHint:'Tap a fighter below to add ({lo} minimum)',
     rmTeam:'✕ Remove team', addTeam:'+ Add team', rmFighter:'Remove from line-up',
     mLeague:'League', mLeagueSub:'3–10 fighters · points table',
@@ -2307,6 +2316,9 @@ const PICK={a:'kono',b:'chichi'};
            nên foeOf() coi tất cả những người còn lại là địch. Ai còn đứng cuối cùng thì thắng.
    'team'  đánh theo đội: vẫn đúng hai phe 0 và 1 nhưng mỗi phe nhiều người. Đội nào
            còn người là đội đó thắng.
+   'relay' đánh theo đội nhưng TUẦN TỰ: mỗi đội chỉ cử MỘT người ra sân, ai gục thì
+           người kế tiếp của đội đó bước ra, còn người thắng Ở LẠI SÂN VỚI ĐÚNG LƯỢNG
+           MÁU CÒN LẠI. Hết sạch người là đội đó thua.
    Chế độ 'duel' phải dựng ra đúng cùng một đội hình như bản cũ — mọi test hiện có đi
    qua đường này. */
 let PMODE='duel';
@@ -2325,7 +2337,21 @@ const isHuman=()=>PLAYKIND==='human';
    chồng lên nhau, đọc không ra ai với ai). */
 const FFA_MIN=3, FFA_MAX=6;
 const TEAM_MIN=1, TEAM_MAX=3, TEAM_MIN_N=2, TEAM_MAX_N=4, TEAM_TOTAL=8;
+/* Đánh tuần tự: cũng 2~4 đội, nhưng MỖI ĐỘI CHỈ MỘT NGƯỜI RA SÂN một lúc nên trần người
+   nới rộng hẳn ra — cả sàn nhiều nhất là 4 thanh máu dù đội hình có 16 người. Đúng lý do
+   TEAM_TOTAL phải chặn ở 8 (tám thanh máu chồng lên nhau thì đọc không ra ai) thì ở đây
+   không còn. Mỗi đội tối thiểu 2 người, không thì nó chỉ là đánh đội 1v1. */
+const RELAY_MIN=2, RELAY_MAX=5, RELAY_MIN_N=2, RELAY_MAX_N=4, RELAY_TOTAL=16;
+/* 'team' và 'relay' dùng CHUNG khung chọn đội hình nhưng khác trần, nên mọi chỗ trong màn
+   chọn đọc giới hạn qua `squadLim()` chứ đừng ghim thẳng TEAM_* vào. Hai bảng dưới đây là
+   hằng số thuần (không đụng tới TMP) nên đặt ở đâu cũng an toàn. */
+const TEAM_LIM={min:TEAM_MIN,max:TEAM_MAX,minN:TEAM_MIN_N,maxN:TEAM_MAX_N,total:TEAM_TOTAL};
+const RELAY_LIM={min:RELAY_MIN,max:RELAY_MAX,minN:RELAY_MIN_N,maxN:RELAY_MAX_N,total:RELAY_TOTAL};
+const squadMode=m=>m==='team'||m==='relay';
+const squadLim=m=>m==='relay'?RELAY_LIM:TEAM_LIM;
+const SQUAD_MAX_N=Math.max(TEAM_MAX_N,RELAY_MAX_N);
 const ROSTERS={ffa:['kono','chichi','tsubasa'], teams:[['kono','chichi'],['tsubasa','shika']],
+                relay:[['kono','chichi','tsubasa'],['shika','suzune','ginyu']],
                 comp:['kono','chichi','tsubasa','shika']};   // dàn đấu thủ của giải đấu
 let CUPSEED='random';               // xếp nhánh: 'random' bốc thăm, 'manual' tự xếp
 let LGLEGS=1;                       // giải vòng tròn: 1 = một lượt, 2 = lượt đi lượt về
@@ -3982,7 +4008,7 @@ async function loadSaved(){
     const rawPick=await Store.get('cfg_picks');
     if(rawPick){ const p=JSON.parse(rawPick);
       if(CHARS[p.a])PICK.a=p.a; if(CHARS[p.b])PICK.b=p.b; dirty=true;
-      if(['ffa','team','duel','league','cup'].indexOf(p.mode)>=0) PMODE=p.mode;
+      if(['ffa','team','relay','duel','league','cup'].indexOf(p.mode)>=0) PMODE=p.mode;
       if(p.seed==='random'||p.seed==='manual') CUPSEED=p.seed;
       if(p.legs===1||p.legs===2) LGLEGS=p.legs;
       if(p.stage&&STAGE_KEYS.indexOf(p.stage)>=0) STAGE=p.stage;
@@ -3994,9 +4020,14 @@ async function loadSaved(){
         const sides=Array.isArray(p.rosters.teams)?p.rosters.teams:[p.rosters.t0,p.rosters.t1];
         const good=sides.filter(ok).map(a=>a.slice(0,TEAM_MAX)).slice(0,TEAM_MAX_N);
         if(good.length>=TEAM_MIN_N) ROSTERS.teams=good;
+        const rel=Array.isArray(p.rosters.relay)?p.rosters.relay:[];
+        const relOk=rel.filter(a=>ok(a)&&a.length>=RELAY_MIN)
+                       .map(a=>a.slice(0,RELAY_MAX)).slice(0,RELAY_MAX_N);
+        if(relOk.length>=RELAY_MIN_N) ROSTERS.relay=relOk;
         if(ok(p.rosters.comp)) ROSTERS.comp=p.rosters.comp.slice(0,LG_MAX);
       }
       if(PMODE==='ffa'&&ROSTERS.ffa.length<FFA_MIN) PMODE='duel';
+      if(PMODE==='relay'&&ROSTERS.relay.length<RELAY_MIN_N) PMODE='duel';
     }
     try{ const lg=await Store.get('cfg_lang'); if(lg==='en'||lg==='vi') LANG=lg; }catch(e){}
     applyLang();
@@ -4048,6 +4079,7 @@ async function loadSaved(){
     if(typeof cselRefresh==='function'){
       TMP.a=PICK.a; TMP.b=PICK.b; TMP.mode=PMODE; TMP.stage=STAGE;
       TMP.ffa=ROSTERS.ffa.slice(); TMP.teams=ROSTERS.teams.map(a=>a.slice());
+      TMP.relay=ROSTERS.relay.map(a=>a.slice());
       cselRefresh();
     }
     if(dirty&&typeof newGame==='function'){ newGame(); running=false; document.getElementById('play').textContent=t('play'); }
@@ -5978,6 +6010,26 @@ function aimTarget(f){
   if(t&&t.alive&&t.hp>0&&!t.leaving&&t.team!==f.team&&G.fighters.indexOf(t)>=0) return t;
   return foeOf(f);
 }
+/* ---------- đánh tuần tự (relay) ----------
+   Mỗi đội là một HÀNG CHỜ: người đầu ra sân, ai gục thì người kế tiếp bước ra, còn bên
+   thắng ở lại sân với đúng lượng máu còn lại. Hết sạch người là đội đó thua.
+
+   Cả chế độ này chỉ là đánh đội với một luật thay người, nên nó KHÔNG đụng vào ruột
+   engine: `foeOf()` / `aliveTeams()` / vòng va chạm vốn đã chạy theo số phe thật, việc
+   duy nhất phải thêm là hàng chờ và cú thay người trong `defeat()`. */
+const RELAY_CINE=gs(1.1);       // đóng băng sàn một nhịp cho người vừa gục đổ xuống
+const RELAY_IN=gs(.85);         // rồi người kế tiếp mới bước ra (nằm trong quãng trên)
+/* Đội hình đầy đủ: mỗi đội một mảng {key, dup, team}. Số thứ tự bản sao đánh CHUNG cho
+   cả sàn — hai Konohamaru ở hai đội khác nhau vẫn phải ra "Konohamaru" và "Konohamaru II"
+   chứ không cùng một tên một màu. */
+function relaySquads(){
+  const seen={};
+  return ROSTERS.relay.map((side,t)=>side.map(key=>{
+    const dup=seen[key]|0; seen[key]=dup+1;
+    return {key,dup,team:t};
+  }));
+}
+const relayOn=()=>!!G&&G.mode==='relay'&&!!G.relay;
 /* Đội hình của trận sắp tới: danh sách {key, team}.
    1v1 dựng ra đúng cùng một đội hình như bản cũ — hai ô A/B, phe 0 và phe 1.
    Hỗn chiến: mỗi người MỘT phe riêng, nên ai cũng là địch của tất cả những người còn lại.
@@ -5985,6 +6037,9 @@ function aimTarget(f){
 function buildRoster(){
   if(PMODE==='adv'&&ADV) return advRoster();   // phiêu lưu: một người phe 0, cả đám địch phe 1
   if(PMODE==='ffa')  return ROSTERS.ffa.map((key,i)=>({key,team:i}));
+  /* Đánh tuần tự: chỉ NGƯỜI ĐẦU của mỗi đội có mặt lúc mở màn, phần còn lại ngồi chờ
+     trong `G.relay` và bước ra khi đồng đội phía trước gục. */
+  if(PMODE==='relay') return relaySquads().map(side=>side[0]).filter(Boolean);
   if(PMODE==='team'){
     const out=[];
     ROSTERS.teams.forEach((side,t)=>{ for(const key of side) out.push({key,team:t}); });
@@ -6008,7 +6063,9 @@ function spawnSpots(roster){
     return out;
   }
   const cx=W/2, top=PAD+96, bot=H-PAD-70, cy=(top+bot)/2;
-  if(PMODE==='team'){
+  /* Đánh tuần tự đi chung đường với đánh đội: mỗi đội đúng MỘT người trên sàn, nên hai
+     đội thì ra đúng hai đầu sàn như 1v1, ba bốn đội thì mỗi đội một góc vòng tròn. */
+  if(PMODE==='team'||PMODE==='relay'){
     const out=new Array(n);
     const nt=Math.max(1,roster.reduce((m,r)=>Math.max(m,r.team+1),0));
     const side=t=>{ const ids=[]; roster.forEach((r,i)=>{ if(r.team===t) ids.push(i); }); return ids; };
@@ -6051,26 +6108,149 @@ function teamLabel(team){
   for(const f of G.fighters) if(f&&!f.summon&&f.team===team) names.push(f.name);
   return names.join(' + ');
 }
+/* Tên một người trong hàng chờ — chưa có fighter nên phải tự ghép hậu tố bản sao, đúng
+   cách `mkChar()` ghép. Dùng cho nhật ký và cho băng-rôn tên cặp đấu. */
+function relayName(e){
+  const C=CHARS[e.key], d=e.dup||0;
+  return C.name+(d<DUP_SUFFIX.length?DUP_SUFFIX[d]:' #'+(d+1));
+}
+function relaySquadText(team){
+  const q=(G.relay||[])[team]||[];
+  return q.map(relayName).join(' › ');
+}
+/* Dựng hàng chờ lúc vào trận: người đầu của mỗi đội đã có mặt trên sàn, phần còn lại đánh
+   dấu 'wait'. `relayHome` là chỗ đứng của đội đó — người thay ca bước ra đúng chỗ ấy. */
+function relaySetup(roster,spots){
+  G.relay=relaySquads().map(side=>side.map(e=>({key:e.key,dup:e.dup,st:'wait',f:null})));
+  G.relayHome=[];
+  roster.forEach((r,i)=>{ if(spots[i]) G.relayHome[r.team]={x:spots[i].x,y:spots[i].y}; });
+  for(const f of G.fighters){
+    const q=G.relay[f.team];
+    if(q&&q[0]){ q[0].st='live'; q[0].f=f; }
+  }
+}
+/* Đội nào còn trong cuộc: đang có người trên sàn HOẶC còn người ngồi chờ. Phải hỏi cả vế
+   sau, vì giữa lúc một người gục và người kế tiếp bước ra thì đội đó không có ai trên sàn
+   — đếm bằng `aliveTeams()` suông là trận kết thúc oan ngay tại khoảng hở đó. */
+function relayTeamsLeft(){
+  const s=new Set(aliveTeams());
+  if(relayOn()) G.relay.forEach((q,t)=>{ if(q.some(e=>e.st==='wait')) s.add(t); });
+  return [...s];
+}
+const relayLeft=team=>relayOn()?(G.relay[team]||[]).filter(e=>e.st==='wait').length:0;
+/* Người vừa gục rời sàn thì mọi thứ họ để lại trên người khác cũng tắt theo: sát thương
+   duy trì (cháy, chảy máu, độc), dải bóng đang trói, dấu của Al Shamac. Một cái xác không
+   được phép hạ nốt người còn lại trong lúc chờ thay ca. */
+function relayShed(o){
+  for(const f of G.fighters){
+    if(f.dots&&f.dots.length)
+      for(let i=f.dots.length-1;i>=0;i--){
+        const d=f.dots[i];
+        if(d&&(d.src===o||(d.src&&d.src.master===o))) f.dots.splice(i,1);
+      }
+    if(f.bind&&f.bind.e===o) f.bind=null;
+    if(f.foe===o) f.foe=null;
+    if(f.tauntBy===o) f.tauntBy=null;
+    if(f.beaShamac&&f.beaShamac.e===o){ f.beaShamac=null; o.beaWarp=null; }
+  }
+}
+/* Hai ô máu / ô màu / nút bấm đọc qua G.k và G.c, mà đánh tuần tự thì đội hình đổi giữa
+   trận — phải bốc lại đúng người của từng phe sau mỗi lượt thay ca. Bám theo PHE chứ
+   đừng bám theo thứ tự trong mảng: người mới luôn được đẩy vào cuối G.fighters, lấy
+   `mains[0]` là G.k nhảy sang phe bên kia. */
+function relaySync(){
+  const mains=aliveMains();
+  if(!mains.length)return;
+  G.k=mains.find(f=>f.team===G.kTeam)||mains[0];
+  G.c=mains.find(f=>f.team!==G.k.team)||mains[1]||mains[0];
+  G.cTeam=G.c.team;
+  syncHuman();
+  if(isHuman()&&typeof padBuild==='function') padBuild();
+  applyColors(); applyHp();
+}
+/* Một người của đội đang đánh tuần tự vừa gục. Còn người chờ thì hẹn giờ cho họ bước ra;
+   hết người thì đội đó bị loại (trận vẫn chạy tiếp nếu còn từ hai đội trở lên — `defeat()`
+   đã đếm trước rồi mới gọi vào đây). */
+function relayFall(t){
+  const q=(G.relay||[])[t.team];
+  if(!q)return;
+  const cur=q.find(e=>e.f===t);
+  if(cur){ cur.st='out'; cur.f=null; }
+  const nx=q.find(e=>e.st==='wait');
+  if(!nx){
+    say(`${t.name} gục xuống — đội ${t.team+1} không còn ai để thay!`,'m');
+    /* Đội này ra khỏi cuộc mà trận vẫn chạy (ba đội trở lên). G.k / G.c có thể đang trỏ
+       vào chính người vừa gục — ô máu, camera và cả cú bấm tay đều đọc qua hai cái đó. */
+    relaySync();
+    return;
+  }
+  /* Đóng băng đúng một nhịp cho cú đổ người rồi mới thay ca — không thì người mới hiện ra
+     ngay trong khung hình đối thủ còn đang ngã. */
+  G.freeze=Math.max(G.freeze,RELAY_CINE); G.freezeAt=t;
+  G.callBanner={txt:'NEXT UP',color:teamTint(t.team),life:RELAY_CINE*1.4,ml:RELAY_CINE*1.4};
+  say(`${t.name} gục xuống — ${relayName(nx)} vào thay (đội ${t.team+1} còn ${relayLeft(t.team)} người dự bị).`,'m');
+  later(RELAY_IN,()=>relayIn(t.team,nx),true);
+}
+/* Người kế tiếp bước ra sân. */
+function relayIn(team,e){
+  if(!G||G.over||!e||e.st!=='wait')return;
+  const q=(G.relay||[])[team];
+  if(!q||q.indexOf(e)<0)return;
+  /* Người vừa gục rời hẳn sàn: gỡ khỏi G.fighters lẫn khỏi quãng đổ người, không thì cái
+     xác nằm đúng chỗ người mới sắp đứng. */
+  for(let i=G.fighters.length-1;i>=0;i--){
+    const o=G.fighters[i];
+    if(!o||o.summon||o.team!==team||o.alive)continue;
+    G.fighters.splice(i,1);
+    for(let j=G.kos.length-1;j>=0;j--) if(G.kos[j]&&G.kos[j].f===o) G.kos.splice(j,1);
+    relayShed(o);
+  }
+  /* Quãng nghỉ giữa hai lượt: người ở lại sân GIỮ NGUYÊN máu, hồi chiêu và mọi thanh tiến
+     trình đã tích được — đó là cả cái hay của chế độ này. Chỉ gỡ khống chế đang dính, vì
+     người gây ra nó đã rời sàn rồi. */
+  for(const f of G.fighters){
+    if(f.summon)continue;
+    f.stun=0; f.lock=0; f.kbx=0; f.kby=0;
+  }
+  const home=(G.relayHome||[])[team]||{x:W/2,y:H/2};
+  const f=mkChar(e.key,team,home.x,home.y,e.dup);
+  e.st='live'; e.f=f;
+  G.fighters.push(f);
+  relaySync();
+  G.callBanner={txt:f.name.toUpperCase(),color:f.color,life:1.6,ml:1.6};
+  ring(f.x,f.y-10,150,f.color,.55);
+  sfx('summon');
+  say(`${f.name} ra sân cho đội ${team+1}!`,'g');
+}
 function newGame(){
-  G={t:0,proj:[],waves:[],fx:[],floats:[],conf:[],timers:[],logs:[],over:null,winner:null,winTeam:null,endT:0,announced:false,cam:{x:W/2,y:H/2,z:1,shake:0},freeze:0,freezeAt:null,callBanner:null,kos:[],fighters:[],mates:[],flashback:null,flashScreen:0};
+  G={t:0,proj:[],waves:[],fx:[],floats:[],conf:[],timers:[],logs:[],over:null,winner:null,winTeam:null,endT:0,announced:false,cam:{x:W/2,y:H/2,z:1,shake:0},freeze:0,freezeAt:null,callBanner:null,kos:[],fighters:[],mates:[],flashback:null,flashScreen:0,relay:null,relayHome:null,kTeam:0,cTeam:1};
   G.timeWarp=null;
   G.mode=PMODE;
   const roster=buildRoster(), spots=spawnSpots(roster), seen={};
   G.fighters=roster.map((r,i)=>{
-    const dup=seen[r.key]|0; seen[r.key]=dup+1;
+    /* Đánh tuần tự đã đánh số bản sao từ trước (người ngồi chờ cũng phải có số của mình),
+       nên tôn trọng `r.dup` khi nó có; mấy chế độ kia vẫn đếm tại chỗ y như cũ. */
+    const dup=r.dup!=null?r.dup:(seen[r.key]|0);
+    seen[r.key]=Math.max(seen[r.key]|0,dup+1);
     return mkChar(r.key,r.team,spots[i].x,spots[i].y,dup);
   });
   /* G.k / G.c vẫn là hai cái tên cũ: người đầu của phe đầu và người đầu của phe khác nó.
      Ô màu, ô máu, chế độ điều khiển tay và camera phân cảnh đều đọc qua hai cái này. */
   G.k=G.fighters[0];
   G.c=G.fighters.find(f=>f.team!==G.k.team)||G.fighters[1]||G.fighters[0];
+  /* Phe của hai ô đó, giữ lại để đánh tuần tự bốc lại đúng người sau mỗi lượt thay: đội
+     hình đổi liên tục nên "người đầu mảng" không còn nói lên phe nào nữa. */
+  G.kTeam=G.k.team; G.cTeam=G.c.team;
+  if(PMODE==='relay') relaySetup(roster,spots);
   /* Phiêu lưu: siết máu người chơi theo cấp và máu / sát thương địch theo số màn, rồi mở
      sổ đếm exp của lượt này. Phải nằm SAU khi G.fighters đã dựng xong. */
   if(PMODE==='adv'&&ADV){ G.advXp=0; G.advSxp=0; ADV_ENC=null; advTune(); }
   syncHuman();                 // ai đang do người chơi cầm, theo ô chế độ
   if(typeof resetSfxPos==='function') resetSfxPos();
   const englishMatch=G.fighters.some(f=>(f.key==='tanjiro'||f.key==='gojo'||f.key==='conan')&&!f.summon);
-  if(englishMatch&&PMODE==='team')     say(`Team battle ready. ${teamLabel(0)} vs ${teamLabel(1)}.`,'g');
+  if(englishMatch&&PMODE==='relay')    say(`Relay battle ready — ${relaySquadText(0)} vs ${relaySquadText(1)}. Winner stays on.`,'g');
+  else if(PMODE==='relay')             say(`Đánh tuần tự sẵn sàng — ${relaySquadText(0)} vs ${relaySquadText(1)}. Ai thắng thì giữ máu ở lại sân.`,'g');
+  else if(englishMatch&&PMODE==='team')     say(`Team battle ready. ${teamLabel(0)} vs ${teamLabel(1)}.`,'g');
   else if(englishMatch&&PMODE==='ffa') say(`Free-for-all ready — ${G.fighters.length} fighters, last one standing wins.`,'g');
   else if(englishMatch)                say(`Battle ready. ${G.k.name} vs ${G.c.name}.`,'g');
   else if(PMODE==='team')          say(`Trận đấu theo đội sẵn sàng. ${teamLabel(0)} vs ${teamLabel(1)}.`,'g');
@@ -6431,7 +6611,9 @@ function defeat(t,src){
   t.beaShamac=null; t.beaUlt=null; t.beaWarp=null;
   // ai đang nhắm vào người vừa gục thì bỏ nhắm, để lượt sau bốc lại đối thủ khác
   for(const o of G.fighters){ if(o.foe===t) o.foe=null; if(o.tauntBy===t) o.tauntBy=null; }
-  const teams=aliveTeams();
+  /* Đánh tuần tự: một đội chưa hết người thì vẫn còn trong cuộc dù lúc này không có ai
+     của họ đứng trên sàn — phải đếm cả hàng chờ. */
+  const teams=relayOn()?relayTeamsLeft():aliveTeams();
   if(teams.length>1){
     koFx(t);
     /* Trận còn chạy tiếp nên phải dọn cho sạch: đồng minh (Ayanokouji) và viện binh của
@@ -6446,6 +6628,7 @@ function defeat(t,src){
       else G.fighters.splice(i,1);
     }
     sfx('ko');
+    if(relayOn()){ relayFall(t); return; }
     const left=aliveMains().length;
     say(t.key==='tanjiro'
       ?`Tanjiro Kamado is defeated — ${left} fighter${left===1?'':'s'} remain.`
@@ -6455,6 +6638,10 @@ function defeat(t,src){
     return;
   }
   // chỉ còn một phe: chọn người thắng trong phe đó
+  if(relayOn()){
+    const q=G.relay[t.team]||[], cur=q.find(e=>e.f===t);
+    if(cur){ cur.st='out'; cur.f=null; }      // để băng-rôn gạch nốt tên người cuối cùng
+  }
   const rest=aliveMains();
   let win=null;
   if(src&&!src.summon&&src.alive&&src.hp>0) win=src;
@@ -6491,6 +6678,10 @@ function finish(w){
   if(win&&win.key==='gojo')say('SATORU GOJO WINS!','g');
   else if(win&&win.key==='conan')say('CONAN EDOGAWA WINS!','g');
   else say(win&&win.key==='tanjiro'?'TANJIRO WINS!':G.over+' thắng!','g');
+  /* Đánh tuần tự: nói rõ đội nào thắng và còn bao nhiêu người chưa phải ra sân — đó mới
+     là thước đo một trận sát nút hay một chiều. */
+  if(relayOn()&&win) say(`Đội ${win.team+1} thắng — ${win.name} trụ lại với ${Math.max(0,Math.round(win.hp))} máu, `+
+    `còn ${relayLeft(win.team)} người chưa phải ra sân.`,'g');
   /* Đang đánh một trận của giải thì ghi kết quả NGAY tại đây — G còn nguyên đội hình
      vừa đánh, ra khỏi hàm này là mấy con số sát thương không đọc lại được nữa. */
   if(compLive) compResult(win);
@@ -18129,7 +18320,7 @@ const VS_OUT='#6B6B7A';        // màu tên của người đã bị hạ gục
 function vsSegments(shortNames){
   const mains=G.fighters.filter(f=>f&&!f.summon);
   const seg=[];
-  const push=(txt,color,small,out)=>seg.push({txt,color,small:!!small,out:!!out});
+  const push=(txt,color,small,out,dim)=>seg.push({txt,color,small:!!small,out:!!out,dim:!!dim});
   /* Ai đã bị hạ thì tên xám lại và mờ đi — nhìn băng-rôn là biết ngay còn mấy người
      trên sàn, khỏi phải đếm thanh máu giữa một đám sáu người.
      Tám người mà viết đủ tên dài thì dù thu cỡ chữ hết mức vẫn tràn khung, nên có lối
@@ -18140,6 +18331,29 @@ function vsSegments(shortNames){
     return (sn+(DUP_SUFFIX[f.dup||0]||'')).toUpperCase();
   };
   const name=f=>push(label(f), f.alive?f.color:VS_OUT, false, !f.alive);
+  /* Đánh tuần tự: băng-rôn là cả HÀNG CHỜ của hai đội, đọc một cái là biết ai đã ra, ai
+     đang đánh, ai còn ngồi chờ — người đang đánh cỡ chữ đầy đủ, người chờ nhỏ và mờ hơn,
+     ai đã gục thì xám lại và bị gạch ngang (dùng lại đúng cờ `out` sẵn có). */
+  if(G.mode==='relay'&&G.relay){
+    G.relay.forEach(q=>{
+      if(!q.length)return;
+      if(seg.length) push('  VS  ','#5A5A66',true);
+      q.forEach((e,i)=>{
+        if(i) push(' › ','#5A5A66',true);
+        const C=CHARS[e.key];
+        const live=e.st==='live'&&e.f&&e.f.alive;
+        /* Người đang trên sàn thì đọc tên của CHÍNH fighter đó — cú CHANGE của Ginyu đổi
+           `name` mà không đổi thân xác, nên tra `CHARS[e.key]` là băng-rôn ghi một đằng
+           thanh máu ghi một nẻo. Người còn ngồi chờ thì chưa có fighter, phải tự ghép. */
+        const txt=e.f?label(e.f)
+          :((shortNames?((C&&(C.short||C.name))||e.key):((C&&C.name)||e.key))
+            +(DUP_SUFFIX[e.dup||0]||'')).toUpperCase();
+        push(txt, e.st==='out'?VS_OUT:(e.f?e.f.color:dupColor(C,e.key,e.dup||0)),
+             !live, e.st==='out', e.st==='wait');
+      });
+    });
+    return seg;
+  }
   if(G.mode==='team'){
     const nt=mains.reduce((m,f)=>Math.max(m,f.team+1),0);
     for(let t=0;t<nt;t++){
@@ -18205,7 +18419,7 @@ function versusBox(){
   for(const g of seg){
     const fs=(g.small?SM:BIG)*sc;
     ctx.font=`900 ${fs}px "Be Vietnam Pro",sans-serif`;
-    ctx.globalAlpha=g.out?.5:1;
+    ctx.globalAlpha=g.out?.5:(g.dim?.62:1);
     ctx.fillStyle=g.color;
     ctx.fillText(g.txt,tx,cy);
     const tw=ctx.measureText(g.txt).width;
@@ -19021,7 +19235,7 @@ function winnerBanner(){
   const tan=w.key==='tanjiro'&&!w.swapAs;
   const gojo=w.key==='gojo'&&!w.swapAs;
   const conan=w.key==='conan'&&!w.swapAs;
-  const head=G.mode==='team'?'WINNING TEAM':'WINNER';
+  const head=(G.mode==='team'||G.mode==='relay')?'WINNING TEAM':'WINNER';
   ctx.font='900 15px "Space Mono",monospace';
   ctx.lineWidth=6; ctx.strokeStyle='#000'; ctx.strokeText(head,0,-42);
   ctx.fillStyle='#fff'; ctx.fillText(head,0,-42);
@@ -19694,6 +19908,7 @@ const shortName=k=>CHARS[k].short||CHARS[k].name;
 function slotKeys(){
   if(PMODE==='ffa')  return [ROSTERS.ffa[0]||PICK.a, ROSTERS.ffa[1]||ROSTERS.ffa[0]||PICK.b];
   if(PMODE==='team') return [(ROSTERS.teams[0]||[])[0]||PICK.a, (ROSTERS.teams[1]||[])[0]||PICK.b];
+  if(PMODE==='relay') return [(ROSTERS.relay[0]||[])[0]||PICK.a, (ROSTERS.relay[1]||[])[0]||PICK.b];
   return [PICK.a,PICK.b];
 }
 /* Đội hình hiện tại viết ra một dòng cho dải chữ dưới tiêu đề trang. */
@@ -19702,6 +19917,8 @@ function rosterLine(){
   if(PMODE==='ffa')  return `Hỗn chiến ${ROSTERS.ffa.length} người · ${ROSTERS.ffa.map(nm).join(' · ')}`;
   if(PMODE==='team') return `Đánh đội ${ROSTERS.teams.length} đội · `+
     ROSTERS.teams.map(side=>side.map(nm).join(' + ')).join(' vs ');
+  if(PMODE==='relay') return `Đánh tuần tự ${ROSTERS.relay.length} đội · `+
+    ROSTERS.relay.map(side=>side.map(nm).join(' › ')).join(' vs ');
   return HP[PICK.a]===HP[PICK.b]
     ? `${nm(PICK.a)} vs ${nm(PICK.b)} · ${HP[PICK.a]} HP`
     : `${nm(PICK.a)} ${HP[PICK.a]} HP · ${nm(PICK.b)} ${HP[PICK.b]} HP`;
@@ -19985,7 +20202,11 @@ el('testForest').addEventListener('click',testForest);
    hai chế độ nhiều người. Bấm "Vào trận" mới chép sang PICK / PMODE / ROSTERS.
    TMP.teams là MẢNG các đội — số đội cũng do người chơi chọn (TEAM_MIN_N~TEAM_MAX_N). */
 const TMP={a:PICK.a,b:PICK.b,mode:PMODE,stage:STAGE,ffa:ROSTERS.ffa.slice(),
-           teams:ROSTERS.teams.map(a=>a.slice()),comp:ROSTERS.comp.slice(),seed:CUPSEED,legs:LGLEGS};
+           teams:ROSTERS.teams.map(a=>a.slice()),relay:ROSTERS.relay.map(a=>a.slice()),
+           comp:ROSTERS.comp.slice(),seed:CUPSEED,legs:LGLEGS};
+/* Mảng đội hình của chế độ nhiều đội đang nháp — 'team' và 'relay' đi chung mọi khung UI,
+   chỉ khác chỗ cất và khác trần (`squadLim`). */
+const squadArr=m=>m==='relay'?TMP.relay:TMP.teams;
 /* Chế độ đang chọn cần mấy nhóm đội hình: 'ffa' đúng một nhóm gộp chung, 'team' thì mỗi
    đội một nhóm. Mỗi nhóm trỏ vào một mảng trong TMP qua hàm list(). */
 function modeGroups(m){
@@ -19995,14 +20216,27 @@ function modeGroups(m){
   if(m==='league') return [{list:()=>TMP.comp,head:t('ffaHead'),min:LG_MIN,max:LG_MAX,full:true,toggle:true}];
   if(m==='cup')    return [{list:()=>TMP.comp,head:t('ffaHead'),min:CUP_SIZES[0],
                             max:CUP_SIZES[CUP_SIZES.length-1],full:true,toggle:true,order:true}];
-  if(m==='team') return TMP.teams.map((side,i)=>({
-    list:()=>TMP.teams[i], head:tf('teamN',{n:i+1}), tint:teamTint(i), team:i,
-    min:TEAM_MIN, max:TEAM_MAX
-  }));
+  /* Đánh đội và đánh tuần tự dùng CHUNG khung này. Riêng tuần tự thì THỨ TỰ trong dàn
+     chính là thứ tự ra sân, nên bật cờ `order` để chip được đánh số như dàn của giải
+     loại trực tiếp. */
+  if(squadMode(m)){
+    const L=squadLim(m);
+    return squadArr(m).map((side,i)=>({
+      list:()=>squadArr(m)[i], head:tf('teamN',{n:i+1}), tint:teamTint(i), team:i,
+      min:L.min, max:L.max, order:m==='relay', swapAlways:m==='relay'
+    }));
+  }
   return [];
 }
 /* Tổng số người của đội hình đang nháp — dùng cho trần TEAM_TOTAL. */
 const tmpTotal=()=>modeGroups(TMP.mode).reduce((n,g)=>n+g.list().length,0);
+/* Một đội mới toanh: đánh đội chỉ cần một người, đánh tuần tự phải đủ tối thiểu RELAY_MIN
+   người thì mới có cái để thay ca. Bốc nhân vật lệch nhau cho khỏi ra một đội toàn bản sao. */
+function newSquad(m,idx){
+  const L=squadLim(m), out=[];
+  for(let i=0;i<L.min;i++) out.push(CKEYS[((idx||0)*L.min+i)%CKEYS.length]);
+  return out;
+}
 /* Mặt nhân vật cho thẻ chọn và thẻ hồ sơ. Dán ảnh rồi thì lấy CHÍNH ảnh thủ thế (ô `idle`,
    Horikita thì `scared` vì form 1 là dáng mặc định của cô) — người dùng đòi "có cả ava nhân
    vật". Chưa dán thì vẫn là emoji như cũ, không để trống.
@@ -20089,7 +20323,7 @@ function paintGroup(i,g){
   box.style.gridColumn=g.full?'1 / -1':'';
   box.style.borderColor=g.tint||'';
   const list=g.list();
-  const day=tmpTotal()>=TEAM_TOTAL;
+  const day=tmpTotal()>=squadLim(TMP.mode).total;
   const head=el('grpHead'+i);
   head.innerHTML=(g.tint?`<span style="color:${g.tint}">●</span> `:'')+
                  `${g.head} <b>${list.length}/${g.max}</b>`;
@@ -20097,28 +20331,30 @@ function paintGroup(i,g){
   /* Trang chơi dùng hàng chọn SỐ ĐỘI (#teamNum) cho gọn; xưởng giữ hai nút này vì
      probe.js bấm đúng chúng để dựng đội hình cho test. */
   if(g.team!==undefined&&!window.ARCADE){
-    const nt=TMP.teams.length;
-    if(nt>TEAM_MIN_N){
+    const arr=squadArr(TMP.mode), L=squadLim(TMP.mode), nt=arr.length;
+    if(nt>L.minN){
       const rm=document.createElement('button');
       rm.type='button'; rm.className='grpBtn'; rm.textContent=t('rmTeam');
-      rm.addEventListener('click',()=>{ TMP.teams.splice(g.team,1); cselRefresh(); });
+      rm.addEventListener('click',()=>{ arr.splice(g.team,1); cselRefresh(); });
       head.appendChild(rm);
     }
-    if(g.team===nt-1&&nt<TEAM_MAX_N&&!day){
+    if(g.team===nt-1&&nt<L.maxN&&!day){
       const add=document.createElement('button');
       add.type='button'; add.className='grpBtn on'; add.textContent=t('addTeam');
-      add.addEventListener('click',()=>{ TMP.teams.push([CKEYS[TMP.teams.length%CKEYS.length]]); cselRefresh(); });
+      add.addEventListener('click',()=>{ arr.push(newSquad(TMP.mode,arr.length)); cselRefresh(); });
       head.appendChild(add);
     }
   }
   const slots=el('grpSlots'+i);
   slots.innerHTML='';
   if(!list.length) slots.innerHTML=`<span class="cRosterEmpty">${tf('rosterHint',{lo:g.min})}</span>`;
-  const traoDuoc=g.order&&TMP.seed==='manual';
+  /* Tráo chỗ bằng cách bấm hai chip. Giải loại trực tiếp chỉ mở khi người chơi chọn tự
+     xếp nhánh; đánh tuần tự thì LÚC NÀO cũng mở, vì thứ tự ra sân là cả cái hay của nó. */
+  const traoDuoc=g.order&&(g.swapAlways||TMP.seed==='manual');
   list.forEach((key,j)=>{
     const C=CHARS[key];
     const chip=document.createElement('span');
-    chip.className='cChip'+(traoDuoc&&swapAt===j?' sw':''); chip.style.color=C.color;
+    chip.className='cChip'+(traoDuoc&&swapAt&&swapAt.g===i&&swapAt.j===j?' sw':''); chip.style.color=C.color;
     /* Tự xếp nhánh: thứ tự trong dàn CHÍNH LÀ thứ tự nhánh, nên đánh số ra cho dễ đọc. */
     chip.innerHTML=(g.order?`<span class="brNo">${j+1}</span>`:'')+
                    `<span>${C.emoji}</span><span>${C.short||C.name}</span>`;
@@ -20126,8 +20362,8 @@ function paintGroup(i,g){
       chip.style.cursor='pointer';
       chip.addEventListener('click',e=>{
         if(e.target.tagName==='BUTTON')return;      // nút ✕ lo việc của nó
-        if(swapAt<0){ swapAt=j; }
-        else { const L=g.list(), tmp=L[swapAt]; L[swapAt]=L[j]; L[j]=tmp; swapAt=-1; }
+        if(!swapAt||swapAt.g!==i){ swapAt={g:i,j}; }
+        else { const L=g.list(), tmp=L[swapAt.j]; L[swapAt.j]=L[j]; L[j]=tmp; swapAt=null; }
         cselRefresh();
       });
     }
@@ -20147,7 +20383,7 @@ function paintGroup(i,g){
         const i=L.indexOf(key);
         if(i>=0) L.splice(i,1);
         else if(L.length<g.max) L.push(key);
-        swapAt=-1; cselRefresh(); return;
+        swapAt=null; cselRefresh(); return;
       }
       if(L.length>=g.max||tmpTotal()>=TEAM_TOTAL)return;
       L.push(key); cselRefresh();
@@ -20161,14 +20397,15 @@ function tmpReady(){
   if(TMP.mode==='cup') return CUP_SIZES.indexOf(TMP.comp.length)>=0;
   if(TMP.mode==='adv') return !!TMP.a;
   const gs=modeGroups(TMP.mode);
-  if(TMP.mode==='team'&&(gs.length<TEAM_MIN_N||gs.length>TEAM_MAX_N)) return false;
+  const L=squadLim(TMP.mode);
+  if(squadMode(TMP.mode)&&(gs.length<L.minN||gs.length>L.maxN)) return false;
   let tong=0;
   for(const g of gs){
     const n=g.list().length;
     if(n<g.min||n>g.max) return false;
     tong+=n;
   }
-  if(TMP.mode==='team'&&tong>TEAM_TOTAL) return false;
+  if(squadMode(TMP.mode)&&tong>L.total) return false;
   return true;
 }
 /* Một thẻ hồ sơ: mặt nhân vật, vai trò, máu, một câu giới thiệu, năm thanh chỉ số, bộ
@@ -20297,7 +20534,7 @@ function cselRefresh(){
     el(slot==='a'?'detailA':'detailB').innerHTML=dexCard(key);
   }
   const groups=modeGroups(TMP.mode);
-  for(let i=0;i<TEAM_MAX_N;i++) paintGroup(i,groups[i]);
+  for(let i=0;i<SQUAD_MAX_N;i++) paintGroup(i,groups[i]);
   for(const t of document.querySelectorAll('.sTile')) t.classList.toggle('on',t.dataset.stage===TMP.stage);
   const ss=el('stageSub');
   if(ss) ss.textContent=t('stagePick')+' · '+stageOf(TMP.stage).name;
@@ -20318,10 +20555,13 @@ function cselRefresh(){
                            :tf('subCup',{a:CUP_SIZES[0],b:CUP_SIZES[1]}));
     if(vs) vs.innerHTML=TMP.comp.map(k=>`<b>${nm(k)}</b>`).join(' · ')||`<b>${t('notEnough')}</b>`;
   }else{
-    if(sub) sub.textContent=ARCADE?cselSubText():tf('subTeam',{n:TMP.teams.length,lo:TEAM_MIN_N,hi:TEAM_MAX_N,
-      tlo:TEAM_MIN,thi:TEAM_MAX,cur:tmpTotal(),max:TEAM_TOTAL});
-    if(vs) vs.innerHTML=TMP.teams.map((side,t)=>
-      `<b style="color:${teamTint(t)}">${side.map(nm).join(' + ')||'—'}</b>`).join(' vs ');
+    const L=squadLim(TMP.mode), arr=squadArr(TMP.mode), relay=TMP.mode==='relay';
+    if(sub) sub.textContent=ARCADE?cselSubText():tf(relay?'subRelay':'subTeam',
+      {n:arr.length,lo:L.minN,hi:L.maxN,tlo:L.min,thi:L.max,cur:tmpTotal(),max:L.total});
+    /* Đánh tuần tự viết tên theo THỨ TỰ RA SÂN, ngăn bằng '›' chứ không phải '+': đội hình
+       là một hàng chờ chứ không phải một nhóm cùng ra sân một lúc. */
+    if(vs) vs.innerHTML=arr.map((side,t)=>
+      `<b style="color:${teamTint(t)}">${side.map(nm).join(relay?' › ':' + ')||'—'}</b>`).join(' vs ');
   }
   if(go){ const ok=tmpReady(); go.disabled=!ok; go.style.opacity=ok?'':'.5'; go.style.cursor=ok?'':'not-allowed'; }
   /* Hàng chọn thể thức — chỉ có ở giải vòng tròn. Kèm luôn số trận và số vòng, vì
@@ -20359,7 +20599,7 @@ function cselRefresh(){
         b.type='button'; b.dataset.seed=v; b.textContent=t(k);
         if(v===TMP.seed) b.className='on';
         b.addEventListener('click',()=>{
-          TMP.seed=v; swapAt=-1;
+          TMP.seed=v; swapAt=null;
           if(v==='random') TMP.comp=shuffled(TMP.comp);   // bốc thăm là xáo ngay cho thấy liền
           cselRefresh();
         });
@@ -20374,15 +20614,16 @@ function cselRefresh(){
   /* Hàng chọn SỐ ĐỘI, chỉ trang chơi mới có. Xưởng vẫn dùng hai nút trong đầu mỗi khung. */
   const tn=document.getElementById('teamNum');
   if(tn){
-    const hien=ARCADE&&TMP.mode==='team';
+    const hien=ARCADE&&squadMode(TMP.mode);
     tn.classList.toggle('off',!hien);
     tn.innerHTML='';
     if(hien){
       const lab=document.createElement('span'); lab.textContent=t('teamCount'); tn.appendChild(lab);
-      for(let n=TEAM_MIN_N;n<=TEAM_MAX_N;n++){
+      const L=squadLim(TMP.mode), arr=squadArr(TMP.mode);
+      for(let n=L.minN;n<=L.maxN;n++){
         const b=document.createElement('button');
         b.type='button'; b.textContent=String(n);
-        if(n===TMP.teams.length) b.className='on';
+        if(n===arr.length) b.className='on';
         b.addEventListener('click',()=>setTeamCount(n));
         tn.appendChild(b);
       }
@@ -20440,7 +20681,8 @@ function buildCsel(){
 function openCsel(){
   TMP.a=PICK.a; TMP.b=PICK.b; TMP.mode=PMODE; TMP.stage=STAGE;
   TMP.ffa=ROSTERS.ffa.slice(); TMP.teams=ROSTERS.teams.map(a=>a.slice());
-  TMP.comp=ROSTERS.comp.slice(); TMP.seed=CUPSEED; TMP.legs=LGLEGS; swapAt=-1;
+  TMP.relay=ROSTERS.relay.map(a=>a.slice());
+  TMP.comp=ROSTERS.comp.slice(); TMP.seed=CUPSEED; TMP.legs=LGLEGS; swapAt=null;
   cselRefresh();
   el('charSelect').classList.remove('off');
   running=false; el('play').textContent=t('play');
@@ -20450,6 +20692,7 @@ function startPicked(){
   if(!tmpReady())return;
   PICK.a=TMP.a; PICK.b=TMP.b; PMODE=TMP.mode; STAGE=TMP.stage||STAGE;
   ROSTERS.ffa=TMP.ffa.slice(); ROSTERS.teams=TMP.teams.map(a=>a.slice());
+  ROSTERS.relay=TMP.relay.map(a=>a.slice());
   ROSTERS.comp=TMP.comp.slice(); CUPSEED=TMP.seed||'random'; LGLEGS=TMP.legs===2?2:1;
   Store.set('cfg_picks',JSON.stringify({a:PICK.a,b:PICK.b,mode:PMODE,stage:STAGE,
     rosters:ROSTERS,seed:CUPSEED,legs:LGLEGS})).catch(()=>{});
@@ -20923,7 +21166,10 @@ const ARCADE=!!window.ARCADE;
    *"màn chọn p1 xong r chọn p2 sau, để chung nhìn rối"*.
    Xưởng KHÔNG chia bước (`dataset.page='all'`) — mọi test cũ bấm #cselGo một phát là vào trận. */
 let cselPage='p1';
-let swapAt=-1;                    // chip đang chờ tráo chỗ khi tự xếp nhánh
+/* Chip đang chờ tráo chỗ: {g: chỉ số khung đội, j: chỗ trong khung}. Phải nhớ CẢ KHUNG
+   chứ không chỉ chỗ — đánh tuần tự có tới bốn dàn cùng cho tráo, nhớ mỗi con số thì cú
+   tráo thứ hai thọc vào nhầm đội. */
+let swapAt=null;
 const cselDuel=()=>ARCADE&&TMP.mode==='duel';
 /* Đánh đội cũng đi TỪNG ĐỘI MỘT, đúng quy trình của 1v1: `t0` → `t1` → … → `stage`.
    Người dùng: "chọn đội 1 trước đội 2 sau — quy trình như 1v1 chứ". Số bước ăn theo số đội
@@ -20938,7 +21184,7 @@ function cselSteps(){
   /* Phiêu lưu chọn ĐÚNG MỘT nhân vật, nên dùng lại nguyên bước 'p1' của đấu tay đôi —
      cùng lưới nhân vật, cùng thẻ hồ sơ, CSS đã giấu cột B ở bước đó từ trước. */
   if(TMP.mode==='adv') return ['mode','p1','stage'];
-  if(TMP.mode==='team') return ['mode'].concat(TMP.teams.map((_,i)=>'t'+i),'stage');
+  if(squadMode(TMP.mode)) return ['mode'].concat(squadArr(TMP.mode).map((_,i)=>'t'+i),'stage');
   /* GIẢI ĐẤU KHÔNG có bước chọn màn ở đây — người dùng: *"có việc lặp lại chọn
      background 2 lần ở chế độ league và tournament… 2 chế độ này chỉ chọn background ở
      lần 2 thôi chứ lần đầu là không được"*. Khai mạc giải xong là vào thẳng bảng xếp
@@ -20958,8 +21204,8 @@ function stepReady(){
   if(!ARCADE) return tmpReady();
   const i=teamStep();
   if(i>=0){
-    const L=TMP.teams[i]||[];
-    return L.length>=TEAM_MIN&&L.length<=TEAM_MAX&&tmpTotal()<=TEAM_TOTAL;
+    const L=squadLim(TMP.mode), side=squadArr(TMP.mode)[i]||[];
+    return side.length>=L.min&&side.length<=L.max&&tmpTotal()<=L.total;
   }
   if(cselPage==='mode') return true;          // chế độ nào cũng có sẵn một đội hình mặc định
   if(cselPage==='chars') return tmpReady();
@@ -20967,9 +21213,10 @@ function stepReady(){
 }
 /* Đổi số đội: thêm thì mỗi đội mới một người mặc định, bớt thì cắt từ cuối. */
 function setTeamCount(n){
-  n=Math.max(TEAM_MIN_N,Math.min(TEAM_MAX_N,n));
-  while(TMP.teams.length<n) TMP.teams.push([CKEYS[TMP.teams.length%CKEYS.length]]);
-  while(TMP.teams.length>n) TMP.teams.pop();
+  const L=squadLim(TMP.mode), arr=squadArr(TMP.mode);
+  n=Math.max(L.minN,Math.min(L.maxN,n));
+  while(arr.length<n) arr.push(newSquad(TMP.mode,arr.length));
+  while(arr.length>n) arr.pop();
   cselFix(); cselRefresh();
 }
 /* Dòng phụ dưới tiêu đề. Ở trang chơi nó nói thẳng đang chọn cho ai — và phải gọi được
@@ -20980,7 +21227,11 @@ function cselSubText(){
   if(ARCADE&&(cselPage==='p1'||cselPage==='p2'))
     return tf('subPick',{who:cselPage==='p1'?t('p1'):t('p2'),n:CKEYS.length});
   const i=teamStep();
-  if(i>=0) return tf('subTeamStep',{n:i+1,lo:TEAM_MIN,hi:TEAM_MAX,cur:tmpTotal(),max:TEAM_TOTAL});
+  if(i>=0){
+    const L=squadLim(TMP.mode);
+    return tf(TMP.mode==='relay'?'subRelayStep':'subTeamStep',
+              {n:i+1,lo:L.min,hi:L.max,cur:tmpTotal(),max:L.total});
+  }
   if(ARCADE&&cselPage==='chars'&&TMP.mode==='ffa') return tf('subFfa',{lo:FFA_MIN,hi:FFA_MAX});
   if(ARCADE&&TMP.mode==='league')
     return tf(TMP.legs===2?'subLeague2':'subLeague',{lo:LG_MIN,hi:LG_MAX});
@@ -20997,7 +21248,7 @@ function cselPaint(){
   if(h2) h2.innerHTML=cselPage==='mode'?t('cselMode')
                      :cselPage==='stage'?t('cselStage')
                      :cselPage==='p1'?t('cselP1'):cselPage==='p2'?t('cselP2')
-                     :ti>=0?tf('cselTeamN',{n:ti+1})
+                     :ti>=0?tf(TMP.mode==='relay'?'cselRelayN':'cselTeamN',{n:ti+1})
                      :(ARCADE&&TMP.mode==='league')?t('cselLeague')
                      :(ARCADE&&TMP.mode==='cup')?t('cselCup')
                      :(ARCADE&&TMP.mode==='ffa')?t('cselFfa'):t('cselChar');
@@ -21013,11 +21264,13 @@ function cselPaint(){
   if(sub&&(ARCADE||TMP.mode==='duel')) sub.textContent=cselSubText();
   /* Đánh đội trên trang chơi: mỗi bước chỉ để lộ ĐÚNG một khung đội, mấy đội kia giấu đi —
      đúng cái người dùng đòi ở 1v1 ("để chung nhìn rối"). */
-  if(ARCADE&&TMP.mode==='team')
-    for(let j=0;j<TEAM_MAX_N;j++){
+  if(ARCADE&&squadMode(TMP.mode)){
+    const n=squadArr(TMP.mode).length;
+    for(let j=0;j<SQUAD_MAX_N;j++){
       const b=document.getElementById('grpBox'+j);
-      if(b) b.classList.toggle('off',j>=TMP.teams.length||j!==ti);
+      if(b) b.classList.toggle('off',j>=n||j!==ti);
     }
+  }
   const go=el('cselGo');
   if(go&&ARCADE){ const ok=stepReady(); go.disabled=!ok; go.style.opacity=ok?'':'.5'; go.style.cursor=ok?'':'not-allowed'; }
   pickRowPaint();

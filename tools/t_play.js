@@ -81,14 +81,15 @@ function wavUrl() {
   await page.waitForTimeout(300);
   ok(await page.evaluate(() => window.__PLAYKIND()) === 'auto', 'chon ban AUTO thi PLAYKIND=auto');
   ok(await page.locator('#charSelect').isVisible(), 'bam START thi mo man chon nhan vat');
-  /* Ban AUTO khong duoc thay the Phieu luu, va van du dung nam the che do cu. */
+  /* Ban AUTO khong duoc thay the Phieu luu, va van du dung sau the che do cu. */
   ok(await page.evaluate(() =>
        getComputedStyle(document.getElementById('mTabAdv')).display) === 'none',
      'ban AUTO khong thay the Phieu luu');
   /* ---------- BƯỚC ĐẦU TIÊN LÀ CHỌN CHẾ ĐỘ ----------
      Người dùng: "vào game ấn phát là chọn trc chế độ chơi, xong rồi mới vào phần chọn
-     nhân vật". Dải năm nút chế độ giờ nở ra thành một màn riêng, và mấy bước sau thì
-     nó biến mất hẳn. */
+     nhân vật". Dải nút chế độ giờ nở ra thành một màn riêng, và mấy bước sau thì
+     nó biến mất hẳn. Sáu thẻ: tay đôi · hỗn chiến · đánh đội · ĐÁNH TUẦN TỰ · vòng
+     tròn · loại trực tiếp. */
   const md = await page.evaluate(() => ({
     page: document.getElementById('charSelect').dataset.page,
     step: document.getElementById('charSelect').dataset.step,
@@ -100,7 +101,7 @@ function wavUrl() {
   ok(md.page === 'mode', `bam START la ra man CHON CHE DO truoc (${md.page})`);
   ok(md.step === 'mode', `mang data-step mode (${md.step})`);
   ok(/MODE|CHE DO|CHẾ ĐỘ/i.test(md.h2), `tieu de ghi dang chon che do (${md.h2})`);
-  ok(md.the === 5, `du nam the che do tren man rieng (${md.the})`);
+  ok(md.the === 6, `du sau the che do tren man rieng (${md.the})`);
   ok(md.luoi === 0, 'man chon che do chua hien luoi nhan vat');
   ok(!md.lui, 'buoc dau khong co nut quay lai');
   await page.click('#cselGo');

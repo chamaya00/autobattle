@@ -146,6 +146,12 @@ window.__buildRoster=buildRoster; window.__spawnSpots=spawnSpots; window.__newGa
 window.__foeOf=foeOf; window.__nearestFoe=nearestFoe; window.__aliveMains=aliveMains;
 window.__aliveTeams=aliveTeams; window.__defeat=defeat; window.__finish=finish;
 window.__teamLabel=teamLabel; window.__vsSegments=vsSegments; window.__versusBox=versusBox;
+/* ---------- đánh tuần tự ---------- */
+window.__relaySquads=relaySquads; window.__relayTeamsLeft=relayTeamsLeft;
+window.__relayLeft=relayLeft; window.__relayFall=relayFall; window.__relayIn=relayIn;
+window.__relayName=relayName; window.__RELAY={min:RELAY_MIN,max:RELAY_MAX,minN:RELAY_MIN_N,
+  maxN:RELAY_MAX_N,total:RELAY_TOTAL,cine:RELAY_CINE,in:RELAY_IN};
+window.__squadLim=squadLim; window.__squadMode=squadMode;
 /* ---------- bản người chơi + phiêu lưu ---------- */
 window.__PLAYKIND=()=>PLAYKIND; window.__setPlayKind=k=>setPlayKind(k);
 window.__mode=()=>mode; window.__isPlayerDbg=f=>isPlayer(f); window.__syncHuman=()=>syncHuman(); window.__ginyuPossess=ginyuPossess; window.__isRun=()=>running; window.__autoSkill=()=>autoSkill;
@@ -272,7 +278,7 @@ async function openMulti(mode, picks, opt) {
      TMP.mode đã lưu, nên cú bấm rơi trước nó bị quét sạch và cả đội hình vừa dựng thành
      một trận tay đôi (đo được: openMulti('team',…) ra đúng "kono vs chichi"). Đây là họ
      hàng của lỗi "một await trong loadSaved" ở mục 9. */
-  const tab = mode === 'ffa' ? '#mTabFfa' : '#mTabTeam';
+  const tab = mode === 'ffa' ? '#mTabFfa' : mode === 'relay' ? '#mTabRelay' : '#mTabTeam';
   for (let i = 0; i < 20; i++) {
     await page.click(tab);
     await page.waitForTimeout(120);
@@ -287,7 +293,7 @@ async function openMulti(mode, picks, opt) {
                                           if (e) { e.click(); return true; } return false; }, sel);
   const dem = sel => page.$$eval(sel, b => b.length);
   // số đội mặc định là 2; thêm hoặc bớt cho khớp đội hình muốn dựng
-  if (mode === 'team') {
+  if (mode === 'team' || mode === 'relay') {
     for (let i = 0; i < 6 && await dem('#multiPane .cselCol:not(.off)') > sides.length; i++)
       { await bam('#multiPane .cselCol:not(.off) .grpBtn:not(.on)'); await page.waitForTimeout(40); }
     for (let i = 0; i < 6 && await dem('#multiPane .cselCol:not(.off)') < sides.length; i++)
