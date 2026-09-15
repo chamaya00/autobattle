@@ -194,7 +194,7 @@ window.__sakSealOn=sakSealOn; window.__sakCanSeal=sakCanSeal; window.__sakRegenT
 window.__sakuraTick=sakuraTick; window.__sakIbOn=sakIbOn; window.__sakHamperOn=sakHamperOn;
 window.__sakLowAlly=sakLowAlly; window.__sakCastMul=sakCastMul; window.__sakShurDmg=sakShurDmg;
 window.__sakShurCd=sakShurCd; window.__SHURIKEN_DMG=()=>SHURIKEN_DMG; window.__cm=cm;
-window.__sakuraVector=sakuraVector; window.__drawSakuraFx=drawSakuraFx;
+window.__sakuraVector=sakuraVector; window.__sakStatus2=sakStatus; window.__drawSakuraFx=drawSakuraFx;
 window.__dupColor=dupColor; window.__teamTint=teamTint; window.__setMode=(m,r)=>{
   PMODE=m;
   if(r){ if(r.ffa)ROSTERS.ffa=r.ffa.slice(); if(r.teams)ROSTERS.teams=r.teams.map(a=>a.slice()); }

@@ -2891,23 +2891,26 @@ const SAK={
   hitKb:.15,                              // đẩy lùi 15% chiều rộng sàn
 
   /* 1 — Cherry Blossom Burst */
-  cbDmg:25, cbStun:gs(3), cbCd:gs(9), cbCast:gs(.75), cbBreakCd:gs(4),
+  cbDmg:25, cbStun:gs(3), cbCd:gs(13), cbCast:gs(.75), cbBreakCd:gs(4),
   cbSpd:520, cbWide:1.25*2*SAK_BODY_R, cbRange:470, cbLift:16,
 
   /* 2 — Chakra-Enhanced Punch */
-  cpDmg:30, cpStun:gs(3.5), cpCd:gs(12), cpDash:gs(.55), cpSteer:gs(.15),
+  cpDmg:30, cpStun:gs(3.5), cpCd:gs(16), cpDash:gs(.55), cpSteer:gs(.15),
   cpSpd:384,                              // 120% tốc lao của ChiChi (320)
   cpIbDps:5*RT, cpIbT:gs(5), cpKb:.18,
   cdMove:.50, cdCast:.40, cdT:gs(6),      // Chakra Disruption sau khi hết choáng
   cpRange:360,
 
   /* 3 — Medical Ninjutsu */
-  mnCast:gs(1), mnGap:gs(.5), mnT:gs(2.5), mnTicks:5, mnCd:gs(9), mnBreakCd:gs(4),
+  mnCast:gs(1), mnGap:gs(.5), mnT:gs(2.5), mnTicks:5, mnCd:gs(20), mnBreakCd:gs(4),
   mnSolo:.05, mnShare:.025,               // 5% máu ĐANG THIẾU mỗi tick, chia đôi khi có đồng đội
   mnSelfHp:.55, mnAllyHp:.45, mnIdleHp:.85,
 
   /* Ultimate — Strength of a Hundred Seal */
   sealHp:.12, sealT:gs(10), sealAnim:gs(1.2), sealCine:gs(1.2), sealRes:.35,
+  /* Hết 10 giây Byakugo là cạn sạch chakra: 10 giây tê liệt, −50% tốc chạy, −50% tốc
+     thi triển, và CHỈ còn đòn thường với Chakra-Enhanced Punch. */
+  exhT:gs(10), exhMove:.50, exhCast:.50,
   sealMove:2.00, sealCast:2.75,           // +175% cast = 275% tốc thi triển
   /* Hồi phục tính theo GIÂY NGƯỜI CHƠI nên phải nhân RT — cùng luật với `dots[].dps`
      ở mục 1 của CLAUDE.md. Quên RT thì nhịp hồi chỉ còn một nửa: đo được 11.92 máu
@@ -2933,7 +2936,7 @@ const CHARS={
       `<b>1 · Cherry Blossom Burst</b> ${rts(SAK.cbCd)}s cooldown · ${rts(SAK.cbCast)}s wind-up, then she slams the ground and a locked-direction fissure races out: ${SAK.cbDmg} damage and <b>${rts(SAK.cbStun)}s Stun</b> to everyone along it, once each per cast. Stunned or knocked down during the wind-up cancels it for only ${rts(SAK.cbBreakCd)}s.`,
       `<b>2 · Chakra-Enhanced Punch</b> ${rts(SAK.cpCd)}s cooldown · a real ${rts(SAK.cpDash)}s charge at 120% of ChiChi's dash speed, steerable for ${rts(SAK.cpSteer)}s then locked, first target only, <b>no CC immunity</b>. On hit: ${SAK.cpDmg} damage, <b>${rts(SAK.cpStun)}s Stun</b>, <b>Internal Bleeding</b> ${SAK.cpIbDps/RT} dmg/s for ${rts(SAK.cpIbT)}s, and once the stun ends <b>Chakra Disruption</b> −${Math.round(SAK.cdMove*100)}% movement / −${Math.round(SAK.cdCast*100)}% cast speed for ${rts(SAK.cdT)}s.`,
       `<b>3 · Medical Ninjutsu</b> ${rts(SAK.mnCd)}s cooldown · rooted ${rts(SAK.mnCast)}s, interruptible. Then ${SAK.mnTicks} ticks over ${rts(SAK.mnT)}s heal <b>${Math.round(SAK.mnSolo*100)}% of missing HP</b> each (${Math.round(SAK.mnSolo*SAK.mnTicks*100)}% total), snapshot when the cast lands. With an ally alive it splits ${Math.round(SAK.mnShare*100)}% / ${Math.round(SAK.mnShare*100)}% between herself and the lowest-HP ally. She may move and fight while it ticks.`,
-      `<b>Ultimate · Strength of a Hundred Seal</b> Automatic, once per battle, the first time lethal damage lands: HP is set to <b>${Math.round(SAK.sealHp*100)}% Maximum HP</b> and <b>Byakugo</b> runs ${rts(SAK.sealT)}s — −${Math.round(SAK.sealRes*100)}% damage taken, total crowd-control and debuff immunity, ${Math.round(SAK.sealMove*100)}% movement, ${Math.round(SAK.sealCast*100)}% cast speed, <b>Katsuyu</b> healing ${Math.round(SAK.katsuyu/RT*100)}% Maximum HP/s to her and every living ally, plus <b>Byakugo Regeneration</b> ${Math.round(SAK.byakugo/RT*100)}% of her missing HP/s. <b>There is no invulnerability afterwards</b> — the very next hit of a multi-hit combo can still finish her.`
+      `<b>Ultimate · Strength of a Hundred Seal</b> Automatic, once per battle, the first time lethal damage lands: HP is set to <b>${Math.round(SAK.sealHp*100)}% Maximum HP</b> and <b>Byakugo</b> runs ${rts(SAK.sealT)}s — −${Math.round(SAK.sealRes*100)}% damage taken, total crowd-control and debuff immunity, ${Math.round(SAK.sealMove*100)}% movement, ${Math.round(SAK.sealCast*100)}% cast speed, <b>Katsuyu</b> healing ${Math.round(SAK.katsuyu/RT*100)}% Maximum HP/s to her and every living ally, plus <b>Byakugo Regeneration</b> ${Math.round(SAK.byakugo/RT*100)}% of her missing HP/s. <b>There is no invulnerability afterwards</b> — the very next hit of a multi-hit combo can still finish her. When the seal fades her chakra is spent: <b>Chakra Exhaustion</b> for ${rts(SAK.exhT)}s — −${Math.round((1-SAK.exhMove)*100)}% movement, −${Math.round((1-SAK.exhCast)*100)}% cast speed, and <b>only her basic attack and Chakra-Enhanced Punch remain usable</b>. Then she returns to normal.`
     ],
     init(f){
       f.cds={s1:gs(2),s2:gs(3),s3:gs(1.5),basic:0};
@@ -2941,7 +2944,7 @@ const CHARS={
       f.sakAct=null;                    // chiêu đang gồng: {kind,t,...}
       f.sakCrack=null;                  // đường nứt đang lan
       f.sakDisrupt=0; f.sakHamper=0; f.sakIb=0;
-      f.sakSeal=0; f.sakSealDone=false; f.sakSealAnim=0;
+      f.sakSeal=0; f.sakSealDone=false; f.sakSealAnim=0; f.sakExh=0;
       f.sakHeal=null; f.katsuyu=0; f.katsuyuOwner=null;
     },
     think(f,e,d,auto){
@@ -2951,11 +2954,16 @@ const CHARS={
       e=aimTarget(f)||e; if(!e)return; d=dist(f,e);
       const use=k=>auto||keys[k];
       const seal=f.sakSeal>0;
+      /* Chakra Exhaustion — cạn chakra sau Byakugo. Cô KHÔNG tung được Cherry Blossom Burst
+         lẫn Medical Ninjutsu; chỉ còn đòn thường và Chakra-Enhanced Punch. Gác ngay ở đây
+         chứ đừng gác bằng cách nống hồi chiêu: nống hồi chiêu thì hết tê liệt là cô vẫn
+         phải chờ thêm, mà bản mô tả nói rõ "sau đó mới về bình thường". */
+      const exh=f.sakExh>0;
 
       /* 1–2 · Medical Ninjutsu. Ngưỡng của bản thân đi trước, rồi mới tới đồng đội.
          Không bao giờ tung khi cả cô lẫn đồng đội đều trên 85% máu, và không tung khi
          đối thủ đang gồng sẵn một đòn chắc chắn cắt được cast. */
-      if(f.cds.s3<=0&&use('u')&&sakHealWanted(f,auto)){
+      if(!exh&&f.cds.s3<=0&&use('u')&&sakHealWanted(f,auto)){
         f.cds.s3=SAK.mnCd; sakMedical(f); return;
       }
       /* 3 · Chakra-Enhanced Punch — chỉ khi dash với tới được. Trong Byakugo thì chủ động
@@ -2965,7 +2973,7 @@ const CHARS={
       }
       /* 4 · Cherry Blossom Burst — địch ở tầm trung, hoặc đang chạy thẳng về phía cô.
          Trong Byakugo thì bung ngay khi có đường đánh hợp lệ. */
-      if(f.cds.s1<=0&&d<=SAK.cbRange&&use('k')&&(seal||d>=SAK.meleeIn*.8||sakClosing(f,e))){
+      if(!exh&&f.cds.s1<=0&&d<=SAK.cbRange&&use('k')&&(seal||d>=SAK.meleeIn*.8||sakClosing(f,e))){
         f.cds.s1=SAK.cbCd; sakBurst(f,e); return;
       }
       /* 5–6 · Đòn thường: gần thì Chakra Strike, xa thì Shuriken Throw. Mốc đổi thế nằm
@@ -2977,6 +2985,7 @@ const CHARS={
     },
     gauge:f=>{
       if(f.sakSeal>0) return {pct:clamp(f.sakSeal/SAK.sealT,0,1),fill:'#B07CFF',txt:`BYAKUGO · ${(f.sakSeal*RT).toFixed(1)}s`};
+      if(f.sakExh>0) return {pct:clamp(f.sakExh/SAK.exhT,0,1),fill:'#6B7A8F',txt:`CHAKRA EXHAUSTION · ${(f.sakExh*RT).toFixed(1)}s`};
       if(f.sakSealDone) return {pct:0,fill:'#B07CFF',txt:'Hundred Seal: Spent'};
       return {pct:1,fill:'#FF6FA5',txt:'Hundred Seal: Ready'};
     }
@@ -3602,7 +3611,7 @@ const DEX={
   sakura:{ role:{vi:'Combat Medic · Crowd-Control Bruiser',en:'Combat Medic · Crowd-Control Bruiser'}, st:{pow:2,spd:2,rng:4,def:4},
     /* Chấm tay, không đo tự động (mục 2g). Sát thương thô THẤP — cô thắng bằng kháng hiệu
        ứng, khống chế nặng và hồi máu, nên dmg 40 mà cc 88 / uti 92 / dur 86. */
-    pw:{dmg:40,dur:86,mob:44,as:46,rng:70,cc:88,uti:92,con:78,cmb:82},
+    pw:{dmg:40,dur:92,mob:44,as:46,rng:70,cc:76,uti:92,con:82,cmb:94},
     bio:{vi:'Ninja y thuật: kháng gần hết mọi hiệu ứng bất lợi, khống chế nặng tay, tự hồi máu và sống sót qua đòn chí tử đầu tiên.',
          en:'A medical ninja who shrugs off almost every debuff, lands heavy control, heals through a fight and survives the first lethal blow.'},
     skills:[
@@ -3622,8 +3631,8 @@ const DEX={
        vi:'Đứng yên 1s rồi hồi 25% lượng máu đã mất qua 5 nhịp; có đồng đội thì chia đôi cho cả hai.',
        en:'A 1s rooted cast, then 25% of missing HP healed over 5 ticks — split with the lowest-HP ally when one is alive.'},
       {tag:'U',name:'Strength of a Hundred Seal',
-       vi:'Đòn chí tử đầu tiên không giết được cô: máu về 12%, 10 giây miễn khống chế, −35% dmg nhận, Katsuyu hồi cho cả đội. Sau đó KHÔNG có bất tử.',
-       en:'The first lethal hit is refused: HP resets to 12% and Byakugo runs 10s — CC immune, −35% damage taken, Katsuyu healing the team. No invulnerability follows.'}
+       vi:'Đòn chí tử đầu tiên không giết được cô: máu về 12%, 10 giây miễn khống chế, −35% dmg nhận, Katsuyu hồi cho cả đội. Sau đó KHÔNG có bất tử, và phải chịu 10 giây cạn chakra.',
+       en:'The first lethal hit is refused: HP resets to 12% and Byakugo runs 10s — CC immune, −35% damage taken, Katsuyu healing the team. No invulnerability follows, and 10s of Chakra Exhaustion does.'}
     ]},
   isagi:{ role:{vi:'Tactical Finisher · Adaptive Striker',en:'Tactical Finisher · Adaptive Striker'}, st:{pow:4,spd:4,rng:4,def:2},
     pw:{dmg:58,dur:40,mob:84,as:52,rng:74,cc:52,uti:86,con:64,cmb:32},
@@ -4273,6 +4282,7 @@ const SFX_EVENTS=[
   ['sak_tick','Một nhịp hồi máu'],
   ['sak_seal','Strength of a Hundred Seal mở ra'],
   ['sak_katsuyu','Katsuyu hiện ra'],
+  ['sak_exhaust','Cạn chakra, tê liệt'],
 
   /* Ô của GIAO DIỆN, không phải của trận đấu: tiếng bấm nút, tiếng lật bước, tiếng màn VS
      và tiếng bảng xếp hạng. Chín ô này chỉ kêu lúc người chơi bấm tay nên đừng để chúng
@@ -4693,6 +4703,10 @@ function synth(name,c,g){
                         tone(c,g,{type:'sine',f0:60,f1:150,dur:.9,vol:.22}); break;
     case 'sak_katsuyu': tone(c,g,{type:'sine',f0:420,f1:250,dur:.5,vol:.13});
                         noise(c,g,{dur:.45,f0:900,f1:300,vol:.10,type:'lowpass'}); break;
+    /* Cạn chakra: một tiếng TỤT xuống, đúng cảm giác hết hơi. */
+    case 'sak_exhaust': tone(c,g,{type:'sine',f0:330,f1:70,dur:.9,vol:.20});
+                        tone(c,g,{type:'triangle',f0:180,f1:52,dur:1.1,vol:.12,delay:.06});
+                        noise(c,g,{dur:.7,f0:700,f1:140,vol:.09,type:'lowpass'}); break;
     /* ---- giao diện ----
        Tiếng bấm nút thì phải GỌN và NHẸ: người chơi bấm cả chục lần trong một lượt chọn
        nhân vật, để dài hay để to là nghe nhức đầu ngay. Cả chín ô đều dưới .2 âm lượng
@@ -5840,7 +5854,7 @@ function mk(o){
        KHÁC, nên khai chung ở đây với giá trị trung tính — cùng lối Disoriented của
        Doraemon và Frozen của Superman. */
     sakHamper:0, sakDisrupt:0, sakDisruptAfter:0, sakLift:0, sakSeal:0, sakSealDone:false,
-    sakSealAnim:0, sakHealAcc:0, katsuyu:0, katsuyuOwner:null,
+    sakSealAnim:0, sakExh:0, sakHealAcc:0, katsuyu:0, katsuyuOwner:null,
     frozen:0, frozenDmg:0, chill:0, chillAfter:0, hvSlowT:0, supSlow:0, supQuake:0,
     supCcAcc:0, supCcT:0, supCcFree:0,
     supEntry:null, supHide:false, supAir:0, supCone:null, supLog:null,
@@ -13335,6 +13349,13 @@ function sakStatus(f,dt){
   if(f.katsuyu>0) f.katsuyu=Math.max(0,f.katsuyu-dt);
   sakRegenTick(f,dt);
   if(!sakOn(f))return;
+  /* Chakra Exhaustion. Đây là cái giá của CHÍNH cô, KHÔNG phải debuff của địch — nên nó
+     tuyệt đối không được nằm trong `SAK_DEBUFFS`, không thì Medical Expertise tự cắt 70%
+     hình phạt của mình và quãng tê liệt còn đúng 3 giây. */
+  if(f.sakExh>0){
+    f.moveMul*=SAK.exhMove;
+    f.castMul*=SAK.exhCast;
+  }
   if(f.sakSeal>0){
     /* Byakugo: gạt sạch mọi hệ số làm chậm mà mấy status khác vừa nhân vào, rồi mới nhân
        phần của mình. Giữ nguyên quãng khoá của CHÍNH chiêu cô đang tung (Medical Ninjutsu
@@ -13348,7 +13369,9 @@ function sakStatus(f,dt){
 /* Tốc thi triển của Byakugo ăn vào QUÃNG GỒNG của chính cô, KHÔNG ăn vào `castMul`.
    Người dùng chốt: "Cast Speed không ảnh hưởng cooldown" — mà trong engine này `castMul`
    chính là nhịp trôi hồi chiêu, nên nhét vào đó là sai hẳn yêu cầu. */
-const sakCastMul=f=>(f&&f.sakSeal>0)?1/SAK.sealCast:1;
+/* Quãng gồng của chính cô. Byakugo rút ngắn, Chakra Exhaustion kéo dài — hai đầu của
+   cùng một trục. `castMul` ở `sakStatus` lo phần nhịp trôi hồi chiêu và nhịp đòn thường. */
+const sakCastMul=f=>!f?1:(f.sakSeal>0?1/SAK.sealCast:(f.sakExh>0?1/SAK.exhCast:1));
 
 /* Internal Bleeding — hai bản, KHÔNG cộng dồn. Bản mạnh ghi đè bản yếu; bản yếu rơi vào
    lúc bản mạnh đang chạy thì chỉ làm mới thời gian chứ không kéo tụt sát thương xuống. */
@@ -13645,8 +13668,24 @@ function sakuraTick(f,dt){
   if(f.sakSeal>0){
     f.sakSeal=Math.max(0,f.sakSeal-dt);
     if(f.sakSeal<=0){
-      say(`Dấu ấn Byakugo mờ dần — ${f.name} trở lại với kháng hiệu ứng thường.`,'m');
+      /* Hết dấu ấn là cạn sạch chakra — rơi THẲNG vào quãng tê liệt, không có nhịp nghỉ. */
+      f.sakExh=SAK.exhT;
+      f.sakAct=null; f.lock=0;
+      say(`Dấu ấn Byakugo mờ dần — ${f.name} cạn sạch chakra và tê liệt ${rts(SAK.exhT)} giây.`,'m');
       G.floats.push({x:f.x,y:f.y-112,txt:'BYAKUGO FADES',color:'#B07CFF',life:1.2,ml:1.2,banner:true,sc:.56});
+      G.floats.push({x:f.x,y:f.y-138,
+        txt:`CHAKRA EXHAUSTION −${Math.round((1-SAK.exhMove)*100)}% MOVE / CAST ${rts(SAK.exhT)}s`,
+        color:'#8FA3B8',life:1.8,ml:1.8,banner:true,gold:true,sc:.56,tilt:rnd(-.05,.05)});
+      ring(f.x,f.y,110,'#6B7A8F',.45);
+      sfx('sak_exhaust');
+    }
+  }
+  if(f.sakExh>0){
+    f.sakExh=Math.max(0,f.sakExh-dt);
+    if(f.sakExh<=0){
+      say(`${f.name} thở lại được — chakra hồi về mức bình thường.`,'g');
+      G.floats.push({x:f.x,y:f.y-112,txt:'CHAKRA RESTORED',color:'#7DEBAB',life:1.2,ml:1.2,banner:true,sc:.56});
+      ring(f.x,f.y,92,'#7DEBAB',.35);
     }
   }
   /* Bị hất lên khỏi mặt đất bởi chính đường nứt của người khác: chỉ là độ cao hiển thị. */
@@ -13732,6 +13771,10 @@ function sakuraVector(f){
   /* Pha BIẾN HÌNH: một cột chakra tím-lam dựng lên quanh người, mạnh dần rồi tắt. Chỉ
      chạy trong quãng `sakSealAnim` nên nó là khoảnh khắc đổi hình, không phải hào quang
      thường trực. */
+  const exh=f.sakExh>0&&!down;
+  /* Cạn chakra: rũ người xuống một nhịp và thở dốc. Chỉ là phép dời + nghiêng nhẹ nên
+     không đụng tới toạ độ thật — mọi phép đo vị trí vẫn đọc ra đúng con số. */
+  if(exh){ ctx.translate(0,2.5); ctx.rotate(f.face>=0?.07:-.07); }
   const tf=f.sakSealAnim>0?clamp(f.sakSealAnim/SAK.sealAnim,0,1):0;
   if(tf>0&&!down){
     ctx.save(); ctx.globalCompositeOperation='lighter';
@@ -13824,7 +13867,7 @@ function sakuraVector(f){
   /* Dấu ấn. Bình thường chỉ là một hình thoi nhỏ giữa trán; lúc Byakugo thì nở ra thành
      hoa văn chạy xuống hai bên mặt — KHÔNG che kín model, đúng yêu cầu. */
   if(!down){
-    ctx.fillStyle=seal?'#B07CFF':'#8E4FD0';
+    ctx.fillStyle=seal?'#B07CFF':(exh?'#5B4A70':'#8E4FD0');
     const dS=seal?4.4:2.6;
     ctx.beginPath(); ctx.moveTo(0,y-31-dS); ctx.lineTo(dS*.7,y-31); ctx.lineTo(0,y-31+dS); ctx.lineTo(-dS*.7,y-31); ctx.closePath(); ctx.fill();
     if(seal){
@@ -13886,6 +13929,25 @@ function drawSakuraFx(){
       ctx.save(); ctx.globalAlpha=.8; ctx.fillStyle='#6B5A4C';
       for(let i=0;i<5;i++){ const a=C.ang+rnd(-1.1,1.1), r=rnd(6,26);
         ctx.beginPath(); ctx.arc(C.x+Math.cos(a)*r,C.y+Math.sin(a)*r-rnd(0,14),rnd(1.6,3.4),0,7); ctx.fill(); }
+      ctx.restore();
+    }
+    /* Chakra Exhaustion: một vòng xám TỐI dưới chân, thở chậm — trái hẳn với quầng tím
+       sáng của Byakugo, nên nhìn một cái là biết cô đang ở pha nào. */
+    if(f.sakExh>0){
+      ctx.save();
+      ctx.globalAlpha=.22+Math.sin(G.t*1.6)*.06;
+      ctx.fillStyle='#4A5666';
+      ctx.beginPath(); ctx.ellipse(f.x,f.y+6,30,11,0,0,7); ctx.fill();
+      ctx.globalAlpha=.30; ctx.strokeStyle='#8FA3B8'; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.ellipse(f.x,f.y+6,30,11,0,0,7); ctx.stroke();
+      // hạt chakra tản ra rồi tắt — chakra đang rò đi chứ không tụ lại
+      ctx.globalCompositeOperation='lighter';
+      for(let i=0;i<3;i++){
+        const ph=((G.t*.55+i*.34)%1);
+        ctx.globalAlpha=(1-ph)*.24;
+        ctx.fillStyle='#7FD8FF';
+        ctx.beginPath(); ctx.arc(f.x+Math.cos(i*2.1+G.t*.5)*(10+ph*26),f.y-18-ph*20,1.8,0,7); ctx.fill();
+      }
       ctx.restore();
     }
     /* Quầng Byakugo dưới chân: nhấp nháy nhẹ, không phủ trắng màn hình. */
