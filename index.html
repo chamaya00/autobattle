@@ -2891,19 +2891,19 @@ const SAK={
   hitKb:.15,                              // đẩy lùi 15% chiều rộng sàn
 
   /* 1 — Cherry Blossom Burst */
-  cbDmg:25, cbStun:gs(3), cbCd:gs(13), cbCast:gs(.75), cbBreakCd:gs(4),
+  cbDmg:25, cbStun:gs(3), cbCd:gs(11), cbCast:gs(.75), cbBreakCd:gs(4),
   cbSpd:520, cbWide:1.25*2*SAK_BODY_R, cbRange:470, cbLift:16,
 
   /* 2 — Chakra-Enhanced Punch */
-  cpDmg:30, cpStun:gs(3.5), cpCd:gs(16), cpDash:gs(.55), cpSteer:gs(.15),
+  cpDmg:30, cpStun:gs(3.5), cpCd:gs(13), cpDash:gs(.55), cpSteer:gs(.15),
   cpSpd:384,                              // 120% tốc lao của ChiChi (320)
   cpIbDps:5*RT, cpIbT:gs(5), cpKb:.18,
   cdMove:.50, cdCast:.40, cdT:gs(6),      // Chakra Disruption sau khi hết choáng
   cpRange:360,
 
   /* 3 — Medical Ninjutsu */
-  mnCast:gs(1), mnGap:gs(.5), mnT:gs(2.5), mnTicks:5, mnCd:gs(20), mnBreakCd:gs(4),
-  mnSolo:.05, mnShare:.025,               // 5% máu ĐANG THIẾU mỗi tick, chia đôi khi có đồng đội
+  mnCast:gs(1), mnGap:gs(.5), mnT:gs(2.5), mnTicks:5, mnCd:gs(18), mnBreakCd:gs(4),
+  mnSolo:.054, mnShare:.027,              // 5.4% máu ĐANG THIẾU mỗi tick, chia đôi khi có đồng đội
   mnSelfHp:.55, mnAllyHp:.45, mnIdleHp:.85,
 
   /* Ultimate — Strength of a Hundred Seal */
@@ -2922,6 +2922,7 @@ const SAK={
 /* Mấy con số dẫn xuất — viết một lần ở đây để bảng kỹ năng, DEX và thân chiêu cùng đọc
    một chỗ. Shuriken của Sakura luôn bám 80% của Konohamaru, nên chỉnh SHURIKEN_DMG là
    con số này tự đi theo, đúng yêu cầu người dùng. */
+const sakPct=v=>String(+(v*100).toFixed(1));   // 5.4 / 27 — đừng làm tròn về số nguyên
 const sakShurDmg=()=>Math.round(SHURIKEN_DMG*SAK.shurMul);
 const sakShurCd=()=>cm(1.35)/SAK.shurFast;
 
@@ -2935,7 +2936,7 @@ const CHARS={
       `<b>Basic · Chakra Strike</b> Inside ${Math.round(SAK.meleeIn)}px she punches and kicks instead: ${SAK.hitDmg} damage every ${rts(SAK.hitCd)}s. <b>${Math.round(SAK.ibOdds*100)}%</b> chance of <b>Internal Bleeding</b> (${SAK.ibDps/RT} dmg/s for ${rts(SAK.ibT)}s) — and only then does it knock the target back ${Math.round(SAK.hitKb*100)}% of the arena.`,
       `<b>1 · Cherry Blossom Burst</b> ${rts(SAK.cbCd)}s cooldown · ${rts(SAK.cbCast)}s wind-up, then she slams the ground and a locked-direction fissure races out: ${SAK.cbDmg} damage and <b>${rts(SAK.cbStun)}s Stun</b> to everyone along it, once each per cast. Stunned or knocked down during the wind-up cancels it for only ${rts(SAK.cbBreakCd)}s.`,
       `<b>2 · Chakra-Enhanced Punch</b> ${rts(SAK.cpCd)}s cooldown · a real ${rts(SAK.cpDash)}s charge at 120% of ChiChi's dash speed, steerable for ${rts(SAK.cpSteer)}s then locked, first target only, <b>no CC immunity</b>. On hit: ${SAK.cpDmg} damage, <b>${rts(SAK.cpStun)}s Stun</b>, <b>Internal Bleeding</b> ${SAK.cpIbDps/RT} dmg/s for ${rts(SAK.cpIbT)}s, and once the stun ends <b>Chakra Disruption</b> −${Math.round(SAK.cdMove*100)}% movement / −${Math.round(SAK.cdCast*100)}% cast speed for ${rts(SAK.cdT)}s.`,
-      `<b>3 · Medical Ninjutsu</b> ${rts(SAK.mnCd)}s cooldown · rooted ${rts(SAK.mnCast)}s, interruptible. Then ${SAK.mnTicks} ticks over ${rts(SAK.mnT)}s heal <b>${Math.round(SAK.mnSolo*100)}% of missing HP</b> each (${Math.round(SAK.mnSolo*SAK.mnTicks*100)}% total), snapshot when the cast lands. With an ally alive it splits ${Math.round(SAK.mnShare*100)}% / ${Math.round(SAK.mnShare*100)}% between herself and the lowest-HP ally. She may move and fight while it ticks.`,
+      `<b>3 · Medical Ninjutsu</b> ${rts(SAK.mnCd)}s cooldown · rooted ${rts(SAK.mnCast)}s, interruptible. Then ${SAK.mnTicks} ticks over ${rts(SAK.mnT)}s heal <b>${sakPct(SAK.mnSolo)}% of missing HP</b> each (${sakPct(SAK.mnSolo*SAK.mnTicks)}% total), snapshot when the cast lands. With an ally alive it splits ${sakPct(SAK.mnShare)}% / ${sakPct(SAK.mnShare)}% between herself and the lowest-HP ally. She may move and fight while it ticks.`,
       `<b>Ultimate · Strength of a Hundred Seal</b> Automatic, once per battle, the first time lethal damage lands: HP is set to <b>${Math.round(SAK.sealHp*100)}% Maximum HP</b> and <b>Byakugo</b> runs ${rts(SAK.sealT)}s — −${Math.round(SAK.sealRes*100)}% damage taken, total crowd-control and debuff immunity, ${Math.round(SAK.sealMove*100)}% movement, ${Math.round(SAK.sealCast*100)}% cast speed, <b>Katsuyu</b> healing ${Math.round(SAK.katsuyu/RT*100)}% Maximum HP/s to her and every living ally, plus <b>Byakugo Regeneration</b> ${Math.round(SAK.byakugo/RT*100)}% of her missing HP/s. <b>There is no invulnerability afterwards</b> — the very next hit of a multi-hit combo can still finish her. When the seal fades her chakra is spent: <b>Chakra Exhaustion</b> for ${rts(SAK.exhT)}s — −${Math.round((1-SAK.exhMove)*100)}% movement, −${Math.round((1-SAK.exhCast)*100)}% cast speed, and <b>only her basic attack and Chakra-Enhanced Punch remain usable</b>. Then she returns to normal.`
     ],
     init(f){
@@ -13571,8 +13572,8 @@ function sakMedicalGo(f){
     self:(f.maxHp-f.hp)*pct, ally, allyAmt:ally?(ally.maxHp-ally.hp)*pct:0};
   ring(f.x,f.y,92,'#7DEBAB',.4);
   say(ally
-    ? `Medical Ninjutsu — chia đôi, hồi ${Math.round(SAK.mnShare*SAK.mnTicks*100)}% máu đã mất cho Sakura và ${ally.name}.`
-    : `Medical Ninjutsu — hồi ${Math.round(SAK.mnSolo*SAK.mnTicks*100)}% lượng máu đã mất qua ${SAK.mnTicks} nhịp.`,'g');
+    ? `Medical Ninjutsu — chia đôi, hồi ${sakPct(SAK.mnShare*SAK.mnTicks)}% máu đã mất cho Sakura và ${ally.name}.`
+    : `Medical Ninjutsu — hồi ${sakPct(SAK.mnSolo*SAK.mnTicks)}% lượng máu đã mất qua ${SAK.mnTicks} nhịp.`,'g');
 }
 function sakHealTick(f,dt){
   const M=f.sakHeal; if(!M)return;
