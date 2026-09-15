@@ -743,8 +743,32 @@ thân xác Ginyu do địch điều khiển (`swapAs==='foe'`) thì chết là c
 > bốn ông còn lại phải đi theo cho nhất quán.
 
 **Trúng — `ginyuPossess(g,t)`.** Nguyên tắc: **hồn đổi chỗ, THÂN XÁC đứng yên.** Không đụng
-tới `key`, `spriteH`, `color`, vị trí — chỉ đổi **`name`** và cờ điều khiển. Nhờ vậy ra đúng
-cái người dùng muốn: **thân xác A mà chữ B trên thanh máu**, và ngược lại.
+tới `key`, `spriteH`, `color`, vị trí — chỉ đổi **`name`**, cờ điều khiển và **`team`**. Nhờ
+vậy ra đúng cái người dùng muốn: **thân xác A mà chữ B trên thanh máu**, và ngược lại.
+
+> **PHE CŨNG ĐI THEO HỒN — `gnSwapTeam()`, lỗi thật đã sửa.** Người dùng: *"khi này đang là
+> ginyu mà sao lại triệu hồi Chi Chi ra đánh khi chung team?"*. Bản cũ để nguyên `team` trên
+> thân xác, nên **hồn Ginyu ngồi trong thân xác của ĐỘI ĐỊCH là anh quay ra đánh thuê cho
+> họ**, rồi chính đồng đội cũ của anh bị đẩy ra sân để đánh anh. Ở **đấu tay đôi thì không ai
+> thấy** (hai thân xác vẫn khác phe nên vẫn đánh nhau như thường) — chỉ đánh đội và **đánh
+> tuần tự** mới lòi ra, vì ở đó một phe có nhiều người.
+>
+> Tráo luôn `team` thì mỗi đội giữ đúng HỒN mình đã chọn: Ginyu vẫn đánh cho đội của anh, chỉ
+> là bằng một thân xác đi mượn; hồn bị cướp xác về đánh cho đội của chính họ trong thân xác
+> Ginyu. Đây là phần còn thiếu của luật đã chốt từ trước — *thắng thua và quyền điều khiển
+> đều tính theo HỒN* — nên `compSoul()` của giải đấu không phải sửa gì.
+>
+> Ba thứ phải đi theo, đừng bỏ sót:
+> 1. **Hàng chờ của chế độ tuần tự tra theo PHE** nên hai ô phải đổi thân xác cho nhau — ô của
+>    Ginyu trỏ vào thân xác anh vừa chiếm, ô của nạn nhân trỏ vào thân xác Ginyu. Thiếu chỗ này
+>    thì `relayFall()` đi tìm trong đúng cái hàng chờ không còn giữ ô đó.
+> 2. **Viện binh và đồng minh đi theo CHỦ** (`o.master`) — Goku / Gohan / phân thân /
+>    Ayanokouji được dựng với `team` của chủ lúc gọi ra, để nguyên là họ quay sang bắn chính
+>    chủ mình.
+> 3. **Bỏ `foe` đang trỏ vào hai người đó và gỡ khiêu khích cùng phe** — đồng đội cũ giờ là
+>    địch và ngược lại, không bốc lại thì AI nhắm nhầm cả một lượt.
+>
+> **Vị trí, ảnh, màu, máu vẫn thuộc về THÂN XÁC như cũ** — chỉ có phe là đi theo hồn.
 
 > **Luật chia bộ chiêu — đối xứng, nhớ đúng một câu: CHIÊU theo HỒN, ĐÒN TAY theo THÂN
 > XÁC.** Ai vào thân xác nào cũng mang theo bộ chiêu của chính mình, còn cú đấm thì đổi
@@ -4383,7 +4407,8 @@ node tools/t_relay.js   # ĐÁNH TUẦN TỰ: mỗi đội chỉ MỘT người 
                         # thì quét sạch một đội mà còn hai đội là trận vẫn chạy, người chơi
                         # cầm tay thì thay ca xong cầm NGƯỜI MỚI chứ không ôm cái xác, và sau
                         # cú CHANGE của Ginyu thì hàng chờ gạch tên theo HỒN vừa ngã chứ không
-                        # theo thân xác
+                        # theo thân xác, và PHE đi theo HỒN nên Ginyu vẫn đánh cho đội
+                        # của anh chứ không quay ra đánh thuê cho đội địch
 node tools/t_modes.js   # ba chế độ đấu: 1v1 vẫn y như cũ (hai người, đúng hai đầu sàn),
                         # hỗn chiến (mỗi người một phe, hạ một người thì trận còn chạy,
                         # người cuối cùng thắng, băng-rôn gạch tên người đã bị hạ,

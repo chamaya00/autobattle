@@ -10371,6 +10371,48 @@ function gnChangeFire(f){
 }
 /* Hồn đổi chỗ, THÂN XÁC đứng yên: mỗi object vẫn giữ nguyên hình dáng của nó, chỉ đổi
    TÊN trên thanh máu và người điều khiển. Nhờ vậy thân xác A mà chữ B, đúng yêu cầu. */
+/* PHE CŨNG ĐI THEO HỒN — phần còn thiếu của luật "thắng thua và quyền điều khiển đều tính
+   theo HỒN" (xem mục CHANGE!!!).
+
+   Người dùng bác: *"khi này đang là ginyu mà sao lại triệu hồi Chi Chi ra đánh khi chung
+   team?"*. Bản cũ chỉ tráo `name` và cờ điều khiển, còn `team` thì để nguyên trên thân xác
+   — nên hồn Ginyu ngồi trong thân xác của ĐỘI ĐỊCH là anh quay ra đánh thuê cho họ, rồi
+   chính đồng đội cũ của anh bị đẩy ra sân để đánh anh. Ở đấu tay đôi thì không ai thấy
+   (hai thân xác vẫn khác phe nên vẫn đánh nhau như thường), nhưng đánh đội và đánh tuần
+   tự thì lòi ra ngay.
+
+   Tráo luôn `team` thì mỗi đội giữ đúng HỒN mình đã chọn: Ginyu vẫn đánh cho đội của anh,
+   chỉ là bằng một thân xác đi mượn; còn hồn bị cướp xác thì về đánh cho đội của chính họ
+   trong thân xác Ginyu. Vị trí, ảnh, màu, máu vẫn thuộc về THÂN XÁC như cũ. */
+function gnSwapTeam(g,t){
+  const gt=g.team, tt=t.team;
+  if(gt===tt)return;                       // cùng phe thì vốn không cướp xác được
+  g.team=tt; t.team=gt;
+  /* Hàng chờ của chế độ tuần tự tra theo PHE, nên hai ô phải đổi thân xác cho nhau — ô
+     của Ginyu giờ trỏ vào thân xác anh vừa chiếm, ô của nạn nhân trỏ vào thân xác Ginyu.
+     Thiếu chỗ này thì `relayFall()` đi tìm trong đúng cái hàng chờ không còn giữ ô đó. */
+  if(relayOn()){
+    const eg=(G.relay[gt]||[]).find(e=>e.f===g);
+    const et=(G.relay[tt]||[]).find(e=>e.f===t);
+    if(eg) eg.f=t;
+    if(et) et.f=g;
+  }
+  /* Viện binh và đồng minh đi theo CHỦ: Goku / Gohan / phân thân / Ayanokouji được dựng
+     với `team` của chủ lúc gọi ra, để nguyên là họ quay sang bắn chính chủ mình. */
+  for(const o of G.fighters){
+    if(!o||!o.summon)continue;
+    if(o.master===g) o.team=g.team;
+    else if(o.master===t) o.team=t.team;
+  }
+  /* Đồng đội cũ giờ là địch và ngược lại — bỏ nhắm để lượt sau bốc lại cho đúng, và gỡ
+     khiêu khích nào đang trỏ vào người CÙNG PHE (đánh đồng đội thì vô nghĩa). */
+  for(const o of G.fighters){
+    if(!o)continue;
+    if(o.foe===g||o.foe===t) o.foe=null;
+    if(o.tauntBy&&o.tauntBy.team===o.team) o.tauntBy=null;
+  }
+  g.foe=null; t.foe=null;
+}
 function ginyuPossess(g,t){
   if(!g||!t||g.swapAs||t.swapAs||!t.alive||t.summon)return;
   g.gnChange=null; g.lock=0; g.pose='idle';
@@ -10382,6 +10424,7 @@ function ginyuPossess(g,t){
      Không tráo chỗ này thì người chơi ngồi bấm cái thân xác không còn là mình nữa. */
   const gh=g.human, th=t.human;
   g.human=th; t.human=gh;
+  gnSwapTeam(g,t);
   /* Cả hai thân xác cùng về 20% máu tối đa của chính nó, không bên nào lệch hơn bên nào.
      Phải LÀM TRÒN XUỐNG chứ không được Math.round: mốc bật cờ tơi tả trong step() là
      f.hp <= f.maxHp*.20, mà làm tròn lên thì với máu tối đa lẻ (người chơi chỉnh được ô
