@@ -2215,17 +2215,19 @@ Kiểm bằng `node tools/t_sakura.js` (97 mục, phần lớn ĐO THẬT trong 
 > **Mười cặp còn lại của cô đều ngã ngũ** trong 14~32 giây (`t_reg`), nên chuyện này chỉ nằm
 > ở trận gương. Giải đấu thì vốn đã có trần `COMP_MAXT` 90 giây trong trận nên không kẹt.
 
-## 2c. Ba chế độ đấu — 1v1, hỗn chiến, đánh theo đội
+## 2c. Bốn chế độ đấu — 1v1, hỗn chiến, đánh theo đội, đánh tuần tự
 
-Chọn ở **đầu màn chọn nhân vật** (`.mTab`, ba nút `#mTabDuel` / `#mTabFfa` / `#mTabTeam`).
-Biến trạng thái là `PMODE` (`'duel' | 'ffa' | 'team'`) cộng `ROSTERS` (`{ffa, t0, t1}`),
-lưu lại chung khoá `cfg_picks` với hai ô A/B cũ. `G.mode` chụp lại `PMODE` lúc `newGame()`.
+Chọn ở **đầu màn chọn nhân vật** (`.mTab`, `#mTabDuel` / `#mTabFfa` / `#mTabTeam` /
+`#mTabRelay`). Biến trạng thái là `PMODE` (`'duel' | 'ffa' | 'team' | 'relay'`) cộng
+`ROSTERS` (`{ffa, teams, relay, comp}`), lưu lại chung khoá `cfg_picks` với hai ô A/B cũ.
+`G.mode` chụp lại `PMODE` lúc `newGame()`.
 
 | Chế độ | Bao nhiêu người | Chia phe thế nào | Thắng khi nào |
 |---|---|---|---|
 | `duel` | đúng 2 | phe 0 và phe 1 | đối thủ về 0 máu |
 | `ffa` | `FFA_MIN`–`FFA_MAX` = **3–6** | **mỗi người MỘT phe riêng** (`team` = số thứ tự) | chỉ còn **một người** đứng |
 | `team` | **`TEAM_MIN_N`–`TEAM_MAX_N` = 2–4 ĐỘI**, mỗi đội `TEAM_MIN`–`TEAM_MAX` = **1–3** người, cả sàn không quá `TEAM_TOTAL` = **8** | mỗi đội một phe (0, 1, 2, 3) | chỉ còn **một đội** còn người |
+| `relay` | **`RELAY_MIN_N`–`RELAY_MAX_N` = 2–4 ĐỘI**, mỗi đội `RELAY_MIN`–`RELAY_MAX` = **2–5** người, cả thảy không quá `RELAY_TOTAL` = **16** | mỗi đội một phe, nhưng **chỉ MỘT người mỗi đội có mặt trên sàn** | chỉ còn **một đội** còn người (kể cả người ngồi chờ) |
 
 > **Số ĐỘI cũng tuỳ chọn, không cắm cứng hai đội** (người dùng: *"theo team là tuỳ chọn
 > team"*). `ROSTERS.teams` là **mảng các đội**, mỗi đội là một mảng khoá nhân vật; màn chọn
@@ -2322,6 +2324,118 @@ thành một cụm — đo được: quãng xa nhất trong cùng một đội v
 > đừng viết lại.
 
 Kiểm bằng `node tools/t_modes.js`.
+
+## 2c-quater. ĐÁNH TUẦN TỰ (`relay`) — thắng thì giữ máu ở lại sân
+
+Người dùng: *"Team fight nhưng đánh tuần tự — 2 team đánh vs nhau, 1 cặp đấu ra trc, đánh
+xong 1 ng hết máu thì ng khác ra sân, nhưng người kia vẫn giữ máu còn lại khi đánh vs ng
+trc, r lặp lại như z cho đến khi có team còn lại thành viên là win"*.
+
+Đây là lối **King of Fighters**: mỗi đội là một **HÀNG CHỜ**, mỗi lúc chỉ một người của đội
+ra sân, ai gục thì người kế tiếp bước ra, còn bên thắng **ở lại sân với đúng lượng máu còn
+lại**. Hết sạch người là đội đó thua.
+
+> **Chế độ này KHÔNG đụng vào ruột engine.** Nó chỉ là đánh đội cộng một luật thay người:
+> `foeOf()` / `aliveTeams()` / vòng va chạm / mọi chiêu vốn đã chạy theo số phe thật từ hồi
+> làm hỗn chiến (mục 2c). Thứ duy nhất thêm vào là hàng chờ `G.relay` và cú thay ca cắm
+> trong `defeat()`. **Đừng viết thêm vòng lặp trận nào.**
+
+### Hàng chờ — `G.relay`
+
+`relaySquads()` đọc `ROSTERS.relay` và đánh **số bản sao CHUNG cho cả sàn**: hai Konohamaru
+ở hai đội khác nhau vẫn phải ra `Konohamaru` và `Konohamaru II` chứ không cùng tên cùng màu.
+`newGame()` gọi `relaySetup()` dựng ra:
+
+```js
+G.relay     = [ [{key,dup,st:'live'|'wait'|'out', f}, …], … ]   // mỗi đội một hàng chờ
+G.relayHome = [ {x,y}, … ]                                       // chỗ đứng của từng đội
+```
+
+- `buildRoster()` cho `relay` **chỉ trả về NGƯỜI ĐẦU của mỗi đội** — phần còn lại chưa phải
+  là fighter, chỉ là một dòng trong hàng chờ. Nhờ vậy `aliveMains()`, `drawBars()`, băng-rôn
+  và mọi chiêu AoE không phải biết gì về người đang ngồi chờ.
+- `spawnSpots()` đi chung nhánh với `team`: hai đội thì đúng hai đầu sàn như 1v1, ba bốn đội
+  thì mỗi đội một góc vòng tròn.
+- **`newGame()` tôn trọng `r.dup` khi roster đã có sẵn số** (`r.dup!=null`), mấy chế độ kia
+  vẫn đếm tại chỗ y như cũ.
+
+### Thay ca — `relayFall()` rồi `relayIn()`
+
+`defeat()` cắm đúng hai chỗ:
+
+1. **Đếm phe phải hỏi cả hàng chờ** — `relayTeamsLeft()` thay cho `aliveTeams()`. Giữa lúc
+   một người gục và người kế tiếp bước ra thì đội đó **không có ai trên sàn**; đếm bằng
+   `aliveTeams()` suông là trận kết thúc oan ngay tại khoảng hở đó.
+2. Trong nhánh "trận còn chạy tiếp", sau phần dọn viện binh có sẵn: `if(relayOn()){ relayFall(t); return; }`.
+
+`relayFall()` đánh dấu người vừa gục là `'out'`, rồi:
+- còn người chờ ⇒ đóng băng sàn `RELAY_CINE` (**1.1 giây người chơi**) cho cú đổ người, băng-rôn
+  `NEXT UP`, và hẹn `relayIn()` ở `RELAY_IN` (**0.85 giây người chơi**);
+- hết người ⇒ chỉ ghi nhật ký, đội đó bị loại (trận vẫn chạy nếu còn từ hai đội — `defeat()`
+  đã đếm trước rồi mới gọi vào đây).
+
+> **`RELAY_IN` phải NHỎ HƠN `RELAY_CINE`** — người thay ca bước ra TRONG lúc sàn còn đóng
+> băng, không thì họ hiện ra rồi mới thấy camera lùi ra. Hẹn giờ mang cờ `cine` nên nó vẫn
+> chạy trong lúc đóng băng (mục 5). `t_relay.js` soi thẳng hai con số này.
+
+`relayIn()`:
+- gỡ cái xác khỏi **cả `G.fighters` lẫn `G.kos`** — không thì nó nằm đúng chỗ người mới sắp
+  đứng, và `drawFighter()` thì không có nhánh nào bỏ qua người đã gục;
+- `relayShed(o)` tắt mọi thứ người vừa rời sàn để lại trên người khác: **sát thương duy trì**
+  (`dots` có `d.src===o`, kể cả dot do viện binh của họ dán), **dải bóng đang trói**
+  (`f.bind.e===o`), dấu của Al Shamac, `foe` / `tauntBy` còn trỏ vào họ;
+- `mkChar()` dựng người mới **ngay lúc này chứ không phải lúc vào trận**, nên **màn ra mắt
+  chạy đúng lúc họ bước ra** — Ginyu bay vào, Doraemon mở Anywhere Door, Superman đáp xuống,
+  Beatrice bước ra từ Forbidden Library. Không phải viết thêm gì, `init()` lo hết.
+
+### Ba luật đã tự quyết, nói rõ để sau này khỏi cãi nhau
+
+| | Chốt thế nào | Vì sao |
+|---|---|---|
+| **máu, hồi chiêu, thanh tiến trình của người ở lại** | **GIỮ NGUYÊN TẤT CẢ** | người dùng nêu thẳng máu; hồi chiêu và nộ khí / chakra / bàn thắng thì đi theo cùng một tinh thần — đó là phần thưởng của một lượt đánh hay |
+| **khống chế đang dính trên người ở lại** | **GỠ SẠCH** (`stun`, `lock`, `kbx/kby`) | người gây ra nó đã rời sàn rồi; không gỡ thì đứng chôn chân đón người mới |
+| **sát thương duy trì của người vừa gục** | **TẮT THEO** (`relayShed`) | một cái xác không được phép hạ nốt người còn lại trong lúc chờ thay ca |
+
+Muốn đổi thì sửa đúng `relayIn()` — đừng rải ra chỗ khác.
+
+### Băng-rôn kể được cả hàng chờ
+
+`vsSegments()` có nhánh riêng cho `relay`: liệt kê **cả hai hàng chờ theo đúng thứ tự ra
+sân**, ngăn bằng `›`. Ba trạng thái dùng lại đúng cờ sẵn có, không thêm cơ chế vẽ nào:
+
+| Trạng thái | Trông ra sao |
+|---|---|
+| `live` — đang đánh | cỡ chữ đầy đủ, màu riêng của nhân vật |
+| `wait` — còn ngồi chờ | chữ nhỏ, mờ đi (`dim`, alpha .62) |
+| `out` — đã gục | chữ nhỏ, xám `VS_OUT` và **bị gạch ngang** (`out`) |
+
+Dải màu dưới đáy khung lọc `!g.small` nên chỉ **người đang đánh** mới có vạch màu — nhìn một
+cái là ra đúng cặp đang trên sàn. `winnerBanner()` ghi `WINNING TEAM` như đánh đội.
+
+### Màn chọn — dùng CHUNG khung với đánh đội
+
+`'team'` và `'relay'` đi chung mọi khung UI (khung đội, hàng chọn số đội, từng bước `t0` →
+`t1` → …), chỉ khác **trần** và **ý nghĩa thứ tự**. Vì vậy:
+
+> **Mọi chỗ trong màn chọn đọc giới hạn qua `squadLim(mode)` và mảng qua `squadArr(mode)`,
+> đừng ghim thẳng `TEAM_MIN` / `TEAM_MAX` / `TEAM_TOTAL` vào nữa.** `squadMode(m)` là cửa
+> duy nhất trả lời "chế độ này có phải kiểu nhiều đội không". Đã sửa theo: `modeGroups()`,
+> `tmpReady()`, `stepReady()`, `setTeamCount()`, `cselSteps()`, `cselSubText()`,
+> `cselRefresh()`, `paintGroup()`.
+
+- **Trần người rộng hơn hẳn đánh đội** (16 so với 8) vì lý do chặn ở 8 không còn: cả sàn
+  nhiều nhất là **4 thanh máu** dù đội hình có 16 người. Đổi lại **mỗi đội tối thiểu 2**
+  người — một người thì nó chỉ là đánh đội thường.
+- **THỨ TỰ trong dàn CHÍNH LÀ thứ tự ra sân**, nên nhóm của `relay` bật cờ `order` (chip
+  đánh số) và `swapAlways` (bấm hai chip là tráo chỗ). Giải loại trực tiếp chỉ mở cú tráo
+  khi người chơi chọn tự xếp nhánh; ở đây thì **lúc nào cũng mở**.
+- **`swapAt` giờ là `{g, j}` chứ không phải một con số.** Đánh tuần tự có tới bốn dàn cùng
+  cho tráo; nhớ mỗi chỗ thì cú tráo thứ hai thọc vào nhầm đội. Giải loại trực tiếp chỉ có
+  MỘT dàn nên lỗi này không lộ ra ở đó.
+- `newSquad(m,idx)` dựng một đội mới đủ `squadLim(m).min` người, bốc nhân vật lệch nhau cho
+  khỏi ra một đội toàn bản sao.
+
+Kiểm bằng `node tools/t_relay.js`.
 
 ## 2c-bis. Hai chế độ GIẢI ĐẤU — league và tournament
 
@@ -2891,6 +3005,7 @@ chỉ làm hai việc: cắt mấy khối `<!--STUDIO-->…<!--/STUDIO-->` và c
   | hỗn chiến | **`mode`** → `chars` (một khung đội hình) → `stage` |
   | **giải vòng tròn · giải loại trực tiếp** | **`mode`** → `chars` — **KHÔNG có bước `stage`** |
   | **đánh đội** | **`mode`** → **`t0` → `t1` → … → `stage`** — mỗi đội một bước |
+  | **đánh tuần tự** | y hệt đánh đội — **`mode`** → **`t0` → `t1` → … → `stage`**, chỉ khác trần đội hình và thứ tự trong dàn là thứ tự ra sân |
 
   > **HAI CHẾ ĐỘ GIẢI KHÔNG hỏi sàn ở màn chọn nhân vật.** Người dùng: *"có việc lặp lại
   > chọn background 2 lần ở chế độ league và tournament — 2 chế độ này chỉ chọn background
@@ -4242,6 +4357,14 @@ node tools/t_player.js  # BẢN NGƯỜI CHƠI và chế độ PHIÊU LƯU: bả
                         # lên cấp giữa trận thì TRẬN ĐỨNG HẲN rồi mới cho chọn thẻ);
                         # đánh thật một màn; và CƯỚP XÁC: bị Ginyu change thì người chơi
                         # cầm THÂN XÁC GINYU chứ không cầm thân xác cũ
+node tools/t_relay.js   # ĐÁNH TUẦN TỰ: mỗi đội chỉ MỘT người ra sân còn lại ngồi hàng chờ,
+                        # hạ một người thì người kế tiếp của ĐÚNG đội đó bước ra (hàng chờ
+                        # đội kia không bị đụng), người thắng Ở LẠI SÂN với đúng máu còn lại
+                        # còn người mới thì đầy máu, cái xác được dọn khỏi sàn và dot/choáng
+                        # của họ tắt theo (dot của người khác thì giữ), chỉ khi một đội hết
+                        # sạch người trận mới kết thúc, băng-rôn liệt kê cả hai hàng chờ và
+                        # gạch tên ai đã gục, trần đội hình tách hẳn khỏi đánh đội, và ba đội
+                        # thì quét sạch một đội mà còn hai đội là trận vẫn chạy
 node tools/t_modes.js   # ba chế độ đấu: 1v1 vẫn y như cũ (hai người, đúng hai đầu sàn),
                         # hỗn chiến (mỗi người một phe, hạ một người thì trận còn chạy,
                         # người cuối cùng thắng, băng-rôn gạch tên người đã bị hạ,
