@@ -2020,6 +2020,19 @@ vốn đã ngắn hơn sàn.
   Chỉnh hướng nhẹ trong `gs(.15)` đầu rồi **khoá hẳn**, chỉ trúng kẻ địch **đầu tiên** va
   chạm. Trúng: **30 dmg + choáng 3.5s + Internal Bleeding 5 dmg/s trong 5s**, hết choáng mới
   tới **Chakra Disruption** −50% chạy / −40% cast trong 6s.
+  > **QUÃNG LAO TÍNH TỪ KHOẢNG CÁCH THẬT, đừng cắm cứng một con số giây — đây là một LỖI
+  > THẬT đã sửa.** `cpDash` cố định `gs(.55)` = 0.275 giây trong trận, nhân tốc 384 thì cú
+  > lao chỉ đi nổi **106px** — mà `think()` tung chiêu từ tận `cpRange` = **360px**. Nên nó
+  > hết giờ giữa đường rồi đứng lại, đúng cái người dùng kêu: *"nếu k có choáng là phải lao
+  > thẳng vào địch chứ nãy h test toàn lao nửa đường"*. Giờ `sakPunch()` lấy
+  > `dist/cpSpd + cpDashPad`, kẹp trong `[cpDash, cpDashMax]`. Đo được: từ 120 · 240 · 320 ·
+  > 360px đều **chạm được người**; trước đó chỉ mốc 120px là tới.
+  > **Đụng vào `cpRange` hay `cpSpd` thì nhớ nới `cpDashMax` theo** — nó là cái trần duy nhất
+  > còn chặn quãng lao.
+  > **Bị choáng cắt ngang thì KHÔNG mất trắng lượt**: `f.cds.s2` hạ xuống
+  > `cpCd × cpBreakCut` = **nửa hồi chiêu** (6.5s), kèm cờ `f.sakCpBroke` và một dòng banner.
+  > Đánh trúng một cú thì `sakChargeHit()` tắt cờ, mà `think()` vốn nạp đủ `cpCd` mỗi lần
+  > tung nên hồi chiêu **tự trở về mức ban đầu** — không phải viết thêm nhánh nào.
   > **`f.dash` của cô tuyệt đối KHÔNG mang cờ `guard`** — `guard` là thứ cho ChiChi miễn
   > khống chế lúc lao, mà bản mô tả nói thẳng là Sakura **không** miễn khống chế khi lao.
   > `sakuraTick()` cắt cú lao ngay khi cô dính choáng hoặc đóng băng.
@@ -2029,13 +2042,13 @@ vốn đã ngắn hơn sàn.
   > **Hai bản Internal Bleeding KHÔNG cộng dồn**: `sakIbOn()` xoá lớp cũ rồi mới đẩy lớp
   > mới, và bản **yếu không ghi đè bản mạnh** (giữ `dps` cao hơn, chỉ làm mới thời gian).
 - **3 · Medical Ninjutsu** — hồi chiêu `gs(18)`, kết ấn `gs(1)` đứng yên, **vẫn ăn đòn và vẫn bị khống chế**;
-  bị cắt ngang ⇒ chỉ chờ `gs(4)`. Xong cast thì **5 nhịp** cách nhau `gs(.5)` hồi **5.4% lượng
-  máu ĐÃ MẤT** mỗi nhịp (tổng **27%**), và cô **đi lại / đánh nhau bình thường** trong lúc
+  bị cắt ngang ⇒ chỉ chờ `gs(4)`. Xong cast thì **5 nhịp** cách nhau `gs(.5)` hồi **7% lượng
+  máu ĐÃ MẤT** mỗi nhịp (tổng **35%**), và cô **đi lại / đánh nhau bình thường** trong lúc
   nó chạy.
   - **Lượng máu đã mất CHỤP LẠI đúng lúc cast xong**, không tính lại sau mỗi nhịp.
-  - Có đồng đội thì hệ số chia đôi: **2.7% cho cô, 2.7% cho đồng đội máu thấp nhất**, và
-    **tính RIÊNG lượng máu đã mất của từng người**. Đo được: cô thiếu 400 ⇒ 10.8/nhịp, đồng
-    đội thiếu 600 ⇒ 16.2/nhịp.
+  - Có đồng đội thì hệ số chia đôi: **3.5% cho cô, 3.5% cho đồng đội máu thấp nhất**, và
+    **tính RIÊNG lượng máu đã mất của từng người**. Đo được: cô thiếu 400 ⇒ 14/nhịp, đồng
+    đội thiếu 600 ⇒ 21/nhịp.
   - **Đồng đội chết giữa chừng thì phần của họ MẤT HẲN**, không dồn sang ai.
   - Không overheal, không hồi sinh, không tự giải khống chế.
 
@@ -2046,18 +2059,18 @@ và nhanh — cần phải giảm lượng skill cast lại, hồi máu liên t�
 hồi chiêu lên nữa"*. Cắt bằng cách **nới hồi chiêu**, KHÔNG đụng vào lượng sát thương hay
 lượng hồi máu — mấy con số đó người dùng đã chốt cứng từ bản mô tả gốc.
 
-| | Bản đầu | Lượt cắt 1 | **Chốt** |
-|---|---|---|---|
-| Cherry Blossom Burst (`cbCd`) | `gs(9)` | `gs(13)` | **`gs(11)`** |
-| Chakra-Enhanced Punch (`cpCd`) | `gs(12)` | `gs(16)` | **`gs(13)`** |
-| Medical Ninjutsu (`mnCd`) | `gs(9)` | `gs(20)` | **`gs(18)`** |
-| lượng hồi mỗi nhịp (`mnSolo`) | 5% | 5% | **5.4%** (tổng 25% → **27%**) |
-| chia đôi khi có đồng đội (`mnShare`) | 2.5% | 2.5% | **2.7%** |
+| | Bản đầu | Lượt cắt 1 | Nới lại | **Chốt** |
+|---|---|---|---|---|
+| Cherry Blossom Burst (`cbCd`) | `gs(9)` | `gs(13)` | `gs(11)` | **`gs(11)`** |
+| Chakra-Enhanced Punch (`cpCd`) | `gs(12)` | `gs(16)` | `gs(13)` | **`gs(13)`** |
+| Medical Ninjutsu (`mnCd`) | `gs(9)` | `gs(20)` | `gs(18)` | **`gs(18)`** |
+| lượng hồi mỗi nhịp (`mnSolo`) | 5% | 5% | 5.4% | **7%** (tổng 25% → **35%**) |
+| chia đôi khi có đồng đội (`mnShare`) | 2.5% | 2.5% | 2.7% | **3.5%** |
 
-> **Lượt cắt 1 quá tay một nấc, người dùng nới lại**: *"Cooldown hồi máu 20→18s, lượng máu
-> hồi tăng lên đôi chút (tăng cỡ 5-10% so vs hiện tại) — punch vs burst hồi chiêu 13s và 11s
-> th"*. Phần hồi lấy **+8%**, đúng điểm giữa khoảng 5~10% họ nêu, và giữ `mnShare` đúng bằng
-> nửa `mnSolo`.
+> **Lượt cắt 1 quá tay một nấc, người dùng nới lại hai lần.** Lần đầu: *"Cooldown hồi máu
+> 20→18s, lượng máu hồi tăng lên đôi chút (tăng cỡ 5-10% so vs hiện tại) — punch vs burst hồi
+> chiêu 13s và 11s th"* ⇒ hồi lấy +8% thành 5.4%. Lần sau họ chốt thẳng một con số:
+> *"Lượng hồi máu tăng lên 7% máu đã mất"*. `mnShare` luôn giữ đúng bằng nửa `mnSolo`.
 
 > **Lượng hồi và lượng sát thương KHÔNG phải chỗ để cân bằng theo cảm tính** — mấy con số đó
 > người dùng chốt cứng từ bản mô tả gốc và chỉ chính họ nới. Cắt sức thì cắt bằng **hồi chiêu**.
@@ -2178,7 +2191,7 @@ Hết `sealT` là **rơi THẲNG** vào `f.sakExh = SAK.exhT` (`gs(10)`), không
 **Đấm đá mượn thẳng `sfx('punch')` của ChiChi**, đúng lối đã chốt cho Horikita / Ginyu /
 Doraemon / Superman / Beatrice — đừng dựng ô mới.
 
-Kiểm bằng `node tools/t_sakura.js` (78 mục, phần lớn ĐO THẬT trong trận).
+Kiểm bằng `node tools/t_sakura.js` (97 mục, phần lớn ĐO THẬT trong trận).
 
 > **Trận gương Sakura vs Sakura HOÀ, và đó là hệ quả ĐÃ ĐO của lượt nới lại — không phải lỗi
 > mới.** Hai cô cùng mang Medical Expertise nên sát thương duy trì của nhau bị cắt 70%, mà
@@ -2189,12 +2202,13 @@ Kiểm bằng `node tools/t_sakura.js` (78 mục, phần lớn ĐO THẬT trong 
 > |---|---|
 > | `gs(9)` · 5% (bản đầu) | hoà vĩnh viễn, dao động 390~525 |
 > | `gs(20)` · 5% (lượt cắt 1) | **giảm đều**: giây 18 `585/570` · 45 `478/347` · 93 `288/256` |
-> | **`gs(18)` · 5.4% (chốt)** | **hoà lại**: giây 45 `362/415` · 120 `386/325` · 200 `265/393` · 280 `320/323` · 360 `338/409` |
+> | `gs(18)` · 5.4% (nới lại) | **hoà lại**: giây 45 `362/415` · 120 `386/325` · 200 `265/393` · 280 `320/323` · 360 `338/409` |
+> | **`gs(18)` · 7% (chốt)** | **vẫn hoà**, dải nhích cao hơn: giây 45 `421/397` · 120 `415/438` · 200 `426/460` · 280 `454/339` · 360 `356/533` |
 >
-> Ranh giới nằm đâu đó **giữa 18 và 20 giây**, và nó rất hẹp — đúng kiểu đường cong dốc đã
-> ghi ở mục Beatrice. Muốn nó có hồi kết lại thì **chỉ đụng `SAK.mnCd`**, đừng đụng `mnSolo`
-> (người dùng chốt cứng con số đó), và **đo lại bằng cách chạy tay một trận gương tới 300+
-> giây** — mốc 60 giây của `t_reg` quá ngắn để phân biệt "chưa xong" với "hoà".
+> Ranh giới nằm đâu đó **giữa 18 và 20 giây ở mức hồi 5%**, và nó rất hẹp — đúng kiểu đường
+> cong dốc đã ghi ở mục Beatrice. Muốn nó có hồi kết lại thì **chỉ đụng `SAK.mnCd`**, đừng
+> đụng `mnSolo` (người dùng chốt cứng con số đó), và **đo lại bằng cách chạy tay một trận
+> gương tới 300+ giây** — mốc 60 giây của `t_reg` quá ngắn để phân biệt "chưa xong" với "hoà".
 >
 > **Mười cặp còn lại của cô đều ngã ngũ** trong 14~32 giây (`t_reg`), nên chuyện này chỉ nằm
 > ở trận gương. Giải đấu thì vốn đã có trần `COMP_MAXT` 90 giây trong trận nên không kẹt.

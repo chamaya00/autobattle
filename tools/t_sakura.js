@@ -141,7 +141,26 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
       /* cú lao KHÔNG miễn khống chế */
       reset(); window.__sakPunch(s,e); o.dashGuard=!!(s.dash&&s.dash.guard);
       o.dashSpd=s.dash.spd; o.chichiDash=320;
+      s.cds.s2=SAK.cpCd;
       s.stun=1; window.__sakuraTick(s,1/120); o.dashBroken=(s.dash===null);
+      o.cdBroke=+(s.cds.s2*RT).toFixed(2); o.brokeFlag=!!s.sakCpBroke;
+      /* KHÔNG lao nửa đường: quãng lao tính từ khoảng cách thật, nên từ tầm xa nhất
+         (`cpRange`) cú lao vẫn chạm được người. Ghim chân đối thủ rồi chạy tay từng bước. */
+      o.reach=[];
+      for(const gap of [120,240,320,SAK.cpRange]){
+        reset();
+        s.x=120; s.y=300; e.x=120+gap; e.y=300; e.lock=999; e.hp=e.maxHp;
+        const hp0=e.hp;
+        s.cds.s2=SAK.cpCd; window.__sakPunch(s,e);
+        let g=0; while(s.dash&&g++<900) window.__step(1/120);
+        o.reach.push({gap:Math.round(gap), trung:e.hp<hp0});
+      }
+      /* đánh trúng thì cờ tắt ⇒ hồi chiêu trở về mức ban đầu */
+      reset(); s.sakCpBroke=true;
+      s.x=120;s.y=300;e.x=270;e.y=300;e.lock=999;
+      s.cds.s2=SAK.cpCd; window.__sakPunch(s,e);
+      let gh=0; while(s.dash&&gh++<900) window.__step(1/120);
+      o.afterHit=!!s.sakCpBroke;
       /* Internal Bleeding: bản yếu không ghi đè bản mạnh, không cộng dồn */
       reset(); window.__sakIbOn(e,s,SAK.cpIbDps,SAK.cpIbT);
       window.__sakIbOn(e,s,SAK.ibDps,SAK.ibT);
@@ -185,12 +204,17 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
     ok(r.dashGuard===false,'cú lao KHÔNG miễn khống chế (không có cờ guard)');
     near(r.dashSpd/r.chichiDash,1.2,.001,'cú lao nhanh bằng 120% dash của ChiChi');
     ok(r.dashBroken,'dính choáng giữa cú lao thì bị chặn đứng');
+    near(r.cdBroke,13*.5,.05,`bị ngắt thì lần sau chỉ chờ nửa hồi chiêu (đo ${r.cdBroke}s trên 13s)`);
+    ok(r.brokeFlag,'bị ngắt thì bật cờ sakCpBroke');
+    ok(r.reach.every(x=>x.trung),
+       `cú lao TỚI ĐƯỢC địch ở mọi tầm, không lao nửa đường (${r.reach.map(x=>x.gap+'px'+(x.trung?'✓':'✗')).join(' · ')})`);
+    ok(r.afterHit===false,'đánh trúng thì cờ tắt — hồi chiêu trở về mức ban đầu');
     near(r.ibKeepStrong,5,.01,'bản Internal Bleeding yếu KHÔNG ghi đè bản mạnh');
     ok(r.ibCount===1,'Internal Bleeding không cộng dồn — chỉ một lớp');
     near(r.hampMove,.75,.01,'Hampered −25% tốc chạy');
     near(r.hampCast,1,.01,'Hampered KHÔNG đụng tốc thi triển');
-    ok(r.mnTick===22&&r.mnN===5,`Medical Ninjutsu 5 nhịp × 5.4% máu đã mất (đo ${r.mnTick}/nhịp trên 400 thiếu)`);
-    ok(r.mnTotal===108,`Medical Ninjutsu hồi tổng 27% máu đã mất (đo ${r.mnTotal}/400)`);
+    ok(r.mnTick===28&&r.mnN===5,`Medical Ninjutsu 5 nhịp × 7% máu đã mất (đo ${r.mnTick}/nhịp trên 400 thiếu)`);
+    ok(r.mnTotal===140,`Medical Ninjutsu hồi tổng 35% máu đã mất (đo ${r.mnTotal}/400)`);
     ok(r.noOverheal,'Medical Ninjutsu không bao giờ overheal');
     assert(!errors.length,'lỗi trang: '+errors.join(' | '));
     await browser.close();
@@ -322,9 +346,9 @@ const near=(a,b,eps,m)=>ok(Math.abs(a-b)<=eps, `${m} (đo ${a}, mốc ${b})`);
       return o;
     });
     ok(r.low==='tsubasa','Medical Ninjutsu chọn đồng đội có tỉ lệ máu thấp nhất');
-    ok(r.selfTick===11&&r.allyTick===16,
-       `hệ số 5.4% chia đôi, tính RIÊNG máu đã mất của từng người (${r.selfTick} / ${r.allyTick})`);
-    ok(r.selfTotal===54&&r.allyTotal===81,'mỗi người nhận đủ 13.5% máu đã mất của chính mình');
+    ok(r.selfTick===14&&r.allyTick===21,
+       `hệ số 7% chia đôi, tính RIÊNG máu đã mất của từng người (${r.selfTick} / ${r.allyTick})`);
+    ok(r.selfTotal===70&&r.allyTotal===105,'mỗi người nhận đủ 17.5% máu đã mất của chính mình');
     ok(r.deadGains===0,'đồng đội chết giữa chừng thì phần hồi của họ mất hẳn, không dồn sang ai');
     ok(r.kSelf===10&&r.kAlly===10,'Katsuyu bên Sakura và Katsuyu Fragment bên đồng đội');
     near(r.allyRegen,16,.2,'đồng đội chỉ nhận Katsuyu (2% máu tối đa), không nhận Byakugo');

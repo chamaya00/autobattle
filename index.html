@@ -2896,6 +2896,8 @@ const SAK={
 
   /* 2 — Chakra-Enhanced Punch */
   cpDmg:30, cpStun:gs(3.5), cpCd:gs(13), cpDash:gs(.55), cpSteer:gs(.15),
+  cpDashMax:gs(2.4), cpDashPad:gs(.35),   // trần quãng lao + phần dư, xem sakPunch()
+  cpBreakCut:.50,                         // bị choáng cắt ngang ⇒ lần sau chỉ chờ nửa hồi chiêu
   cpSpd:384,                              // 120% tốc lao của ChiChi (320)
   cpIbDps:5*RT, cpIbT:gs(5), cpKb:.18,
   cdMove:.50, cdCast:.40, cdT:gs(6),      // Chakra Disruption sau khi hết choáng
@@ -2903,7 +2905,7 @@ const SAK={
 
   /* 3 — Medical Ninjutsu */
   mnCast:gs(1), mnGap:gs(.5), mnT:gs(2.5), mnTicks:5, mnCd:gs(18), mnBreakCd:gs(4),
-  mnSolo:.054, mnShare:.027,              // 5.4% máu ĐANG THIẾU mỗi tick, chia đôi khi có đồng đội
+  mnSolo:.07, mnShare:.035,               // 7% máu ĐANG THIẾU mỗi tick, chia đôi khi có đồng đội
   mnSelfHp:.55, mnAllyHp:.45, mnIdleHp:.85,
 
   /* Ultimate — Strength of a Hundred Seal */
@@ -2935,7 +2937,7 @@ const CHARS={
       `<b>Basic · Shuriken Throw</b> ${sakShurDmg()} damage at range, 80% of Konohamaru's shuriken but thrown 15% faster. <b>${Math.round(SAK.slowOdds*100)}%</b> chance to apply <b>Hampered</b>: −${Math.round(SAK.slowAmt*100)}% movement for ${rts(SAK.slowT)}s, no stacking, refreshes instead.`,
       `<b>Basic · Chakra Strike</b> Inside ${Math.round(SAK.meleeIn)}px she punches and kicks instead: ${SAK.hitDmg} damage every ${rts(SAK.hitCd)}s. <b>${Math.round(SAK.ibOdds*100)}%</b> chance of <b>Internal Bleeding</b> (${SAK.ibDps/RT} dmg/s for ${rts(SAK.ibT)}s) — and only then does it knock the target back ${Math.round(SAK.hitKb*100)}% of the arena.`,
       `<b>1 · Cherry Blossom Burst</b> ${rts(SAK.cbCd)}s cooldown · ${rts(SAK.cbCast)}s wind-up, then she slams the ground and a locked-direction fissure races out: ${SAK.cbDmg} damage and <b>${rts(SAK.cbStun)}s Stun</b> to everyone along it, once each per cast. Stunned or knocked down during the wind-up cancels it for only ${rts(SAK.cbBreakCd)}s.`,
-      `<b>2 · Chakra-Enhanced Punch</b> ${rts(SAK.cpCd)}s cooldown · a real ${rts(SAK.cpDash)}s charge at 120% of ChiChi's dash speed, steerable for ${rts(SAK.cpSteer)}s then locked, first target only, <b>no CC immunity</b>. On hit: ${SAK.cpDmg} damage, <b>${rts(SAK.cpStun)}s Stun</b>, <b>Internal Bleeding</b> ${SAK.cpIbDps/RT} dmg/s for ${rts(SAK.cpIbT)}s, and once the stun ends <b>Chakra Disruption</b> −${Math.round(SAK.cdMove*100)}% movement / −${Math.round(SAK.cdCast*100)}% cast speed for ${rts(SAK.cdT)}s.`,
+      `<b>2 · Chakra-Enhanced Punch</b> ${rts(SAK.cpCd)}s cooldown · a real charge at 120% of ChiChi's dash speed that runs until it reaches the target, steerable for ${rts(SAK.cpSteer)}s then locked, first target only, <b>no CC immunity</b> — a stun cuts it short and the next attempt only waits ${rts(SAK.cpCd*SAK.cpBreakCut)}s. On hit: ${SAK.cpDmg} damage, <b>${rts(SAK.cpStun)}s Stun</b>, <b>Internal Bleeding</b> ${SAK.cpIbDps/RT} dmg/s for ${rts(SAK.cpIbT)}s, and once the stun ends <b>Chakra Disruption</b> −${Math.round(SAK.cdMove*100)}% movement / −${Math.round(SAK.cdCast*100)}% cast speed for ${rts(SAK.cdT)}s.`,
       `<b>3 · Medical Ninjutsu</b> ${rts(SAK.mnCd)}s cooldown · rooted ${rts(SAK.mnCast)}s, interruptible. Then ${SAK.mnTicks} ticks over ${rts(SAK.mnT)}s heal <b>${sakPct(SAK.mnSolo)}% of missing HP</b> each (${sakPct(SAK.mnSolo*SAK.mnTicks)}% total), snapshot when the cast lands. With an ally alive it splits ${sakPct(SAK.mnShare)}% / ${sakPct(SAK.mnShare)}% between herself and the lowest-HP ally. She may move and fight while it ticks.`,
       `<b>Ultimate · Strength of a Hundred Seal</b> Automatic, once per battle, the first time lethal damage lands: HP is set to <b>${Math.round(SAK.sealHp*100)}% Maximum HP</b> and <b>Byakugo</b> runs ${rts(SAK.sealT)}s — −${Math.round(SAK.sealRes*100)}% damage taken, total crowd-control and debuff immunity, ${Math.round(SAK.sealMove*100)}% movement, ${Math.round(SAK.sealCast*100)}% cast speed, <b>Katsuyu</b> healing ${Math.round(SAK.katsuyu/RT*100)}% Maximum HP/s to her and every living ally, plus <b>Byakugo Regeneration</b> ${Math.round(SAK.byakugo/RT*100)}% of her missing HP/s. <b>There is no invulnerability afterwards</b> — the very next hit of a multi-hit combo can still finish her. When the seal fades her chakra is spent: <b>Chakra Exhaustion</b> for ${rts(SAK.exhT)}s — −${Math.round((1-SAK.exhMove)*100)}% movement, −${Math.round((1-SAK.exhCast)*100)}% cast speed, and <b>only her basic attack and Chakra-Enhanced Punch remain usable</b>. Then she returns to normal.`
     ],
@@ -5854,7 +5856,7 @@ function mk(o){
     /* Haruno Sakura: Hampered, Chakra Disruption và Katsuyu là thứ cô dán lên NGƯỜI
        KHÁC, nên khai chung ở đây với giá trị trung tính — cùng lối Disoriented của
        Doraemon và Frozen của Superman. */
-    sakHamper:0, sakDisrupt:0, sakDisruptAfter:0, sakLift:0, sakSeal:0, sakSealDone:false,
+    sakHamper:0, sakDisrupt:0, sakDisruptAfter:0, sakLift:0, sakSeal:0, sakSealDone:false, sakCpBroke:false,
     sakSealAnim:0, sakExh:0, sakHealAcc:0, katsuyu:0, katsuyuOwner:null,
     frozen:0, frozenDmg:0, chill:0, chillAfter:0, hvSlowT:0, supSlow:0, supQuake:0,
     supCcAcc:0, supCcT:0, supCcFree:0,
@@ -13503,14 +13505,21 @@ function sakCrackTick(f,dt){
    Cú lao THẬT, có animation chạy, không phải teleport. KHÔNG miễn khống chế: một cú choáng
    là cắt đứt được — vì vậy `f.dash` ở đây tuyệt đối KHÔNG mang cờ `guard`. */
 function sakPunch(f,e){
-  setPose(f,'charge',SAK.cpDash+gs(.3)); aim(f,e,1.4); sfx('sak_dash');
-  f.dash={t:SAK.cpDash,hit:false,kind:'sakcharge',spd:SAK.cpSpd,pose:'charge',steer:SAK.cpSteer};
+  /* Quãng lao tính TỪ KHOẢNG CÁCH THẬT, không cắm cứng một con số giây. `cpDash` cố định
+     0.55s người chơi chỉ đi nổi 106px, mà AI tung chiêu từ tận `cpRange` = 360 — nên cú lao
+     hết giờ giữa đường và đứng lại, đúng cái người dùng kêu "lao nửa đường". Giờ lấy
+     quãng-cách / tốc-độ cộng một phần dư để địch có nhích ra thì vẫn với tới. */
+  const need=e?dist(f,e)/SAK.cpSpd+SAK.cpDashPad:SAK.cpDash;
+  const span=clamp(need,SAK.cpDash,SAK.cpDashMax);
+  setPose(f,'charge',span+gs(.3)); aim(f,e,1.4); sfx('sak_dash');
+  f.dash={t:span,hit:false,kind:'sakcharge',spd:SAK.cpSpd,pose:'charge',steer:SAK.cpSteer};
   G.floats.push({x:f.x,y:f.y-104,txt:'CHAKRA-ENHANCED PUNCH',color:f.color,life:1.3,ml:1.3,
     banner:true,bubble:true,gold:true,big:true,tilt:rnd(-.06,.06)});
   ring(f.x,f.y,80,f.color,.4);
 }
 function sakChargeHit(f,e){
   if(!e||!e.alive)return;
+  f.sakCpBroke=false;                     // trúng rồi thì hồi chiêu trở về mức ban đầu
   G.flashScreen=Math.max(G.flashScreen,.14);
   G.cam.shake=Math.max(G.cam.shake||0,6);
   ring(e.x,e.y,132,'#FF6FA5',.5); ring(e.x,e.y,86,'#FFFFFF',.34);
@@ -13715,8 +13724,14 @@ function sakuraTick(f,dt){
   const D=f.dash;
   if(D&&D.kind==='sakcharge'){
     if(f.stun>0||f.frozen>0){
+      /* Bị choáng cắt ngang thì KHÔNG mất trắng lượt: lần sau chỉ phải chờ nửa hồi chiêu.
+         Đánh trúng một cú là `think()` nạp lại đủ `cpCd` nên nó tự trở về mức ban đầu. */
       f.dash=null; setPose(f,'hurt',gs(.3));
-      say('Cú lao của Sakura bị chặn đứng giữa chừng.','m');
+      f.cds.s2=Math.min(f.cds.s2,SAK.cpCd*SAK.cpBreakCut);
+      f.sakCpBroke=true;
+      G.floats.push({x:f.x,y:f.y-96,txt:`CHARGE BROKEN · CD ${rts(SAK.cpCd*SAK.cpBreakCut)}s`,
+        color:'#FF9AB8',life:1.1,ml:1.1,banner:true,sc:.58});
+      say(`Cú lao của Sakura bị chặn đứng giữa chừng — lần sau chỉ phải chờ ${rts(SAK.cpCd*SAK.cpBreakCut)} giây.`,'m');
     }else{
       if(D.steer>0){
         D.steer-=dt;
