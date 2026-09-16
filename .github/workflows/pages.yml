@@ -45,13 +45,13 @@ jobs:
           # Showcase v2 là lớp sửa nhỏ tải SAU CSS inline của file game khổng lồ.
           # Nhờ vậy 3 bản sao head/torso/legs của PR #142 bị gom lại thành đúng 1 PNG,
           # đồng thời mỗi fighter có motion/VFX riêng mà không phải chép lại index.html.
-          # File motion thứ hai chỉ dùng cú pháp calc() tương thích iOS Safari 18.1.
+          # File motion thứ hai giữ tương thích iOS Safari 18.1; V3 thêm signature cinema riêng cho từng fighter.
           python3 - <<'PY'
           from pathlib import Path
 
           pages = (
-              (Path('site/index.html'), ('assets/ui/showcase-v2.css', 'assets/ui/showcase-v2-motion.css')),
-              (Path('site/studio/index.html'), ('../assets/ui/showcase-v2.css', '../assets/ui/showcase-v2-motion.css')),
+              (Path('site/index.html'), ('assets/ui/showcase-v2.css', 'assets/ui/showcase-v2-motion.css', 'assets/ui/showcase-v3-wow.css')),
+              (Path('site/studio/index.html'), ('../assets/ui/showcase-v2.css', '../assets/ui/showcase-v2-motion.css', '../assets/ui/showcase-v3-wow.css')),
           )
           for page, hrefs in pages:
               text = page.read_text(encoding='utf-8')
