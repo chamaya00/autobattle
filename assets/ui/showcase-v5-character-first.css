@@ -1,0 +1,258 @@
+/*
+ * Multiverse Battler — Showcase V5: Character First.
+ *
+ * V4 proved the signature vocabulary, but let the scene graph compete with the
+ * fighter. V5 keeps the personality and moves every flourish behind one intact
+ * body, with quieter luminance, fewer particles and smoother body rhythms.
+ */
+
+/* ---------- hierarchy: fighter first, effects second ---------- */
+.pickSplash{--mirror:1;--v5Aura:.24;--v5Accent:.22}
+.pickSplash.right{--mirror:-1}
+.pickSplash .pickSplashFx{
+  z-index:1!important;
+  opacity:.78!important;
+  filter:saturate(.88)!important;
+}
+.pickSplash .pickSplashArt{
+  z-index:3!important;
+  isolation:isolate;
+}
+.pickSplash .pickSplashCopy{z-index:4!important}
+.pickSplash .sigDirector{opacity:.72!important}
+.pickSplash .sigAtmosphere{
+  inset:12% 9% 8%!important;
+  opacity:var(--v5Aura)!important;
+  mix-blend-mode:screen!important;
+  background:radial-gradient(ellipse at 50% 58%,color-mix(in srgb,var(--sigA) 48%,transparent),transparent 64%)!important;
+  filter:blur(10px)!important;
+}
+.pickSplash .sigArena{
+  border:0!important;
+  box-shadow:none!important;
+  filter:none!important;
+  -webkit-mask:none!important;
+  mask:none!important;
+  clip-path:none!important;
+  opacity:var(--v5Accent)!important;
+  mix-blend-mode:screen!important;
+  animation:v5AccentBreath var(--beatDur,6s) ease-in-out infinite!important;
+}
+.pickSplash .sigSpeed{display:none!important}
+.pickSplash .sigEmblem,
+.pickSplash .sigOrbit,
+.pickSplash .sigImpact,
+.pickSplash .sigHud{display:none!important}
+.pickSplash .sigCore{opacity:.34!important;mix-blend-mode:screen!important}
+.pickSplash .sigCore i{display:none!important;border:0!important;box-shadow:none!important}
+.pickSplash .sigShards{opacity:.5!important;mix-blend-mode:screen!important}
+.pickSplash .sigShards i{
+  display:none!important;
+  opacity:.24!important;
+  box-shadow:none!important;
+  animation:v5Drift 7.2s var(--delay) ease-in-out infinite!important;
+}
+.pickSplash .sigSweep{
+  display:none!important;
+  opacity:0!important;
+  height:1px!important;
+  box-shadow:none!important;
+  filter:none!important;
+  animation:v5QuietSweep var(--beatDur,7s) ease-in-out infinite!important;
+}
+
+/* The glow hugs the silhouette instead of painting over it. */
+.pickSplash .pickSplashArt::before{
+  opacity:.34!important;
+  filter:blur(7px)!important;
+  animation:v5GroundBreath 4.8s ease-in-out infinite!important;
+}
+.pickSplash .pickSplashArt::after{
+  opacity:.2!important;
+  filter:blur(16px)!important;
+  animation:v5AuraBreath 5.6s ease-in-out infinite!important;
+}
+
+/* ---------- restrained entrance + continuous, intact-body motion ---------- */
+.pickSplash.show .pickSplashArt,
+.pickSplash.right.show .pickSplashArt{
+  animation:
+    v5Entrance .68s cubic-bezier(.18,.82,.2,1) both,
+    var(--bodyAnim) var(--bodyDur) .68s cubic-bezier(.45,0,.55,1) infinite,
+    v5SilhouetteGlow var(--beatDur) .68s ease-in-out infinite!important;
+}
+
+@keyframes v5Entrance{
+  0%{opacity:0;transform:translate3d(var(--entryX),14px,0) rotate(calc(var(--entryRot) * .55)) scaleX(var(--mirror)) scale(.95);filter:brightness(.72) saturate(.78) blur(1px)}
+  72%{opacity:1;transform:translate3d(0,-2px,0) rotate(0) scaleX(var(--mirror)) scale(1.006);filter:brightness(1.04) saturate(1.04) blur(0)}
+  100%{opacity:1;transform:translate3d(0,0,0) rotate(0) scaleX(var(--mirror)) scale(1);filter:brightness(1) saturate(1)}
+}
+@keyframes v5SilhouetteGlow{
+  0%,100%{filter:drop-shadow(0 17px 21px rgba(0,0,0,.76)) drop-shadow(0 0 5px color-mix(in srgb,var(--fxA) 18%,transparent))}
+  50%{filter:drop-shadow(0 18px 22px rgba(0,0,0,.78)) drop-shadow(0 0 9px color-mix(in srgb,var(--fxA) 28%,transparent))}
+}
+@keyframes v5GroundBreath{0%,100%{transform:scale(.97);opacity:.25}50%{transform:scale(1.025);opacity:.42}}
+@keyframes v5AuraBreath{0%,100%{transform:scale(.98);opacity:.14}50%{transform:scale(1.025);opacity:.25}}
+@keyframes v5AccentBreath{0%,100%{transform:scale(.975) rotate(-1deg);opacity:calc(var(--v5Accent) * .72)}50%{transform:scale(1.02) rotate(1deg);opacity:var(--v5Accent)}}
+@keyframes v5QuietSweep{0%,72%,100%{opacity:0;transform:translateX(-20%) rotate(-9deg) scaleX(.4)}82%{opacity:.28;transform:translateX(0) rotate(-9deg) scaleX(.9)}90%{opacity:0;transform:translateX(20%) rotate(-9deg) scaleX(1.1)}}
+@keyframes v5Drift{0%,100%{opacity:.08;transform:translate3d(0,5px,0) rotate(0) scale(.82)}50%{opacity:.3;transform:translate3d(4px,-8px,0) rotate(90deg) scale(1)}}
+@keyframes v5SoftOrbit{to{transform:rotate(360deg)}}
+@keyframes v5FloatOrb{0%,100%{transform:translate3d(0,2px,0) scale(.92);opacity:.18}50%{transform:translate3d(0,-3px,0) scale(1.04);opacity:.32}}
+@keyframes v5Scan{0%,76%,100%{opacity:0;transform:translateY(-34px)}84%{opacity:.28}94%{opacity:0;transform:translateY(100px)}}
+
+/* Each fighter keeps a different physical cadence, but every curve is smooth. */
+.pickSplash[data-key="dora"]{--bodyAnim:v5Dora;--bodyAnimR:v5Dora;--bodyDur:5.4s;--beatDur:7.4s;--v5Aura:.22;--v5Accent:.24}
+.pickSplash[data-key="sakura"]{--bodyAnim:v5Sakura;--bodyAnimR:v5Sakura;--bodyDur:5.9s;--beatDur:7s;--v5Aura:.22;--v5Accent:.2}
+.pickSplash[data-key="isagi"]{--bodyAnim:v5Isagi;--bodyAnimR:v5Isagi;--bodyDur:5.15s;--beatDur:6.8s;--v5Aura:.2;--v5Accent:.19}
+.pickSplash[data-key="kono"]{--bodyAnim:v5Kono;--bodyAnimR:v5Kono;--bodyDur:5s;--beatDur:7.2s;--v5Aura:.2;--v5Accent:.2}
+.pickSplash[data-key="chichi"]{--bodyAnim:v5ChiChi;--bodyAnimR:v5ChiChi;--bodyDur:5.45s;--beatDur:6.6s;--v5Aura:.22;--v5Accent:.2}
+.pickSplash[data-key="shika"]{--bodyAnim:v5Shika;--bodyAnimR:v5Shika;--bodyDur:7.4s;--beatDur:8.4s;--v5Aura:.16;--v5Accent:.24}
+.pickSplash[data-key="tsubasa"]{--bodyAnim:v5Tsubasa;--bodyAnimR:v5Tsubasa;--bodyDur:4.85s;--beatDur:6.5s;--v5Aura:.18;--v5Accent:.2}
+.pickSplash[data-key="suzune"]{--bodyAnim:v5Suzune;--bodyAnimR:v5Suzune;--bodyDur:6.7s;--beatDur:8s;--v5Aura:.17;--v5Accent:.18}
+.pickSplash[data-key="superman"]{--bodyAnim:v5Superman;--bodyAnimR:v5Superman;--bodyDur:6.4s;--beatDur:7.6s;--v5Aura:.22;--v5Accent:.2}
+.pickSplash[data-key="ginyu"]{--bodyAnim:v5Ginyu;--bodyAnimR:v5Ginyu;--bodyDur:5.35s;--beatDur:7s;--v5Aura:.2;--v5Accent:.2}
+.pickSplash[data-key="beatrice"]{--bodyAnim:v5Beatrice;--bodyAnimR:v5Beatrice;--bodyDur:6.8s;--beatDur:8.2s;--v5Aura:.2;--v5Accent:.2}
+.pickSplash[data-key="tanjiro"]{--bodyAnim:v5Tanjiro;--bodyAnimR:v5Tanjiro;--bodyDur:5.65s;--beatDur:7.2s;--v5Aura:.2;--v5Accent:.21}
+.pickSplash[data-key="gojo"]{--bodyAnim:v5Gojo;--bodyAnimR:v5Gojo;--bodyDur:7s;--beatDur:8.4s;--v5Aura:.2;--v5Accent:.18}
+.pickSplash[data-key="conan"]{--bodyAnim:v5Conan;--bodyAnimR:v5Conan;--bodyDur:6.15s;--beatDur:8s;--v5Aura:.17;--v5Accent:.19}
+
+@keyframes v5Dora{0%,100%{transform:translate3d(0,0,0) rotate(-.12deg) scaleX(var(--mirror)) scale(1)}24%{transform:translate3d(1px,-4px,0) rotate(.18deg) scaleX(var(--mirror)) scale(1.006,1.01)}52%{transform:translate3d(-1px,-6px,0) rotate(-.16deg) scaleX(var(--mirror)) scale(.999,1.014)}76%{transform:translate3d(1px,-2px,0) rotate(.1deg) scaleX(var(--mirror)) scale(1.008,.997)}}
+@keyframes v5Sakura{0%,100%{transform:translate3d(0,0,0) rotate(-.08deg) scaleX(var(--mirror)) scale(1)}30%{transform:translate3d(1px,-3px,0) rotate(.1deg) scaleX(var(--mirror)) scale(1.002,1.009)}58%{transform:translate3d(-1px,-5px,0) rotate(-.14deg) scaleX(var(--mirror)) scale(1.005,1.013)}78%{transform:translate3d(0,-2px,0) rotate(.06deg) scaleX(var(--mirror)) scale(1.007,.999)}}
+@keyframes v5Isagi{0%,100%{transform:translate3d(-1px,0,0) rotate(-.12deg) scaleX(var(--mirror)) scale(1)}28%{transform:translate3d(2px,-2px,0) rotate(.22deg) scaleX(var(--mirror)) scale(1.003,1.006)}54%{transform:translate3d(3px,-4px,0) rotate(.28deg) scaleX(var(--mirror)) scale(1.006,1.009)}76%{transform:translate3d(0,-3px,0) rotate(-.08deg) scaleX(var(--mirror)) scale(1.003,1.007)}}
+@keyframes v5Kono{0%,100%{transform:translate3d(-1px,0,0) rotate(-.2deg) scaleX(var(--mirror)) scale(1)}26%{transform:translate3d(2px,-3px,0) rotate(.28deg) scaleX(var(--mirror)) scale(1.003,1.008)}52%{transform:translate3d(4px,-5px,0) rotate(.36deg) scaleX(var(--mirror)) scale(.999,1.011)}78%{transform:translate3d(0,-2px,0) rotate(-.16deg) scaleX(var(--mirror)) scale(1.005,1.002)}}
+@keyframes v5ChiChi{0%,100%{transform:translate3d(0,0,0) rotate(-.14deg) scaleX(var(--mirror)) scale(1)}25%{transform:translate3d(2px,-3px,0) rotate(.22deg) scaleX(var(--mirror)) scale(1.004,1.009)}50%{transform:translate3d(-2px,-5px,0) rotate(-.24deg) scaleX(var(--mirror)) scale(1.007,1.012)}75%{transform:translate3d(1px,-3px,0) rotate(.12deg) scaleX(var(--mirror)) scale(1.004,1.006)}}
+@keyframes v5Shika{0%,100%{transform:translate3d(0,0,0) rotate(-.04deg) scaleX(var(--mirror)) scale(1)}34%{transform:translate3d(1px,-2px,0) rotate(.05deg) scaleX(var(--mirror)) scale(1.001,1.006)}68%{transform:translate3d(-1px,-3px,0) rotate(-.07deg) scaleX(var(--mirror)) scale(1.003,1.008)}84%{transform:translate3d(0,-1px,0) rotate(0) scaleX(var(--mirror)) scale(1.004,.999)}}
+@keyframes v5Tsubasa{0%,100%{transform:translate3d(-1px,0,0) rotate(-.18deg) scaleX(var(--mirror)) scale(1)}27%{transform:translate3d(2px,-3px,0) rotate(.3deg) scaleX(var(--mirror)) scale(1.003,1.007)}55%{transform:translate3d(5px,-5px,0) rotate(.48deg) scaleX(var(--mirror)) scale(1.006,1.01)}78%{transform:translate3d(1px,-3px,0) rotate(.08deg) scaleX(var(--mirror)) scale(1.003,1.006)}}
+@keyframes v5Suzune{0%,100%{transform:translate3d(0,0,0) rotate(-.035deg) scaleX(var(--mirror)) scale(1)}32%{transform:translate3d(1px,-2px,0) rotate(.055deg) scaleX(var(--mirror)) scale(1.001,1.006)}64%{transform:translate3d(-1px,-4px,0) rotate(-.075deg) scaleX(var(--mirror)) scale(1.003,1.009)}82%{transform:translate3d(0,-2px,0) rotate(.025deg) scaleX(var(--mirror)) scale(1.002,1.004)}}
+@keyframes v5Superman{0%,100%{transform:translate3d(0,0,0) rotate(-.06deg) scaleX(var(--mirror)) scale(1)}25%{transform:translate3d(1px,-4px,0) rotate(.08deg) scaleX(var(--mirror)) scale(1.002,1.006)}50%{transform:translate3d(0,-8px,0) rotate(0) scaleX(var(--mirror)) scale(1.004,1.009)}75%{transform:translate3d(-1px,-4px,0) rotate(-.08deg) scaleX(var(--mirror)) scale(1.002,1.006)}}
+@keyframes v5Ginyu{0%,100%{transform:translate3d(-1px,0,0) rotate(-.2deg) scaleX(var(--mirror)) scale(1)}28%{transform:translate3d(2px,-3px,0) rotate(.28deg) scaleX(var(--mirror)) scale(1.004,1.008)}56%{transform:translate3d(3px,-5px,0) rotate(.38deg) scaleX(var(--mirror)) scale(1.007,1.011)}80%{transform:translate3d(0,-2px,0) rotate(-.1deg) scaleX(var(--mirror)) scale(1.004,1.003)}}
+@keyframes v5Beatrice{0%,100%{transform:translate3d(0,0,0) rotate(-.06deg) scaleX(var(--mirror)) scale(1)}25%{transform:translate3d(1px,-4px,0) rotate(.08deg) scaleX(var(--mirror)) scale(1.002,1.006)}50%{transform:translate3d(-1px,-7px,0) rotate(-.09deg) scaleX(var(--mirror)) scale(1.004,1.009)}75%{transform:translate3d(1px,-4px,0) rotate(.05deg) scaleX(var(--mirror)) scale(1.002,1.006)}}
+@keyframes v5Tanjiro{0%,100%{transform:translate3d(0,0,0) rotate(-.12deg) scaleX(var(--mirror)) scale(1)}28%{transform:translate3d(1px,-3px,0) rotate(.16deg) scaleX(var(--mirror)) scale(1.003,1.008)}56%{transform:translate3d(-1px,-5px,0) rotate(-.18deg) scaleX(var(--mirror)) scale(1.005,1.012)}78%{transform:translate3d(1px,-2px,0) rotate(.08deg) scaleX(var(--mirror)) scale(1.004,1.003)}}
+@keyframes v5Gojo{0%,100%{transform:translate3d(-1px,-2px,0) rotate(-.035deg) scaleX(var(--mirror)) scale(1)}25%{transform:translate3d(1px,-5px,0) rotate(.045deg) scaleX(var(--mirror)) scale(1.001,1.004)}50%{transform:translate3d(2px,-8px,0) rotate(.06deg) scaleX(var(--mirror)) scale(1.003,1.006)}75%{transform:translate3d(0,-5px,0) rotate(-.025deg) scaleX(var(--mirror)) scale(1.001,1.004)}}
+@keyframes v5Conan{0%,100%{transform:translate3d(0,0,0) rotate(-.06deg) scaleX(var(--mirror)) scale(1)}30%{transform:translate3d(1px,-2px,0) rotate(.08deg) scaleX(var(--mirror)) scale(1.002,1.005)}60%{transform:translate3d(2px,-4px,0) rotate(.12deg) scaleX(var(--mirror)) scale(1.004,1.008)}82%{transform:translate3d(0,-2px,0) rotate(-.04deg) scaleX(var(--mirror)) scale(1.002,1.004)}}
+
+/* ---------- one restrained signature accent per fighter ---------- */
+/* Doraemon — a small gadget portal under the feet. */
+.pickSplash[data-key="dora"] .sigArena{
+  inset:auto!important;left:25%!important;bottom:10%!important;width:50%!important;height:16%!important;border-radius:50%!important;
+  border:1px dashed rgba(255,224,75,.62)!important;
+  background:radial-gradient(ellipse,transparent 50%,rgba(32,191,255,.5) 52%,transparent 66%)!important;
+}
+.pickSplash[data-key="dora"] .sigShards i:nth-child(-n+2){display:block!important;border-radius:50%!important;background:#ffe04b!important}
+
+/* Sakura — four slow petals and a soft chakra bloom. */
+.pickSplash[data-key="sakura"] .sigArena{
+  inset:auto!important;left:24%!important;bottom:12%!important;width:52%!important;height:24%!important;border-radius:50%!important;
+  background:radial-gradient(ellipse,rgba(255,95,162,.28),transparent 68%)!important;
+}
+.pickSplash[data-key="sakura"] .sigShards i:nth-child(-n+4){display:block!important;width:9px!important;height:6px!important;border-radius:90% 12% 90% 12%!important;background:rgba(255,190,220,.75)!important}
+
+/* Isagi — a quiet tactical lane beneath the stance. */
+.pickSplash[data-key="isagi"] .sigArena{
+  inset:auto!important;left:23%!important;bottom:8%!important;width:54%!important;height:34%!important;
+  clip-path:polygon(38% 0,62% 0,94% 100%,6% 100%)!important;
+  background:repeating-linear-gradient(90deg,transparent 0 23px,rgba(125,255,233,.38) 24px 25px),linear-gradient(90deg,transparent 49%,rgba(125,255,233,.65) 49% 51%,transparent 51%)!important;
+}
+
+/* Konohamaru — one blue-to-amber slash behind the shoulder. */
+.pickSplash[data-key="kono"] .sigSweep{display:block!important;top:46%!important;background:linear-gradient(90deg,transparent,#218cff 36%,rgba(255,255,255,.75) 50%,#ffad32 64%,transparent)!important}
+.pickSplash[data-key="kono"] .sigSpeed{
+  display:block!important;inset:25% 13% 20%!important;opacity:.12!important;
+  background:linear-gradient(118deg,transparent 34%,rgba(33,140,255,.7) 35% 36%,transparent 37% 59%,rgba(255,173,50,.55) 60% 61%,transparent 62%)!important;
+  animation:v5AccentBreath 7.2s ease-in-out infinite!important;
+}
+
+/* ChiChi — a restrained warm martial crescent. */
+.pickSplash[data-key="chichi"] .sigArena{
+  inset:20% 16% 15%!important;border-radius:50%!important;
+  background:conic-gradient(from 210deg,transparent 0 15%,rgba(255,49,95,.55) 19%,rgba(255,208,91,.45) 23%,transparent 29% 72%,rgba(255,208,91,.4) 77%,transparent 82%)!important;
+}
+
+/* Shikamaru — threat stays on the floor, never over the face. */
+.pickSplash[data-key="shika"] .sigAtmosphere{mix-blend-mode:normal!important;background:linear-gradient(to top,rgba(2,2,6,.7),transparent 60%)!important;filter:none!important}
+.pickSplash[data-key="shika"] .sigArena{
+  inset:auto 16% 5%!important;height:24%!important;border-radius:50%!important;
+  background:radial-gradient(ellipse,rgba(4,3,8,.94),rgba(32,22,58,.44) 48%,transparent 72%)!important;
+  animation:v5AccentBreath 8.4s ease-in-out infinite!important;
+  mix-blend-mode:normal!important;
+}
+
+/* Tsubasa — three clean acceleration trails, kept behind the body. */
+.pickSplash[data-key="tsubasa"] .sigSpeed{
+  display:block!important;inset:26% 12% 18%!important;opacity:.15!important;
+  background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.7) 21% 21.5%,transparent 22% 46%,rgba(28,159,255,.72) 47% 48%,transparent 49% 70%,rgba(255,255,255,.55) 71% 71.5%,transparent 72%)!important;
+  animation:v5AccentBreath 6.5s ease-in-out infinite!important;
+}
+
+/* Suzune — one exact violet prism. */
+.pickSplash[data-key="suzune"] .sigArena{
+  inset:25% 27% 19%!important;border:1px solid rgba(232,224,255,.52)!important;
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)!important;
+  background:linear-gradient(45deg,transparent 49%,rgba(142,232,255,.3) 50%,transparent 51%)!important;
+}
+
+/* Superman — a low-power sun used as rim light, not a second subject. */
+.pickSplash[data-key="superman"] .sigArena{
+  inset:auto!important;left:27%!important;top:22%!important;width:46%!important;aspect-ratio:1!important;border-radius:50%!important;
+  background:radial-gradient(circle,rgba(255,244,172,.58),rgba(255,213,63,.24) 28%,rgba(255,40,61,.09) 52%,transparent 70%)!important;
+  animation:v5AccentBreath 7.6s ease-in-out infinite!important;
+}
+
+/* Ginyu — one scouter arc and a rare scan line. */
+.pickSplash[data-key="ginyu"] .sigArena{
+  inset:auto!important;right:14%!important;top:28%!important;width:34%!important;aspect-ratio:1!important;border-radius:50%!important;
+  border:1px dashed rgba(80,255,210,.58)!important;background:radial-gradient(circle,transparent 56%,rgba(169,80,255,.28) 58%,transparent 65%)!important;
+}
+.pickSplash[data-key="ginyu"] .sigSweep{display:block!important;top:35%!important;left:48%!important;width:38%!important;background:linear-gradient(90deg,transparent,#50ffd2,transparent)!important;animation:v5Scan 7s ease-in-out infinite!important}
+
+/* Beatrice — a small runic seal below the floating silhouette. */
+.pickSplash[data-key="beatrice"] .sigArena{
+  inset:auto!important;left:25%!important;bottom:8%!important;width:50%!important;aspect-ratio:1!important;border-radius:50%!important;
+  background:repeating-conic-gradient(from 0deg,rgba(255,241,170,.52) 0 1deg,transparent 1deg 24deg)!important;
+  -webkit-mask:radial-gradient(circle,transparent 0 47%,#000 49% 51%,transparent 53%)!important;
+  mask:radial-gradient(circle,transparent 0 47%,#000 49% 51%,transparent 53%)!important;
+  animation:v5SoftOrbit 28s linear infinite!important;
+}
+
+/* Tanjiro — one water/fire arc, deliberately incomplete. */
+.pickSplash[data-key="tanjiro"] .sigArena{
+  inset:17% 13% 13%!important;border-radius:50%!important;
+  background:conic-gradient(from 215deg,transparent 0 13%,rgba(185,251,255,.58) 17%,rgba(45,214,232,.4) 23%,transparent 31% 64%,rgba(255,212,155,.52) 69%,rgba(255,97,62,.36) 75%,transparent 82%)!important;
+}
+
+/* Gojo — Blue and Red are small satellites; no giant infinity overlay. */
+.pickSplash[data-key="gojo"] .sigAtmosphere{
+  background:radial-gradient(circle at 34% 47%,rgba(41,200,255,.36),transparent 18%),radial-gradient(circle at 66% 47%,rgba(255,63,108,.3),transparent 18%),radial-gradient(ellipse at 50% 58%,rgba(152,91,255,.2),transparent 54%)!important;
+}
+.pickSplash[data-key="gojo"] .sigArena{display:none!important}
+.pickSplash[data-key="gojo"] .sigCore i:nth-child(1),
+.pickSplash[data-key="gojo"] .sigCore i:nth-child(2){display:block!important;width:10%!important;aspect-ratio:1!important;top:43%!important;border-radius:50%!important;animation:v5FloatOrb 8.4s ease-in-out infinite!important}
+.pickSplash[data-key="gojo"] .sigCore i:nth-child(1){left:25%!important;background:radial-gradient(circle,rgba(255,255,255,.7),rgba(41,200,255,.48) 24%,transparent 68%)!important}
+.pickSplash[data-key="gojo"] .sigCore i:nth-child(2){left:65%!important;background:radial-gradient(circle,rgba(255,255,255,.65),rgba(255,63,108,.42) 24%,transparent 68%)!important;animation-delay:-4.2s!important}
+
+/* Conan — a compact reticle near the head and one infrequent scan. */
+.pickSplash[data-key="conan"] .sigArena{
+  inset:auto!important;right:17%!important;top:25%!important;width:27%!important;aspect-ratio:1!important;border-radius:50%!important;
+  border:1px solid rgba(45,157,255,.6)!important;
+  background:linear-gradient(90deg,transparent 49%,rgba(255,57,79,.48) 49% 51%,transparent 51%),linear-gradient(0deg,transparent 49%,rgba(255,57,79,.48) 49% 51%,transparent 51%)!important;
+}
+.pickSplash[data-key="conan"] .sigSweep{display:block!important;top:29%!important;left:57%!important;width:29%!important;background:linear-gradient(90deg,transparent,#2d9dff,#ff394f,transparent)!important;animation:v5Scan 8s ease-in-out infinite!important}
+
+/* ---------- smaller screens: preserve contrast, spend less GPU ---------- */
+@media(max-width:760px){
+  .pickSplash .sigDirector{opacity:.62!important}
+  .pickSplash .sigAtmosphere{opacity:calc(var(--v5Aura) * .82)!important;filter:blur(7px)!important}
+  .pickSplash .sigShards i:nth-child(n+4){display:none!important}
+  .pickSplash .pickSplashArt::after{opacity:.14!important;filter:blur(11px)!important}
+}
+@media(max-width:560px){
+  .pickSplash .pickSplashFx{opacity:.68!important}
+  .pickSplash .sigShards i:nth-child(n+3){display:none!important}
+  .pickSplash[data-key="kono"] .sigSpeed,
+  .pickSplash[data-key="tsubasa"] .sigSpeed{opacity:.09!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .pickSplash.show .pickSplashArt,
+  .pickSplash.right.show .pickSplashArt{animation:v5SilhouetteGlow 8s ease-in-out infinite!important}
+  .pickSplash .sigDirector,.pickSplash .sigDirector *{animation:none!important}
+}
