@@ -12,6 +12,11 @@ name: ci
 # this skips the placeholder scaffolding gate the factory ships by default and
 # runs the project's real checks from day one - see CLAUDE.md, section 8, for
 # what each test file covers.
+#
+# Most of tools/t_*.js drive the game through tools/probe.js, which requires
+# the playwright package and a Chromium binary. Those exist on the original
+# author's machine (probe.js even falls back to a hardcoded local path) but
+# not on a GitHub-hosted runner, so the suite needs an explicit install here.
 
 on:
   push:
@@ -24,4 +29,6 @@ jobs:
     with:
       check-name: 'tests'
       commands: |
+        npm install --no-save playwright
+        npx playwright install --with-deps chromium
         for f in tools/t_*.js; do node "$f"; done
