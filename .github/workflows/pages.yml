@@ -41,6 +41,28 @@ jobs:
           cp index.html site/studio/index.html  # trang xưởng nằm trong /studio/
           # ảnh, tiếng và gói phát hành: cả hai trang cùng đọc
           [ -d assets ] && cp -r assets site/assets || true
+
+          # Showcase v2 là lớp sửa nhỏ tải SAU CSS inline của file game khổng lồ.
+          # Nhờ vậy 3 bản sao head/torso/legs của PR #142 bị gom lại thành đúng 1 PNG,
+          # đồng thời mỗi fighter có motion/VFX riêng mà không phải chép lại index.html.
+          python3 - <<'PY'
+          from pathlib import Path
+
+          pages = (
+              (Path('site/index.html'), 'assets/ui/showcase-v2.css'),
+              (Path('site/studio/index.html'), '../assets/ui/showcase-v2.css'),
+          )
+          for page, href in pages:
+              text = page.read_text(encoding='utf-8')
+              marker = '</head>'
+              tag = f'  <link rel="stylesheet" href="{href}">\n'
+              if 'showcase-v2.css' not in text:
+                  if marker not in text:
+                      raise SystemExit(f'{page}: thiếu </head> để gắn showcase-v2.css')
+                  text = text.replace(marker, tag + marker, 1)
+                  page.write_text(text, encoding='utf-8')
+          PY
+
           echo "site/ có: $(ls site | tr '\n' ' ')"
 
       # enablement: true = tự BẬT Pages qua API, khỏi phải vào Settings bấm tay.
