@@ -1,0 +1,134 @@
+/*
+ * Multiverse Battler — Stage V6.
+ * High-resolution cinematic stages + readable full-body matchup chips.
+ */
+
+/* Stage cards: let the artwork lead, keep captions legible. */
+.sTile{
+  position:relative!important;
+  overflow:hidden!important;
+  background:#070b14!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.34);
+}
+.sTile>img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:50% 50%!important;
+  transform:scale(1.002);
+  filter:saturate(.94) contrast(1.04);
+  transition:transform .42s cubic-bezier(.2,.8,.2,1),filter .32s ease!important;
+}
+.sTile::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(3,6,12,.02) 34%,rgba(3,6,12,.22) 57%,rgba(3,6,12,.94) 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);
+}
+.sTile:hover>img,.sTile.on>img{
+  transform:scale(1.025);
+  filter:saturate(1) contrast(1.06);
+}
+.sTile .sCap{z-index:2!important}
+
+/* Versus splash: the 1536px artwork stays clean behind both fighters. */
+#vsStageBg{
+  background-size:cover!important;
+  background-position:50% 50%!important;
+  filter:saturate(.9) contrast(1.04) brightness(.76)!important;
+}
+
+/* Player chips used above Select Stage. The old 30px square made every
+   full-body model unreadable; this gives the silhouette room to breathe. */
+.pickRow{
+  gap:12px!important;
+  min-height:64px;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.pickChip[data-key]{
+  position:relative!important;
+  min-width:162px!important;
+  height:64px!important;
+  padding:6px 14px 6px 8px!important;
+  gap:10px!important;
+  overflow:hidden!important;
+  isolation:isolate;
+}
+.pickChip[data-key]::before{
+  content:"";
+  position:absolute;
+  width:58px;height:58px;
+  left:4px;top:2px;
+  border-radius:13px;
+  background:radial-gradient(circle at 50% 68%,color-mix(in srgb,var(--c,#8a74ff) 22%,transparent),transparent 70%);
+  opacity:.72;
+  pointer-events:none;
+}
+.pickChip[data-key]>img{
+  position:relative;
+  z-index:1;
+  flex:0 0 52px!important;
+  width:52px!important;
+  height:52px!important;
+  object-fit:contain!important;
+  object-position:50% 72%!important;
+  transform:scale(var(--chip-model-scale,1.2));
+  transform-origin:50% 72%;
+  filter:drop-shadow(0 7px 7px rgba(0,0,0,.72)) drop-shadow(0 0 4px color-mix(in srgb,var(--c,#8a74ff) 34%,transparent));
+}
+.pickChip[data-fighter="dora"]{--chip-model-scale:1.08}
+.pickChip[data-fighter="ginyu"]{--chip-model-scale:1.12}
+.pickChip[data-fighter="superman"]{--chip-model-scale:1.13}
+.pickChip[data-fighter="sakura"],
+.pickChip[data-fighter="isagi"],
+.pickChip[data-fighter="kono"],
+.pickChip[data-fighter="chichi"],
+.pickChip[data-fighter="shika"],
+.pickChip[data-fighter="tsubasa"],
+.pickChip[data-fighter="suzune"],
+.pickChip[data-fighter="beatrice"],
+.pickChip[data-fighter="tanjiro"],
+.pickChip[data-fighter="gojo"],
+.pickChip[data-fighter="conan"]{--chip-model-scale:1.2}
+
+/* Character-grid and detail avatars receive the same full-body treatment. */
+.cAva,.dexAva{overflow:hidden!important}
+.cAva img,.dexAva img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:50% 72%!important;
+  transform:scale(1.16);
+  transform-origin:50% 72%;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.7));
+}
+.cTile[data-key="dora"] .cAva img{transform:scale(1.04)}
+.cTile[data-key="ginyu"] .cAva img,
+.cTile[data-key="superman"] .cAva img{transform:scale(1.1)}
+
+@media(max-width:760px){
+  .pickRow{width:100%!important;gap:8px!important;min-height:60px}
+  .pickChip[data-key]{
+    flex:1 1 0!important;
+    min-width:0!important;
+    max-width:190px;
+    height:60px!important;
+    padding:5px 8px 5px 5px!important;
+    gap:7px!important;
+  }
+  .pickChip[data-key]::before{width:54px;height:54px;left:2px;top:3px}
+  .pickChip[data-key]>img{flex-basis:50px!important;width:50px!important;height:50px!important}
+  .pickChip[data-key] b{font-size:clamp(12px,3.3vw,16px)!important}
+  .pickChip[data-key] b>i{font-size:clamp(8px,2.15vw,10px)!important}
+}
+@media(max-width:420px){
+  .pickChip[data-key]{height:56px!important}
+  .pickChip[data-key]::before{width:50px;height:50px}
+  .pickChip[data-key]>img{flex-basis:46px!important;width:46px!important;height:46px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .sTile>img{transition:none!important}
+}
