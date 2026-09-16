@@ -42,7 +42,7 @@ function wavUrl() {
   const dir = path.dirname(buildPlay());
   fs.mkdirSync(path.join(dir, 'assets', 'pack'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'assets', 'pack', 'pack.json'), JSON.stringify({
-    v: 1, at: '2026-09-08', spr: { kono: { idle: [PNG] } }, sfx: { punch: wavUrl() }
+    v: 1, at: '2026-09-08', spr: { kono: { idle: [PNG] }, ginyu: { idle: [PNG] } }, sfx: { punch: wavUrl() }
   }));
   const mime = f => f.endsWith('.json') ? 'application/json' : f.endsWith('.wav') ? 'audio/wav' : 'text/html';
   const sv = http.createServer((rq, rs) => {
@@ -133,11 +133,18 @@ function wavUrl() {
     return {
       hien:box.classList.contains('show')&&getComputedStyle(box).display!=='none',
       key:box.dataset.key,
-      motion:getComputedStyle(art).animationName
+      motion:getComputedStyle(art).animationName,
+      rig:art.querySelectorAll('.pickRig img').length,
+      motes:art.querySelectorAll('.pickMote').length,
+      ring:!!art.querySelector('.pickEnergyRing'),
+      streaks:document.querySelectorAll('#pickSplash .pickStreak').length
     };
   });
   ok(giu.hien && giu.key==='ginyu', 'showcase Ginyu van nam canh roster sau hon 1 giay');
   ok(/pickArtIdle/.test(giu.motion), `showcase co idle sway/breath motion (${giu.motion})`);
+  ok(giu.rig===3, `showcase tach thanh chan/than/dau de chuyen dong 2.5D (${giu.rig} lop)`);
+  ok(giu.motes===8 && giu.ring && giu.streaks===3,
+     `showcase co aura particles, energy ring va streaks (${giu.motes}/${giu.streaks})`);
   ok(await page.evaluate(() => getComputedStyle(document.querySelector('#pickSplashArt'),'::after').animationName==='pickBodyAura'),
      'showcase co aura bao quanh toan than');
   await page.click('#cselGo');
