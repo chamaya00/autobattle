@@ -52,7 +52,7 @@ const remoteBase='https://cdn.jsdelivr.net/gh/tphuc3519-coder/autobattle@'+branc
 const proxyMode=location.hostname==='htmlpreview.github.io';
 const assetBase=proxyMode?remoteBase:'';
 frame.src=proxyMode
-  ? 'https://htmlpreview.github.io/?https://raw.githubusercontent.com/tphuc3519-coder/autobattle/'+branch+'/index.html'
+  ? 'https://htmlpreview.github.io/?https://raw.githubusercontent.com/tphuc3519-coder/autobattle/'+branch+'/play.html'
   : './';
 document.getElementById('fighters').innerHTML=fighters.map(([find,label])=>
   '<button type="button" data-find="'+find+'">'+label+'</button>'
