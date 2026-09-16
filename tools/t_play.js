@@ -119,6 +119,13 @@ function wavUrl() {
   ok(await page.evaluate(() => document.querySelectorAll('.pickChip').length) === 0,
      'buoc P1 chua co dai "da chon"');
   await page.click('#listA .cTile[data-key="ginyu"]');
+  const khoa = await page.evaluate(() => ({
+    hien: document.getElementById('pickSplash').classList.contains('show'),
+    ten: document.getElementById('pickSplashName').textContent,
+    art: !!document.querySelector('#pickSplashArt img, #pickSplashArt i')
+  }));
+  ok(khoa.hien && /GINYU/i.test(khoa.ten) && khoa.art,
+     `chon fighter co splash art khoa nhan vat (${khoa.ten})`);
   await page.click('#cselGo');
   await page.waitForTimeout(250);
   const buoc2 = await page.evaluate(() => ({
@@ -164,10 +171,13 @@ function wavUrl() {
     vs: document.querySelectorAll('#arcVs .vsBig').length,
     ten: [...document.querySelectorAll('#arcVs .vsName')].map(e => e.textContent).join('/'),
     san: (document.getElementById('vsStage') || {}).textContent,
+    nen: (document.getElementById('vsStageBg') || {}).style.backgroundImage,
+    hud: document.querySelectorAll('#arcVs .vsPlate').length,
     t: window.__G().t
   }));
   ok(vsm.hien, 'bam vao tran thi mo man VS truoc');
   ok(vsm.mat === 2 && vsm.vs === 1, `hai khung nhan vat va mot chu VS (${vsm.mat} khung / ${vsm.vs} VS)`);
+  ok(vsm.hud === 2 && /^url\(/.test(vsm.nen), `VS co hai HUD plate va nen san dau that (${vsm.hud} plate)`);
   /* Người dùng: "đừng để nó là icon — để nó là full body với nhiều effect trông như một
      battle thật". Khung phải CAO hơn rộng và vẽ trọn cả người, kèm quầng sáng / vệt tốc độ
      / vũng sáng dưới chân / burst sau chữ VS. */

@@ -43,6 +43,18 @@ File dài ~7500 dòng. Các khu ngăn nhau bằng comment `/* ---------- tên --
 | `gói phát hành` | `packBuild()` / `packLoad()` — đường đưa ảnh, tiếng sang trang chơi |
 | `loop` / `ghi hình sàn đấu` / `màn chọn nhân vật` | vòng `requestAnimationFrame`, quay video (`recFrame()` dựng khung dọc 9:16), ba nút chế độ `.mTab`, dựng thẻ `.cTile` và dải đội hình `.cChip` |
 
+### Splash art lúc chọn và màn VS
+
+- Mỗi đấu thủ chơi được có thêm pose `splash` trong `SETS`. Đây là tranh key art khổ lớn
+  chỉ dành cho hiệu ứng khoá nhân vật và màn VS; game không dùng nó để vẽ thân người trong
+  trận. Nếu ô này trống, `splashSrc()` tự rơi về `idle` / `scared` / `stand3`, nên bộ asset
+  cũ vẫn chạy đầy đủ.
+- `pickSplashShow()` mở `#pickSplash` trong 0,82 giây sau mỗi lần chọn. Lớp này
+  `pointer-events:none`, vì vậy test và người chơi vẫn có thể bấm Tiếp ngay; đừng đổi nó
+  thành modal chặn thao tác.
+- `vsShow()` dùng splash art, nền thu nhỏ thật của màn đấu (`stageThumb()`), tên watermark,
+  role và tối đa bốn ô loadout. `vsOn` vẫn là cờ duy nhất đóng băng mô phỏng.
+
 ---
 
 ## 1. Quy đổi thời gian — đọc kỹ trước khi sửa bất kỳ con số nào
