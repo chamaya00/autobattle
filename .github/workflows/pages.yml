@@ -45,15 +45,16 @@ jobs:
           # Showcase v2 là lớp sửa nhỏ tải SAU CSS inline của file game khổng lồ.
           # Nhờ vậy 3 bản sao head/torso/legs của PR #142 bị gom lại thành đúng 1 PNG,
           # đồng thời mỗi fighter có motion/VFX riêng mà không phải chép lại index.html.
-          # File motion thứ hai giữ tương thích iOS Safari 18.1; V3 thêm signature cinema riêng cho từng fighter.
+          # File motion thứ hai giữ tương thích iOS Safari 18.1; V3 điều khiển body motion;
+          # V4 dựng scene graph trực quan riêng cho từng fighter.
           python3 - <<'PY'
           from pathlib import Path
 
           pages = (
-              (Path('site/index.html'), ('assets/ui/showcase-v2.css', 'assets/ui/showcase-v2-motion.css', 'assets/ui/showcase-v3-wow.css')),
-              (Path('site/studio/index.html'), ('../assets/ui/showcase-v2.css', '../assets/ui/showcase-v2-motion.css', '../assets/ui/showcase-v3-wow.css')),
+              (Path('site/index.html'), ('assets/ui/showcase-v2.css', 'assets/ui/showcase-v2-motion.css', 'assets/ui/showcase-v3-wow.css', 'assets/ui/showcase-v4-director.css'), 'assets/ui/showcase-v4-director.js'),
+              (Path('site/studio/index.html'), ('../assets/ui/showcase-v2.css', '../assets/ui/showcase-v2-motion.css', '../assets/ui/showcase-v3-wow.css', '../assets/ui/showcase-v4-director.css'), '../assets/ui/showcase-v4-director.js'),
           )
-          for page, hrefs in pages:
+          for page, hrefs, script_src in pages:
               text = page.read_text(encoding='utf-8')
               marker = '</head>'
               if marker not in text:
@@ -61,7 +62,13 @@ jobs:
               tags = ''.join(f'  <link rel="stylesheet" href="{href}">\n' for href in hrefs)
               if 'showcase-v2.css' not in text:
                   text = text.replace(marker, tags + marker, 1)
-                  page.write_text(text, encoding='utf-8')
+              body_marker = '</body>'
+              if body_marker not in text:
+                  raise SystemExit(f'{page}: thiếu </body> để gắn visual director')
+              if 'showcase-v4-director.js' not in text:
+                  script = f'  <script src="{script_src}" defer></script>\n'
+                  text = text.replace(body_marker, script + body_marker, 1)
+              page.write_text(text, encoding='utf-8')
           PY
 
           echo "site/ có: $(ls site | tr '\n' ' ')"
