@@ -112,6 +112,19 @@ Netlify: kéo thả nguyên thư mục vào netlify.com/drop là xong. Vercel: `
 Muốn khoá trang xưởng bằng mật khẩu thật thì Netlify (bản trả phí) và Cloudflare Access
 đều làm được ở mức hosting, không phải sửa code.
 
+### Cách 3 — Vercel: một bản NỘI BỘ + một bản CÔNG KHAI
+
+Repo đã có sẵn `vercel.json` + `tools/vercel_build.sh` (build y hệt Cách 1) và
+`middleware.js` (khoá bằng mật khẩu HTTP Basic Auth, chỉ bật khi project có khai hai biến
+môi trường `DEV_BASIC_AUTH_USER` / `DEV_BASIC_AUTH_PASS`). Dựng **hai project Vercel** từ
+cùng repo này — một theo dõi nhánh `main` không khoá gì (bản công khai cho người chơi), một
+theo dõi nhánh `dev` có khoá hai biến môi trường trên (bản nội bộ cho team, hỏi mật khẩu
+trước khi vào được kể cả trang chơi lẫn `/studio/`).
+
+Các bước dựng cụ thể (tạo nhánh `dev`, import repo hai lần, đặt biến môi trường…) nằm trong
+[`docs/deploy-vercel.md`](docs/deploy-vercel.md). Muốn kiểm phần khoá mật khẩu mà không cần
+deploy thật thì chạy `node tools/t_vercel_auth.js`.
+
 ## Muốn bỏ bước commit — làm backend
 
 Bước 2–3 ở trên là chỗ vướng duy nhất: đổi một cái ảnh cũng phải đẩy repo. Muốn bấm nút

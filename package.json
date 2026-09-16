@@ -1,0 +1,11 @@
+{
+  "name": "multiverse-battler",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Static single-file canvas autobattler. No build step for local play; package.json exists only so Vercel Edge Middleware (middleware.js) resolves as an ES module.",
+  "scripts": {
+    "build": "bash tools/vercel_build.sh",
+    "test": "node tools/t_reg.js"
+  }
+}
