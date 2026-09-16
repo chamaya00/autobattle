@@ -18,7 +18,7 @@
   --bodyAnim:mbDoraBody;
   --bodyAnimR:mbDoraBodyR;
   --beatDur:4.8s;
-  --glowPower:.54;
+  --glowPower:54%;
 }
 .pickSplash.right{
   --entryX:34px;
@@ -67,7 +67,7 @@
 }
 @keyframes mbSignatureGlow{
   0%,72%,100%{filter:drop-shadow(0 16px 20px rgba(0,0,0,.72)) drop-shadow(0 0 8px color-mix(in srgb,var(--fxA) 24%,transparent))}
-  78%{filter:drop-shadow(0 17px 21px rgba(0,0,0,.74)) drop-shadow(0 0 16px color-mix(in srgb,var(--fxA) calc(var(--glowPower) * 100%),transparent))}
+  78%{filter:drop-shadow(0 17px 21px rgba(0,0,0,.74)) drop-shadow(0 0 16px color-mix(in srgb,var(--fxA) var(--glowPower),transparent))}
   84%{filter:drop-shadow(0 16px 20px rgba(0,0,0,.72)) drop-shadow(0 0 10px color-mix(in srgb,var(--fxB) 30%,transparent))}
 }
 
@@ -278,26 +278,26 @@
 }
 
 /* ---------- stronger fighter identity: timing + reveal direction ---------- */
-.pickSplash[data-key="dora"]{--bodyAnim:mbDoraBody;--bodyAnimR:mbDoraBodyR;--bodyDur:4.7s;--beatDur:4.7s;--entryY:28px;--entryRot:-1.2deg;--entryScale:.84;--glowPower:.52}
-.pickSplash[data-key="sakura"]{--bodyAnim:mbSakuraBody;--bodyAnimR:mbSakuraBodyR;--bodyDur:5.3s;--beatDur:5.3s;--entryY:10px;--entryRot:-2.8deg;--entryScale:.9;--glowPower:.62}
-.pickSplash[data-key="isagi"]{--bodyAnim:mbIsagiBody;--bodyAnimR:mbIsagiBodyR;--bodyDur:4.15s;--beatDur:4.15s;--entryX:-52px;--entryY:2px;--entryRot:-3.2deg;--entryScale:.94;--glowPower:.66}
+.pickSplash[data-key="dora"]{--bodyAnim:mbDoraBody;--bodyAnimR:mbDoraBodyR;--bodyDur:4.7s;--beatDur:4.7s;--entryY:28px;--entryRot:-1.2deg;--entryScale:.84;--glowPower:52%}
+.pickSplash[data-key="sakura"]{--bodyAnim:mbSakuraBody;--bodyAnimR:mbSakuraBodyR;--bodyDur:5.3s;--beatDur:5.3s;--entryY:10px;--entryRot:-2.8deg;--entryScale:.9;--glowPower:62%}
+.pickSplash[data-key="isagi"]{--bodyAnim:mbIsagiBody;--bodyAnimR:mbIsagiBodyR;--bodyDur:4.15s;--beatDur:4.15s;--entryX:-52px;--entryY:2px;--entryRot:-3.2deg;--entryScale:.94;--glowPower:66%}
 .pickSplash.right[data-key="isagi"]{--entryX:52px;--entryRot:3.2deg}
-.pickSplash[data-key="kono"]{--bodyAnim:mbKonoBody;--bodyAnimR:mbKonoBodyR;--bodyDur:3.85s;--beatDur:3.85s;--entryX:-70px;--entryY:-2px;--entryRot:-5deg;--entryScale:.93;--glowPower:.68}
+.pickSplash[data-key="kono"]{--bodyAnim:mbKonoBody;--bodyAnimR:mbKonoBodyR;--bodyDur:3.85s;--beatDur:3.85s;--entryX:-70px;--entryY:-2px;--entryRot:-5deg;--entryScale:.93;--glowPower:68%}
 .pickSplash.right[data-key="kono"]{--entryX:70px;--entryRot:5deg}
-.pickSplash[data-key="chichi"]{--bodyAnim:mbChiChiBody;--bodyAnimR:mbChiChiBodyR;--bodyDur:4.45s;--beatDur:4.45s;--entryY:14px;--entryRot:-3.5deg;--entryScale:.9;--glowPower:.67}
-.pickSplash[data-key="shika"]{--bodyAnim:mbShikaBody;--bodyAnimR:mbShikaBodyR;--bodyDur:6.6s;--beatDur:6.6s;--entryX:-18px;--entryY:5px;--entryRot:-.5deg;--entryScale:.96;--glowPower:.42}
+.pickSplash[data-key="chichi"]{--bodyAnim:mbChiChiBody;--bodyAnimR:mbChiChiBodyR;--bodyDur:4.45s;--beatDur:4.45s;--entryY:14px;--entryRot:-3.5deg;--entryScale:.9;--glowPower:67%}
+.pickSplash[data-key="shika"]{--bodyAnim:mbShikaBody;--bodyAnimR:mbShikaBodyR;--bodyDur:6.6s;--beatDur:6.6s;--entryX:-18px;--entryY:5px;--entryRot:-.5deg;--entryScale:.96;--glowPower:42%}
 .pickSplash.right[data-key="shika"]{--entryX:18px;--entryRot:.5deg}
-.pickSplash[data-key="tsubasa"]{--bodyAnim:mbTsubasaBody;--bodyAnimR:mbTsubasaBodyR;--bodyDur:3.7s;--beatDur:3.7s;--entryX:-72px;--entryY:7px;--entryRot:-4deg;--entryScale:.92;--glowPower:.67}
+.pickSplash[data-key="tsubasa"]{--bodyAnim:mbTsubasaBody;--bodyAnimR:mbTsubasaBodyR;--bodyDur:3.7s;--beatDur:3.7s;--entryX:-72px;--entryY:7px;--entryRot:-4deg;--entryScale:.92;--glowPower:67%}
 .pickSplash.right[data-key="tsubasa"]{--entryX:72px;--entryRot:4deg}
-.pickSplash[data-key="suzune"]{--bodyAnim:mbSuzuneBody;--bodyAnimR:mbSuzuneBodyR;--bodyDur:5.8s;--beatDur:5.8s;--entryX:-20px;--entryY:4px;--entryRot:-.8deg;--entryScale:.95;--glowPower:.52}
+.pickSplash[data-key="suzune"]{--bodyAnim:mbSuzuneBody;--bodyAnimR:mbSuzuneBodyR;--bodyDur:5.8s;--beatDur:5.8s;--entryX:-20px;--entryY:4px;--entryRot:-.8deg;--entryScale:.95;--glowPower:52%}
 .pickSplash.right[data-key="suzune"]{--entryX:20px;--entryRot:.8deg}
-.pickSplash[data-key="superman"]{--bodyAnim:mbSupermanBody;--bodyAnimR:mbSupermanBodyR;--bodyDur:5.25s;--beatDur:5.25s;--entryY:46px;--entryRot:0deg;--entryScale:.88;--glowPower:.75}
-.pickSplash[data-key="ginyu"]{--bodyAnim:mbGinyuBody;--bodyAnimR:mbGinyuBodyR;--bodyDur:4.15s;--beatDur:4.15s;--entryY:24px;--entryRot:-5deg;--entryScale:.86;--glowPower:.68}
-.pickSplash[data-key="beatrice"]{--bodyAnim:mbBeatriceBody;--bodyAnimR:mbBeatriceBodyR;--bodyDur:5.9s;--beatDur:5.9s;--entryY:34px;--entryRot:-1deg;--entryScale:.88;--glowPower:.58}
-.pickSplash[data-key="tanjiro"]{--bodyAnim:mbTanjiroBody;--bodyAnimR:mbTanjiroBodyR;--bodyDur:4.7s;--beatDur:4.7s;--entryX:-46px;--entryY:12px;--entryRot:-3deg;--entryScale:.91;--glowPower:.7}
+.pickSplash[data-key="superman"]{--bodyAnim:mbSupermanBody;--bodyAnimR:mbSupermanBodyR;--bodyDur:5.25s;--beatDur:5.25s;--entryY:46px;--entryRot:0deg;--entryScale:.88;--glowPower:75%}
+.pickSplash[data-key="ginyu"]{--bodyAnim:mbGinyuBody;--bodyAnimR:mbGinyuBodyR;--bodyDur:4.15s;--beatDur:4.15s;--entryY:24px;--entryRot:-5deg;--entryScale:.86;--glowPower:68%}
+.pickSplash[data-key="beatrice"]{--bodyAnim:mbBeatriceBody;--bodyAnimR:mbBeatriceBodyR;--bodyDur:5.9s;--beatDur:5.9s;--entryY:34px;--entryRot:-1deg;--entryScale:.88;--glowPower:58%}
+.pickSplash[data-key="tanjiro"]{--bodyAnim:mbTanjiroBody;--bodyAnimR:mbTanjiroBodyR;--bodyDur:4.7s;--beatDur:4.7s;--entryX:-46px;--entryY:12px;--entryRot:-3deg;--entryScale:.91;--glowPower:70%}
 .pickSplash.right[data-key="tanjiro"]{--entryX:46px;--entryRot:3deg}
-.pickSplash[data-key="gojo"]{--bodyAnim:mbGojoBody;--bodyAnimR:mbGojoBodyR;--bodyDur:6.15s;--beatDur:6.15s;--entryY:20px;--entryRot:-.6deg;--entryScale:.89;--glowPower:.74}
-.pickSplash[data-key="conan"]{--bodyAnim:mbConanBody;--bodyAnimR:mbConanBodyR;--bodyDur:5.25s;--beatDur:5.25s;--entryX:-28px;--entryY:12px;--entryRot:-1.4deg;--entryScale:.9;--glowPower:.58}
+.pickSplash[data-key="gojo"]{--bodyAnim:mbGojoBody;--bodyAnimR:mbGojoBodyR;--bodyDur:6.15s;--beatDur:6.15s;--entryY:20px;--entryRot:-.6deg;--entryScale:.89;--glowPower:70%4}
+.pickSplash[data-key="conan"]{--bodyAnim:mbConanBody;--bodyAnimR:mbConanBodyR;--bodyDur:5.25s;--beatDur:5.25s;--entryX:-28px;--entryY:12px;--entryRot:-1.4deg;--entryScale:.9;--glowPower:58%}
 .pickSplash.right[data-key="conan"]{--entryX:28px;--entryRot:1.4deg}
 
 /* ---------- signature VFX beats ---------- */
@@ -339,7 +339,7 @@
 }
 .pickSplash[data-key="sakura"] .pickSplashFx::after{
   left:18%;right:18%;bottom:9%;height:38%;border:2px solid transparent;border-top-color:#ffd6e8;border-radius:50%;
-  filter:drop-shadow(0 0 8px var(--fxA));animation:mbPetalStorm calc(var(--beatDur) * .73) -.8s ease-in-out infinite!important;
+  filter:drop-shadow(0 0 8px var(--fxA));animation:mbPetalStorm 3.85s -.8s ease-in-out infinite!important;
 }
 
 /* Isagi — egoist field grid, goal reticle and decision flash. */
@@ -382,7 +382,7 @@
 }
 .pickSplash[data-key="chichi"] .pickSplashFx::after{
   left:12%;right:12%;bottom:7%;height:28%;border:2px solid transparent;border-top-color:var(--fxB);border-radius:50%;
-  filter:drop-shadow(0 0 7px var(--fxA));animation:mbKiCrescent calc(var(--beatDur) * .67) -.6s ease-in-out infinite!important;
+  filter:drop-shadow(0 0 7px var(--fxA));animation:mbKiCrescent 2.98s -.6s ease-in-out infinite!important;
 }
 
 /* Shikamaru — shadow possession visibly reaches toward the opponent. */
@@ -526,9 +526,6 @@
 
 /* Keep the presentation premium without overloading iPhone GPUs. */
 @media(max-width:560px){
-  .pickSplash.show .pickSplashArt,.pickSplash.right.show .pickSplashArt{
-    animation-duration:var(--entryDur),calc(var(--bodyDur) * 1.06),calc(var(--beatDur) * 1.06)!important;
-  }
   .pickSplashFx::before,.pickSplashFx::after{filter:none}
   .pickSplash[data-key="superman"] .pickSplashFx::before,
   .pickSplash[data-key="gojo"] .pickSplashFx::before,
