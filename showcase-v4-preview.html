@@ -36,7 +36,7 @@
     <div class="fighters" id="fighters"></div>
     <div class="status" id="status">LOADING ARENA…</div>
   </div>
-  <iframe id="game" title="Multiverse Battler V4 preview" src="./"></iframe>
+  <iframe id="game" title="Multiverse Battler V4 preview"></iframe>
   <div class="tip">Each fighter now changes the whole scene—not just the aura color.</div>
 <script>
 const fighters=[
@@ -47,6 +47,13 @@ const fighters=[
 ];
 const frame=document.getElementById('game');
 const status=document.getElementById('status');
+const branch='feat/showcase-v4-visual-director';
+const remoteBase='https://cdn.jsdelivr.net/gh/tphuc3519-coder/autobattle@'+branch+'/';
+const proxyMode=location.hostname==='htmlpreview.github.io';
+const assetBase=proxyMode?remoteBase:'';
+frame.src=proxyMode
+  ? 'https://htmlpreview.github.io/?https://raw.githubusercontent.com/tphuc3519-coder/autobattle/'+branch+'/index.html'
+  : './';
 document.getElementById('fighters').innerHTML=fighters.map(([find,label])=>
   '<button type="button" data-find="'+find+'">'+label+'</button>'
 ).join('');
@@ -69,12 +76,12 @@ async function boot(){
   ['showcase-v2.css','showcase-v2-motion.css','showcase-v3-wow.css','showcase-v4-director.css'].forEach(file=>{
     if(!doc.querySelector('link[href*="'+file+'"]')){
       const link=doc.createElement('link');
-      link.rel='stylesheet';link.href='assets/ui/'+file;doc.head.appendChild(link);
+      link.rel='stylesheet';link.href=assetBase+'assets/ui/'+file;doc.head.appendChild(link);
     }
   });
   if(!doc.querySelector('script[src*="showcase-v4-director.js"]')){
     const script=doc.createElement('script');
-    script.src='assets/ui/showcase-v4-director.js';script.defer=true;doc.body.appendChild(script);
+    script.src=assetBase+'assets/ui/showcase-v4-director.js';script.defer=true;doc.body.appendChild(script);
   }
   await wait(850);
   await clickStage(doc,['press start','bắt đầu'],650);
