@@ -126,6 +126,18 @@ function wavUrl() {
   }));
   ok(khoa.hien && /GINYU/i.test(khoa.ten) && khoa.art,
      `chon fighter co splash art khoa nhan vat (${khoa.ten})`);
+  await page.waitForTimeout(1100);
+  const giu = await page.evaluate(() => {
+    const box=document.getElementById('pickSplash');
+    const art=document.getElementById('pickSplashArt');
+    return {
+      hien:box.classList.contains('show')&&getComputedStyle(box).display!=='none',
+      key:box.dataset.key,
+      motion:getComputedStyle(art).animationName
+    };
+  });
+  ok(giu.hien && giu.key==='ginyu', 'showcase Ginyu van nam canh roster sau hon 1 giay');
+  ok(/pickArtFloat/.test(giu.motion), `showcase co idle motion (${giu.motion})`);
   await page.click('#cselGo');
   await page.waitForTimeout(250);
   const buoc2 = await page.evaluate(() => ({
