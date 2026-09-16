@@ -1368,12 +1368,12 @@
   .pickSplashArt{position:absolute;z-index:2;left:4%;right:4%;bottom:-4%;height:88%;display:flex;
     align-items:flex-end;justify-content:center;transform-origin:50% 100%;
     filter:drop-shadow(0 20px 25px rgba(0,0,0,.78)) drop-shadow(0 0 18px color-mix(in srgb,var(--psColor) 35%,transparent))}
-  .pickSplash.show .pickSplashArt{animation:pickArtIn .58s cubic-bezier(.16,.88,.22,1) both,pickArtFloat 4.2s .58s ease-in-out infinite alternate}
+  .pickSplash.show .pickSplashArt{animation:pickArtIn .58s cubic-bezier(.16,.88,.22,1) both,pickArtIdle 5.6s .58s ease-in-out infinite}
   .pickSplash.right .pickSplashArt{transform:scaleX(-1)}
-  .pickSplash.right.show .pickSplashArt{animation:pickArtInR .58s cubic-bezier(.16,.88,.22,1) both,pickArtFloatR 4.2s .58s ease-in-out infinite alternate}
+  .pickSplash.right.show .pickSplashArt{animation:pickArtInR .58s cubic-bezier(.16,.88,.22,1) both,pickArtIdleR 5.6s .58s ease-in-out infinite}
   .pickSplashArt::before{content:'';position:absolute;z-index:-1;left:9%;right:9%;bottom:0;height:16%;border-radius:50%;
     background:radial-gradient(ellipse,color-mix(in srgb,var(--psColor) 64%,#fff 8%),transparent 70%);
-    opacity:.72;filter:blur(7px);animation:pickAura 1.8s ease-in-out infinite alternate}
+    opacity:.72;filter:blur(7px);animation:pickAura 2.8s ease-in-out infinite alternate}
   .pickSplashArt img{max-width:100%;max-height:100%;object-fit:contain;object-position:bottom center}
   .pickSplashArt i{font-style:normal;font-size:min(19vw,210px);line-height:1;padding-bottom:10vh;
     filter:drop-shadow(0 0 32px var(--psColor))}
@@ -1398,8 +1398,20 @@
   @keyframes pickBackdrop{from{background-position:44% 50%}to{background-position:57% 50%}}
   @keyframes pickArtIn{from{opacity:0;transform:translateX(-52px) scale(.94)}to{opacity:1;transform:none}}
   @keyframes pickArtInR{from{opacity:0;transform:translateX(52px) scaleX(-1) scale(.94)}to{opacity:1;transform:scaleX(-1)}}
-  @keyframes pickArtFloat{from{transform:translateY(0) scale(1)}to{transform:translateY(-7px) scale(1.018)}}
-  @keyframes pickArtFloatR{from{transform:translateY(0) scaleX(-1) scale(1)}to{transform:translateY(-7px) scaleX(-1) scale(1.018)}}
+  /* Idle đứng: lấy bàn chân làm trục, nghiêng/dịch rất ít và nở thân nhẹ như đang thở.
+     Năm mốc không đối xứng hoàn toàn để loop bớt cảm giác máy móc. */
+  @keyframes pickArtIdle{
+    0%,100%{transform:translate3d(0,0,0) rotate(-.35deg) scale(1)}
+    24%{transform:translate3d(2px,-3px,0) rotate(.18deg) scale(1.006,1.012)}
+    50%{transform:translate3d(1px,-6px,0) rotate(.48deg) scale(1.011,1.02)}
+    76%{transform:translate3d(-2px,-2px,0) rotate(-.12deg) scale(1.004,1.01)}
+  }
+  @keyframes pickArtIdleR{
+    0%,100%{transform:translate3d(0,0,0) rotate(.35deg) scaleX(-1) scale(1)}
+    24%{transform:translate3d(-2px,-3px,0) rotate(-.18deg) scaleX(-1) scale(1.006,1.012)}
+    50%{transform:translate3d(-1px,-6px,0) rotate(-.48deg) scaleX(-1) scale(1.011,1.02)}
+    76%{transform:translate3d(2px,-2px,0) rotate(.12deg) scaleX(-1) scale(1.004,1.01)}
+  }
   @keyframes pickAura{from{opacity:.42;filter:blur(8px)}to{opacity:.86;filter:blur(4px)}}
   @keyframes pickCopyIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
 

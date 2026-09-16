@@ -51,8 +51,9 @@ File dài ~7500 dòng. Các khu ngăn nhau bằng comment `/* ---------- tên --
   `SPLASH_POSES`, rồi mới rơi về `idle` / `scared` / `stand3`, nên bộ asset cũ vừa chạy
   đầy đủ vừa có key art giàu động tác hơn.
 - `#pickSplash` là showcase cố định nằm cạnh roster trong suốt bước chọn nhân vật.
-  `pickSplashShow()` đổi key art, tên, role và chạy lại entrance; sau đó ảnh tiếp tục nhịp
-  idle/aura cho tới khi sang bước chọn màn. Khối vẫn `pointer-events:none`, vì vậy không
+  `pickSplashShow()` đổi key art, tên, role và chạy lại entrance; sau đó `pickArtIdle` /
+  `pickArtIdleR` làm nhân vật đứng đung đưa quanh bàn chân, thở nhẹ cùng aura cho tới khi
+  sang bước chọn màn. Khối vẫn `pointer-events:none`, vì vậy không
   được biến nó thành modal hoặc phủ lên các nút chọn.
 - `vsShow()` dùng splash art, nền thu nhỏ thật của màn đấu (`stageThumb()`), tên watermark,
   role và tối đa bốn ô loadout. `vsOn` vẫn là cờ duy nhất đóng băng mô phỏng.
