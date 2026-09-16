@@ -1,0 +1,27 @@
+name: ci
+
+# Thin caller: the logic lives in the factory, at the release pinned below.
+#
+# The pin is the point. This repository keeps running that exact release until
+# somebody bumps the line and merges it - a new release in the factory changes
+# nothing here on its own. /update-agents proposes the bump as a pull request,
+# so the diff gets read here before it runs here.
+#
+# This repository already has a stack (a single-file canvas game, no build,
+# no package manager) and an existing Node-based test suite under tools/, so
+# this skips the placeholder scaffolding gate the factory ships by default and
+# runs the project's real checks from day one - see CLAUDE.md, section 8, for
+# what each test file covers.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    uses: chamaya00/agent-factory/.github/workflows/ci.yml@v1.26.0
+    with:
+      check-name: 'tests'
+      commands: |
+        for f in tools/t_*.js; do node "$f"; done
