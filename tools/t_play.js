@@ -137,7 +137,7 @@ function wavUrl() {
     };
   });
   ok(giu.hien && giu.key==='ginyu', 'showcase Ginyu van nam canh roster sau hon 1 giay');
-  ok(/pickArtFloat/.test(giu.motion), `showcase co idle motion (${giu.motion})`);
+  ok(/pickArtIdle/.test(giu.motion), `showcase co idle sway/breath motion (${giu.motion})`);
   await page.click('#cselGo');
   await page.waitForTimeout(250);
   const buoc2 = await page.evaluate(() => ({
