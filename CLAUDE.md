@@ -51,11 +51,14 @@ File dài ~7500 dòng. Các khu ngăn nhau bằng comment `/* ---------- tên --
   `SPLASH_POSES`, rồi mới rơi về `idle` / `scared` / `stand3`, nên bộ asset cũ vừa chạy
   đầy đủ vừa có key art giàu động tác hơn.
 - `#pickSplash` là showcase cố định nằm cạnh roster trong suốt bước chọn nhân vật.
-  `pickSplashShow()` đổi key art, tên, role và chạy lại entrance; sau đó `pickArtIdle` /
-  `pickArtIdleR` làm nhân vật đứng đung đưa quanh bàn chân, thở nhẹ cùng hai lớp aura
-  (`pickAura` dưới chân + `pickBodyAura` ôm toàn thân) cho tới khi
-  sang bước chọn màn. Khối vẫn `pointer-events:none`, vì vậy không
-  được biến nó thành modal hoặc phủ lên các nút chọn.
+  `pickSplashShow()` dùng `showcaseSrc()` để ưu tiên dáng đứng, rồi `pickArtHtml()` tách
+  cùng một PNG thành ba vùng chồng chân–thân–đầu. Chân neo tại sàn, thân thở và đầu đi sau
+  một nhịp nên art có biến dạng 2.5D thật thay vì chỉ lắc nguyên tấm ảnh. `PICK_RIG` chứa
+  profile cắt riêng cho tỉ lệ Doraemon; humanoid dùng profile `base`.
+- Hai lớp aura (`pickAura` dưới chân + `pickBodyAura` ôm toàn thân), vòng năng lượng phối
+  cảnh, tám mote bay lên, ba streak chạy nền và lock-slash một lần khi đổi fighter đều lấy
+  `--psColor` của nhân vật. Toàn khối vẫn `pointer-events:none`; không biến nó thành modal
+  hoặc phủ lên nút chọn. `prefers-reduced-motion` phải tắt cả rig lẫn các FX lặp.
 - `vsShow()` dùng splash art, nền thu nhỏ thật của màn đấu (`stageThumb()`), tên watermark,
   role và tối đa bốn ô loadout. `vsOn` vẫn là cờ duy nhất đóng băng mô phỏng.
 
