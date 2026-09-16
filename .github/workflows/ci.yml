@@ -30,9 +30,13 @@ name: ci
 # test file itself, so there is nothing in it to carry into an upstream pull
 # request by mistake.
 #
-# The loop does not stop at the first failure: it runs every file and
-# reports all of them, so a real regression anywhere is never masked by an
-# earlier, already-known SKIP.
+# The loop stops at the first failure, same as the factory's own default -
+# a version that ran every file and reported them all at once was tried and
+# reverted: the full suite's browser-driven tests take longer in total than
+# this job's 15-minute timeout (fixed in the reusable workflow, not
+# overridable from here), so that version got cancelled outright rather than
+# reporting anything. A SKIP entry has to be added one discovery at a time as
+# a genuinely new failure surfaces, the same way t_player.js was.
 
 on:
   push:
@@ -47,4 +51,4 @@ jobs:
       commands: |
         npm install --no-save playwright
         npx playwright install --with-deps chromium
-        SKIP="tools/t_player.js"; fail=0; for f in tools/t_*.js; do case " $SKIP " in *" $f "*) echo "SKIP $f (known pre-existing gap, see ci.yml comment)"; continue;; esac; node "$f" || { echo "::error::$f failed"; fail=1; }; done; exit "$fail"
+        SKIP="tools/t_player.js"; for f in tools/t_*.js; do case " $SKIP " in *" $f "*) echo "SKIP $f (known pre-existing gap, see ci.yml comment)"; continue;; esac; node "$f" || { echo "::error::$f failed"; exit 1; }; done
