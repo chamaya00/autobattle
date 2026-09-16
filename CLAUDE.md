@@ -52,7 +52,8 @@ File dài ~7500 dòng. Các khu ngăn nhau bằng comment `/* ---------- tên --
   đầy đủ vừa có key art giàu động tác hơn.
 - `#pickSplash` là showcase cố định nằm cạnh roster trong suốt bước chọn nhân vật.
   `pickSplashShow()` đổi key art, tên, role và chạy lại entrance; sau đó `pickArtIdle` /
-  `pickArtIdleR` làm nhân vật đứng đung đưa quanh bàn chân, thở nhẹ cùng aura cho tới khi
+  `pickArtIdleR` làm nhân vật đứng đung đưa quanh bàn chân, thở nhẹ cùng hai lớp aura
+  (`pickAura` dưới chân + `pickBodyAura` ôm toàn thân) cho tới khi
   sang bước chọn màn. Khối vẫn `pointer-events:none`, vì vậy không
   được biến nó thành modal hoặc phủ lên các nút chọn.
 - `vsShow()` dùng splash art, nền thu nhỏ thật của màn đấu (`stageThumb()`), tên watermark,
