@@ -138,6 +138,8 @@ function wavUrl() {
   });
   ok(giu.hien && giu.key==='ginyu', 'showcase Ginyu van nam canh roster sau hon 1 giay');
   ok(/pickArtIdle/.test(giu.motion), `showcase co idle sway/breath motion (${giu.motion})`);
+  ok(await page.evaluate(() => getComputedStyle(document.querySelector('#pickSplashArt'),'::after').animationName==='pickBodyAura'),
+     'showcase co aura bao quanh toan than');
   await page.click('#cselGo');
   await page.waitForTimeout(250);
   const buoc2 = await page.evaluate(() => ({

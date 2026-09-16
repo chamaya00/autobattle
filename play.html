@@ -1368,13 +1368,17 @@
   .pickSplash.right::after{clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
   .pickSplashArt{position:absolute;z-index:2;left:4%;right:4%;bottom:-4%;height:88%;display:flex;
     align-items:flex-end;justify-content:center;transform-origin:50% 100%;
-    filter:drop-shadow(0 20px 25px rgba(0,0,0,.78)) drop-shadow(0 0 18px color-mix(in srgb,var(--psColor) 35%,transparent))}
-  .pickSplash.show .pickSplashArt{animation:pickArtIn .58s cubic-bezier(.16,.88,.22,1) both,pickArtIdle 5.6s .58s ease-in-out infinite}
+    filter:drop-shadow(0 20px 25px rgba(0,0,0,.78)) drop-shadow(0 0 28px color-mix(in srgb,var(--psColor) 52%,transparent))}
+  .pickSplash.show .pickSplashArt{animation:pickArtIn .58s cubic-bezier(.16,.88,.22,1) both,pickArtIdle 4.6s .58s ease-in-out infinite}
   .pickSplash.right .pickSplashArt{transform:scaleX(-1)}
-  .pickSplash.right.show .pickSplashArt{animation:pickArtInR .58s cubic-bezier(.16,.88,.22,1) both,pickArtIdleR 5.6s .58s ease-in-out infinite}
+  .pickSplash.right.show .pickSplashArt{animation:pickArtInR .58s cubic-bezier(.16,.88,.22,1) both,pickArtIdleR 4.6s .58s ease-in-out infinite}
   .pickSplashArt::before{content:'';position:absolute;z-index:-1;left:9%;right:9%;bottom:0;height:16%;border-radius:50%;
     background:radial-gradient(ellipse,color-mix(in srgb,var(--psColor) 64%,#fff 8%),transparent 70%);
-    opacity:.72;filter:blur(7px);animation:pickAura 2.8s ease-in-out infinite alternate}
+    opacity:.82;filter:blur(7px);animation:pickAura 2.2s ease-in-out infinite alternate}
+  .pickSplashArt::after{content:'';position:absolute;z-index:-2;inset:5% 0 -1%;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 55%,color-mix(in srgb,var(--psColor) 55%,transparent) 0,
+      color-mix(in srgb,var(--psColor) 24%,transparent) 34%,transparent 68%);
+    filter:blur(14px);transform-origin:50% 62%;animation:pickBodyAura 2.2s ease-in-out infinite alternate}
   .pickSplashArt img{max-width:100%;max-height:100%;object-fit:contain;object-position:bottom center}
   .pickSplashArt i{font-style:normal;font-size:min(19vw,210px);line-height:1;padding-bottom:10vh;
     filter:drop-shadow(0 0 32px var(--psColor))}
@@ -1402,18 +1406,22 @@
   /* Idle đứng: lấy bàn chân làm trục, nghiêng/dịch rất ít và nở thân nhẹ như đang thở.
      Năm mốc không đối xứng hoàn toàn để loop bớt cảm giác máy móc. */
   @keyframes pickArtIdle{
-    0%,100%{transform:translate3d(0,0,0) rotate(-.35deg) scale(1)}
-    24%{transform:translate3d(2px,-3px,0) rotate(.18deg) scale(1.006,1.012)}
-    50%{transform:translate3d(1px,-6px,0) rotate(.48deg) scale(1.011,1.02)}
-    76%{transform:translate3d(-2px,-2px,0) rotate(-.12deg) scale(1.004,1.01)}
+    0%,100%{transform:translate3d(-1px,0,0) rotate(-.65deg) scale(1)}
+    22%{transform:translate3d(4px,-5px,0) rotate(.38deg) scale(1.011,1.02)}
+    49%{transform:translate3d(2px,-9px,0) rotate(.9deg) scale(1.018,1.032)}
+    74%{transform:translate3d(-4px,-4px,0) rotate(-.32deg) scale(1.009,1.018)}
   }
   @keyframes pickArtIdleR{
-    0%,100%{transform:translate3d(0,0,0) rotate(.35deg) scaleX(-1) scale(1)}
-    24%{transform:translate3d(-2px,-3px,0) rotate(-.18deg) scaleX(-1) scale(1.006,1.012)}
-    50%{transform:translate3d(-1px,-6px,0) rotate(-.48deg) scaleX(-1) scale(1.011,1.02)}
-    76%{transform:translate3d(2px,-2px,0) rotate(.12deg) scaleX(-1) scale(1.004,1.01)}
+    0%,100%{transform:translate3d(1px,0,0) rotate(.65deg) scaleX(-1) scale(1)}
+    22%{transform:translate3d(-4px,-5px,0) rotate(-.38deg) scaleX(-1) scale(1.011,1.02)}
+    49%{transform:translate3d(-2px,-9px,0) rotate(-.9deg) scaleX(-1) scale(1.018,1.032)}
+    74%{transform:translate3d(4px,-4px,0) rotate(.32deg) scaleX(-1) scale(1.009,1.018)}
   }
   @keyframes pickAura{from{opacity:.42;filter:blur(8px)}to{opacity:.86;filter:blur(4px)}}
+  @keyframes pickBodyAura{
+    from{opacity:.38;transform:scale(.94);filter:blur(18px)}
+    to{opacity:.9;transform:scale(1.06);filter:blur(10px)}
+  }
   @keyframes pickCopyIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
 
   /* Cinematic VS rebuild: real stage art, strong silhouettes and compact HUD plates. */
@@ -1487,7 +1495,7 @@
     .vsLoadout i{width:15px;height:15px}.vsStage{margin-top:10px}
   }
   @media(prefers-reduced-motion:reduce){
-    .pickSplash::before,.pickSplashArt,.pickSplashArt::before{animation:none!important}
+    .pickSplash::before,.pickSplashArt,.pickSplashArt::before,.pickSplashArt::after{animation:none!important}
   }
 
   .nextM,.brM{border:1px solid rgba(148,163,184,.14);border-radius:16px;clip-path:none;background:linear-gradient(180deg,#121D30,#090F1B);box-shadow:0 12px 28px rgba(0,0,0,.2)}
