@@ -62,6 +62,132 @@ File dài ~7500 dòng. Các khu ngăn nhau bằng comment `/* ---------- tên --
 - `vsShow()` dùng splash art, nền thu nhỏ thật của màn đấu (`stageThumb()`), tên watermark,
   role và tối đa bốn ô loadout. `vsOn` vẫn là cờ duy nhất đóng băng mô phỏng.
 
+#### Ba luật của lớp trình bày — đọc trước khi thêm bất kỳ hiệu ứng nào
+
+Người dùng bác bản trước bằng ba câu, và cả ba đều là luật chứ không phải góp ý:
+*"hiệu ứng k loè loẹt nữa"*, *"làm nổi bật hơn nhân vật chứ k phải làm nổi bật nền"*,
+*"tránh lỗi che mặt"*. Áp cho **cả** `#pickSplash` lẫn `#arcVs`.
+
+> **ĐỪNG CHỮA BẰNG CÁCH VẶN NHỎ HẾT — lượt đầu đã đi sai đúng chỗ này.** Nghe "loè
+> loẹt" tôi hạ sạch alpha, gỡ hết texture và pha loãng mọi màu; kết quả là một cái hốc
+> đen trơn và người dùng bác ngay: *"hiệu ứng nhìn sao thấy nhạt và khô dữ vậy???"*.
+> Cái sai của bản gốc **không phải là "nhiều hiệu ứng"**, mà là **đặt chỗ sáng nhầm
+> chỗ** (một vạt trắng to hơn cả người) và **để đồ trang trí đè lên mặt**. Sửa đúng
+> chỗ đó thì năng lượng cứ trả về đủ: quầng đèn đậm, vòng sáng có glow, hạt bay có
+> quầng, sọc tốc độ vẫn còn. Ba thứ phải giữ khi tăng lại:
+> - màu là `--psColor` / `currentColor` của nhân vật, **không bao giờ là mảng trắng**;
+> - mọi lớp nằm **sau model** hoặc **dưới `--psFace`**;
+> - nhịp đi chậm và đều (xem ghi chú "Mượt = đi CHẬM VÀ ĐỀU" bên dưới).
+>
+> **Texture là thứ dễ quên nhất.** Gỡ sạch lưới chấm halftone là khung đọc ra "phẳng
+> và khô" ngay, dù màu mè vẫn còn. Nó được giữ lại, chỉ khác là tô bằng màu nhân vật
+> chứ không bằng trắng — thành ánh đèn trên sân thay vì một tờ giấy dán đè lên.
+
+1. **SÂN KHẤU TỐI, NHÂN VẬT ĐƯỢC RỌI ĐÈN — điểm sáng nhất khung phải là chính tấm art.**
+   Bản cũ sai đúng chỗ này ở cả hai màn: showcase tô một vạt `#E8EDF3` chiếm gần nửa
+   khung, màn VS kẻ một vệt `#FFF` dày 9px kèm `box-shadow:0 0 20px` chém dọc giữa màn.
+   Cả hai đều **sáng hơn cả model**, nên mắt rơi vào nền trước. Giờ nền là hốc tối gần
+   đen (`#04070B` / `#03060B`), mọi lớp trang trí dưới `.2` alpha, và nền màn đấu ở VS
+   lùi hẳn ra sau (`blur(7px) brightness(.24)`).
+   `t_play.js` **đo thẳng độ sáng**: chụp `#pickSplash`, vẽ lại vào canvas rồi so độ
+   sáng trung bình của cột có model với cột nền. Ba lượt đo:
+
+   | | người | nền | |
+   |---|---|---|---|
+   | bản gốc | 72.2 | **102.0** | nền sáng gấp 1.4 lần người — sai |
+   | lượt hạ tay quá đà | 27.8 | 14.6 | đúng tỉ lệ nhưng cả khung tối thui, bị bác là "nhạt và khô" |
+   | **chốt** | **43.0** | **20.5** | cả hai cùng đậm lên, người sáng gấp 2.1 lần |
+
+   Chỗ cần giữ là **TỈ LỆ**, không phải con số tuyệt đối — cứ đẩy cả khung sáng lên
+   thoải mái miễn là cột người vẫn thắng.
+2. **KHÔNG GÌ ĐƯỢC CẮT NGANG MẶT.** `--psFace` (mặc định `40%`) là mốc dưới của vùng
+   đầu; mọi thứ trang trí hoặc bị ghìm xuống **dưới** mốc đó, hoặc nằm **sau** model
+   (`z-index` nhỏ hơn `.pickSplashArt`). Ba chỗ từng vi phạm, đừng dựng lại:
+   - `.pickSplashWatermark` ở `top:4%` — chữ khổ lớn chạy thẳng qua tóc và mặt. Giờ nó
+     tụt xuống `bottom:7%`, nằm sau model. `.vsGhostName` cũng vậy (`top:8%` → `bottom:14%`).
+   - `.pickLockSlash` ở `top:42%` — đúng tầm mặt, lại tô `#fff` kèm hai lớp glow, nên mỗi
+     lần chọn nhân vật là một vệt sáng chém ngang mặt. Giờ nó là cú **loé sáng dưới chân**.
+   - `.pickMotes` từng phủ cả khung ở `z-index:3` (trên model) nên có đốm sáng đậu lên
+     mặt. Giờ `z-index:0` và khung chỉ bắt đầu từ `--psFace` trở xuống.
+   `t_play.js` đo bằng **hình học**: lớp trang trí hợp lệ khi nằm hẳn dưới mốc mặt HOẶC
+   nằm sau model; riêng watermark thì bắt buộc dưới mốc, vì kể cả vẽ sau lưng thì mấy
+   chữ cái khổ lớn vẫn chạy qua hai bên đầu. Đo được: bản cũ vi phạm cả ba
+   (`.pickMotes`, `.pickSplashFx`, `.pickSplashWatermark`), bản mới không còn lớp nào.
+   Ở màn VS, đường chia đôi cũng bị **mask tan đi ở đúng dải chiều cao hai fighter
+   đứng** — kẻ suốt từ trên xuống dưới thì nó chạy ngang qua người.
+3. **CHUYỂN ĐỘNG LẶP CHỈ ĐƯỢC ĐỔI `transform` / `opacity`.** Bản cũ animate
+   `filter:blur()` ở cả hai lớp aura — mỗi khung hình trình duyệt phải làm mờ lại cả mảng
+   gradient, đó là nguồn giật chính. Giờ blur là hằng số, chỉ opacity/scale chạy.
+   Cùng lý do, `.vsLines` bỏ `background-position` (tô lại mảng gradient mỗi nhịp) để
+   đổi sang `transform`.
+   Đo thật trên máy test (không GPU, 5 giây đứng ở showcase — con số tuyệt đối vô nghĩa,
+   cái cần là SO các bản với nhau):
+
+   | | fps | p95 | tệ nhất | khung quá 20ms |
+   |---|---|---|---|---|
+   | bản gốc | 22.8 | 50.1ms | 100ms | 113/114 |
+   | lượt hạ tay quá đà | 31.8 | 33.4ms | 66.7ms | 135/160 |
+   | **chốt (đậm mà vẫn rẻ)** | **38.2** | **33.4ms** | **66.7ms** | **101/191** |
+
+> **CHỖ ĐẮT LÀ `filter`/`box-shadow`, KHÔNG PHẢI ĐỘ ĐẬM CỦA MÀU — lỗi thật đã sửa.**
+> Lượt trả năng lượng về, tôi thêm một `drop-shadow(0 0 26px …)` thứ ba vào
+> `.pickSplashArt` và rắc `box-shadow` lên vòng sáng, tám hạt bay, ba vệt sáng. Nhịp
+> khung **rơi từ 31.8 xuống 21.3 fps** — mất sạch phần đã cải thiện, còn tệ hơn cả bản
+> gốc. Lý do: `.pickSplashArt` mang `filter` mà **bên trong nó là cả đám đang chạy**
+> (ba lớp rig, vòng sáng quay, tám hạt bay). Mỗi khung hình chỉ cần một đứa con vẽ lại
+> là **cả subtree phải lọc lại từ đầu** — thêm một lớp nhoè 26px vào đó là nhân lên
+> nhiều lần. Cùng lý do, `box-shadow` là một lượt vẽ RIÊNG cho mỗi phần tử mỗi khung.
+>
+> Cách chữa mà **không mất một chút độ đậm nào**: quầng sáng quanh người chuyển hẳn
+> sang lớp `.pickSplashArt::after` (blur là HẰNG SỐ, chỉ opacity/scale chạy, nằm ngoài
+> đường lọc của subtree), còn quầng của hạt bay tô thẳng vào `radial-gradient` nền thay
+> cho `box-shadow`. Đo lại: **38.2 fps** — đậm hơn bản gốc mà vẫn nhanh hơn cả bản tối.
+>
+> **Luật rút ra: đừng bao giờ đặt `filter` lên một phần tử có con đang animate.** Muốn
+> quầng sáng thì cho nó một lớp riêng, blur cố định, rồi animate `opacity`/`transform`.
+
+   Thêm hiệu ứng mới thì đo lại bằng cùng phép đo đó chứ đừng tin mắt.
+
+> **VÒNG SÁNG DƯỚI CHÂN PHẢI LÀ HÌNH TRÒN RỒI MỚI ÉP DẸT — lỗi thật đã sửa.** Bản cũ
+> `.pickEnergyRing` là một hình **bầu dục** rồi quay trong mặt phẳng của chính nó
+> (`transform:perspective(260px) rotateX(68deg)` + keyframe `rotate(360deg)`). Quay một
+> bầu dục thì mỗi vòng nó lại phình thành một vành **cao nghều** rồi xẹp xuống — nhìn
+> đúng như một lỗi vẽ. Hình **tròn**
+> (`aspect-ratio:1`) thì quay bao nhiêu độ cũng y hệt, chỉ có nét đứt là chạy; ép dẹt
+> bằng `scaleY(.24)` với `transform-origin:50% 100%` nên nó nở xuống chân chứ không nở
+> lên ngực. **Đừng đổi `aspect-ratio` thành `height` theo phần trăm** — làm vậy là hình
+> bầu dục trở lại và lỗi quay lại y nguyên.
+
+> **Ba lớp rig phải CÙNG CHU KỲ.** Bản cũ để `4.6s` / `4.6s` / `5.15s`: ba nhịp trôi lệch
+> nhau dần, cứ vài giây là cổ và hông hở ra một đường rồi khép lại — đó là chỗ nhìn ra
+> "không mượt". Cùng `6.6s` rồi lệch pha bằng **delay âm** (`-.22s` / `-.44s`) thì khoảng
+> cách giữa ba lớp đứng yên mãi mãi. Đổi chu kỳ thì đổi cả ba, đừng đổi một cái.
+
+> **CHỮ THÌ GIỮ NGUYÊN — người dùng chốt: *"font chữ giữ như nãy đi, đang đẹp"*.**
+> Lượt dựng lại đầu tôi tiện tay hạ cả typography: tên nhân vật mất cái bóng lệch màu
+> `2px 2px 0 var(--psColor)` (thành bóng phẳng), watermark và ghost name bị thu nhỏ,
+> tên trên tấm HUD của màn VS mất quầng `0 0 16px currentColor`. Tất cả đã trả về
+> đúng như cũ. **Cỡ chữ và bóng chữ không nằm trong phạm vi "hạ hiệu ứng"** — đó là
+> nhận dạng của cả màn, đừng đụng vào khi chỉ được yêu cầu chỉnh hiệu ứng.
+>
+> Chỗ DUY NHẤT được phép động tới cỡ chữ tên là `--psNameK`: `pickSplashShow()` đo
+> **TỪ DÀI NHẤT** trong tên rồi co lại cho vừa tấm plate. Tên một từ dài mới là chỗ
+> tràn (DORAEMON, KONOHAMARU — chúng không xuống dòng được); tên ngắn giữ nguyên cỡ
+> arcade to. Đặt một cỡ nhỏ chung cho tất cả thì tên ngắn trông hụt hẳn — đã thử và
+> bị bác.
+
+> **Mượt = đi CHẬM VÀ ĐỀU, không phải thêm nhịp.** Cả hai màn đều kéo dài chu kỳ và hạ
+> biên độ chừng một nửa: idle của art `4.6s → 6.6s`, mote `2.7~3.8s → 5.8~8.2s`, vòng
+> sáng `3.2s → 20s`, streak `3s → 8.5s`; bên VS thì `vsBreath` `1.5s → 3.8s` với biên độ
+> `.26↔.62 → .34↔.58`, `.vsLines` `1.1s → 5.6s`, `.vsBurst` `.82s → 2.6s`.
+
+> **`.vsBody` có nhịp thở riêng (`vsIdle`), và nó đặt trên `.vsBody` chứ KHÔNG đặt trên
+> `<img>`**: bên phải mang `scaleX(-1)` tĩnh để hai người quay mặt vào nhau, gắn animation
+> thẳng lên `img` là đè mất cú lật đó. Luật ở mục 2h vẫn nguyên giá trị — cấm là cấm gắn
+> `animation … infinite` lên **chính** phần tử test phải bấm (`#arcVs`); mấy lớp con nằm
+> sâu bên trong thì không đụng tới phép dò "đứng yên" của Playwright, và ở đây tổng chi
+> phí còn GIẢM vì `.vsLines` bỏ được lượt tô lại gradient mỗi khung.
+
 ---
 
 ## 1. Quy đổi thời gian — đọc kỹ trước khi sửa bất kỳ con số nào
