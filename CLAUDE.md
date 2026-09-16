@@ -47,11 +47,13 @@ File dài ~7500 dòng. Các khu ngăn nhau bằng comment `/* ---------- tên --
 
 - Mỗi đấu thủ chơi được có thêm pose `splash` trong `SETS`. Đây là tranh key art khổ lớn
   chỉ dành cho hiệu ứng khoá nhân vật và màn VS; game không dùng nó để vẽ thân người trong
-  trận. Nếu ô này trống, `splashSrc()` tự rơi về `idle` / `scared` / `stand3`, nên bộ asset
-  cũ vẫn chạy đầy đủ.
-- `pickSplashShow()` mở `#pickSplash` trong 0,82 giây sau mỗi lần chọn. Lớp này
-  `pointer-events:none`, vì vậy test và người chơi vẫn có thể bấm Tiếp ngay; đừng đổi nó
-  thành modal chặn thao tác.
+  trận. Nếu ô này trống, `splashSrc()` ưu tiên pose signature/action trong
+  `SPLASH_POSES`, rồi mới rơi về `idle` / `scared` / `stand3`, nên bộ asset cũ vừa chạy
+  đầy đủ vừa có key art giàu động tác hơn.
+- `#pickSplash` là showcase cố định nằm cạnh roster trong suốt bước chọn nhân vật.
+  `pickSplashShow()` đổi key art, tên, role và chạy lại entrance; sau đó ảnh tiếp tục nhịp
+  idle/aura cho tới khi sang bước chọn màn. Khối vẫn `pointer-events:none`, vì vậy không
+  được biến nó thành modal hoặc phủ lên các nút chọn.
 - `vsShow()` dùng splash art, nền thu nhỏ thật của màn đấu (`stageThumb()`), tên watermark,
   role và tối đa bốn ô loadout. `vsOn` vẫn là cờ duy nhất đóng băng mô phỏng.
 
