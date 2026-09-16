@@ -3303,6 +3303,48 @@ với `Get Pages site failed … Error: Not Found`, vì repo chưa bật Pages n
 
 Kiểm bằng `node tools/t_play.js`.
 
+## 2e-bis. Vercel: một bản DEV NỘI BỘ + một bản PROD CÔNG KHAI
+
+Người dùng: *"set up the site so that there are two versions hosted on vercel — one internal
+only dev website, and another public facing prod website"*. GitHub Pages (mục 2e) chỉ có một
+bản, và `/studio/` chỉ **giấu đường dẫn** chứ không khoá thật. Vercel thêm một đường triển
+khai thứ hai, song song, **không đụng gì tới `.github/workflows/pages.yml`**.
+
+**Một build dùng chung cho cả hai project** — `tools/vercel_build.sh`, y hệt logic của
+`pages.yml` (`mk_play.py` rồi xếp `site/index.html` = trang chơi, `site/studio/index.html` =
+trang xưởng, kèm `assets/`). `vercel.json` ở gốc repo trỏ `buildCommand` /
+`outputDirectory` vào đó. Hai project Vercel trỏ vào **cùng file này** — khác nhau ở CẤU
+HÌNH trên Vercel Dashboard (nhánh production + biến môi trường), không phải ở nội dung repo:
+
+| | Project | Nhánh production | Khoá bằng gì |
+|---|---|---|---|
+| prod (công khai) | `multiverse-battler` | `main` | không khoá |
+| dev (nội bộ) | `multiverse-battler-dev` | `dev` | HTTP Basic Auth |
+
+**Khoá nội bộ nằm trong `middleware.js` (Vercel Edge Middleware), không phải "Deployment
+Protection" trả phí của Vercel** — người dùng không nói rõ họ có gói Pro hay không, nên
+"nội bộ" không nên phụ thuộc vào việc nâng cấp gói. `middleware()` đọc hai biến môi trường
+`DEV_BASIC_AUTH_USER` / `DEV_BASIC_AUTH_PASS`: **project nào không khai** (đúng project
+`prod`) thì hàm `return` ngay, không thêm một mili-giây nào; **project nào có khai** (đúng
+project `dev`) thì mọi request đều phải đúng Basic Auth mới qua, sai/thiếu/hỏng cú pháp đều
+ra 401 kèm `WWW-Authenticate: Basic`. Ai có gói Pro/Team vẫn bật thêm Deployment Protection
+song song trên project `dev` được — hai lớp không đụng nhau.
+
+> **Thêm `middleware.js` kéo theo một cái bẫy: `package.json` gốc phải mang `"type":
+> "module"`** để Vercel dựng nó thành ES module (`export default function middleware(...)`).
+> Nhưng Node xác định kiểu module theo `package.json` GẦN NHẤT tính từ file — để một mình ở
+> gốc thì NÓ ĐÈ LUÔN CẢ `tools/*.js`, mà những file đó là CommonJS (`require('./probe')`) và
+> chính là thứ `node tools/t_*.js` chạy. Vá bằng `tools/package.json` = `{"type":
+> "commonjs"}` để ghim lại đúng thư mục đó — xem `docs/decisions/0001-dual-vercel-environments.md`.
+> **Thêm file `.js` mới ở gốc repo (ngoài `tools/`) thì nhớ nó tự động là ES module.**
+
+Các bước dựng hai project trên Vercel Dashboard (tạo nhánh `dev`, import repo hai lần, đặt
+hai biến môi trường…) nằm trong `docs/deploy-vercel.md` — phần đó cần tài khoản Vercel thật
+nên không tự động hoá được từ trong repo.
+
+Kiểm bằng `node tools/t_vercel_auth.js` (không cần deploy thật, gọi thẳng `middleware()` với
+`Request` giả).
+
 ## 2f. Hai ngôn ngữ, hồ sơ nhân vật, nhạc nền tự chỉnh
 
 Ba yêu cầu đi cùng một lượt: *"chỉnh cho có ít nhất 2 ngôn ngữ Anh - Việt tùy chọn"*,
@@ -4599,6 +4641,10 @@ node tools/t_tanjiro.js # Tanjiro: HP đọc từ HP_STD, màn vào sân 1.5s, O
                         # damage/kháng hiệu ứng nhưng không bất tử, Bright Red chỉ giảm hồi HP;
                         # AI dùng vector melee chung như ChiChi, Water Wheel chờ nhịp riêng
                         # và chỉ tiếp cận khi ở xa; power chart khớp nhịp chiến đấu mới
+node tools/t_vercel_auth.js # middleware.js của bản Vercel "dev" nội bộ (mục 2e-bis / docs/deploy-vercel.md):
+                        # không khai DEV_BASIC_AUTH_USER/PASS (project "prod") thì đi qua
+                        # thẳng, khai rồi thì thiếu/sai/hỏng cú pháp Authorization đều ra
+                        # 401 kèm WWW-Authenticate: Basic, đúng user:pass mới qua được
 ```
 
 > **`t_beatrice.js` mục 10 (bước chân của Beatrice) từng SỐNG NHỜ MAY.** Mấy mục trên nó

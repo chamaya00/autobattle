@@ -1,0 +1,12 @@
+# Không cần đưa lên Vercel: không phải phần được deploy, chỉ làm chậm upload.
+# (tools/ và assets/ vẫn cần giữ lại — buildCommand đọc tools/, output đọc assets/.)
+.git
+.github
+.claude
+docs
+art
+site
+node_modules
+*.md
+ChatGPT Image*.png
+IMG_8780.jpeg

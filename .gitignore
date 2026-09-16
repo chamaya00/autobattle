@@ -1,0 +1,6 @@
+# Thư mục dựng ra khi build cho Vercel (tools/vercel_build.sh) — không commit,
+# Vercel tự tạo lại mỗi lần deploy.
+/site/
+
+# Vercel CLI link thư mục dự án cục bộ với project trên Vercel (vercel link / vercel dev).
+.vercel
