@@ -408,17 +408,22 @@
      pha loãng thay vì `currentColor` đặc. Nhấp nháy nhanh cộng màu no là thứ làm cả màn
      đọc ra "loè loẹt" — bản thân màu thì không có lỗi gì. */
   .vsGlow{position:absolute;inset:-14% -20% -6%;pointer-events:none;
-    background:radial-gradient(ellipse at 50% 66%,color-mix(in srgb,currentColor 58%,transparent) 0%,transparent 70%);
-    opacity:.30;animation:vsBreath 3.8s ease-in-out infinite}
-  /* Bản cũ là một rừng sọc chéo `repeating-linear-gradient` quét 1.1s một vòng — nó
-     đè lên chính tấm art và là nguồn nhiễu lớn nhất trong khung. Giờ đổi thành MỘT
-     cột sáng hắt sau lưng fighter, thở rất chậm. Chạy bằng `transform`/`opacity`
-     thay cho `background-position` nên không phải tô lại mảng gradient mỗi khung. */
+    background:radial-gradient(ellipse at 50% 66%,color-mix(in srgb,currentColor 92%,transparent) 0%,transparent 70%);
+    opacity:.34;animation:vsBreath 3.8s ease-in-out infinite}
+  /* Sọc tốc độ + cột đèn sau lưng, gộp vào một lớp. Lượt dựng lại đầu tôi bỏ hẳn sọc
+     cho đỡ nhiễu, nhưng bỏ sạch thì panel thành một mảng màu phẳng — đúng chỗ người
+     dùng kêu "khô". Sọc được giữ lại, chỉ khác ba điểm so với bản gốc: thưa hơn
+     (22px thay vì 15px), nhịp quét chậm hơn nhiều (1.1s → 6.4s), và mask ôm quanh
+     thân người nên nó là ÁNH SÁNG sau lưng chứ không phải lưới kẻ phủ cả khung.
+     Cả lớp vẫn nằm TRƯỚC `.vsBody` trong DOM nên luôn ở sau model. */
   .vsLines{position:absolute;inset:-8% 0 0;pointer-events:none;
-    background:linear-gradient(180deg,transparent,color-mix(in srgb,currentColor 30%,transparent) 46%,transparent);
-    -webkit-mask-image:radial-gradient(56% 50% at 50% 60%,#000,transparent 76%);
-    mask-image:radial-gradient(56% 50% at 50% 60%,#000,transparent 76%);
-    animation:vsSweep 5.6s ease-in-out infinite alternate}
+    background:
+      repeating-linear-gradient(108deg,color-mix(in srgb,currentColor 55%,transparent) 0 2px,transparent 2px 22px),
+      linear-gradient(180deg,transparent,color-mix(in srgb,currentColor 42%,transparent) 46%,transparent);
+    background-size:200% 100%,100% 100%;
+    -webkit-mask-image:radial-gradient(58% 54% at 50% 60%,#000,transparent 78%);
+    mask-image:radial-gradient(58% 54% at 50% 60%,#000,transparent 78%);
+    animation:vsSweep 6.4s linear infinite}
   .vsBody{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;
     font-size:calc(clamp(58px,15vw,116px)*var(--k,1));line-height:1;
     text-shadow:0 0 26px currentColor;   /* ô nào chưa dán ảnh thì emoji cũng phát sáng theo */
@@ -453,9 +458,9 @@
       linear-gradient(100deg,rgba(77,226,255,.14) 0%,transparent 46%),
       linear-gradient(100deg,transparent 54%,rgba(255,79,163,.14) 100%)}
 
-  .vsFloor{position:absolute;left:6%;right:6%;bottom:-6px;height:20px;border-radius:50%;
+  .vsFloor{position:absolute;left:4%;right:4%;bottom:-7px;height:24px;border-radius:50%;
     pointer-events:none;background:radial-gradient(ellipse at 50% 50%,currentColor,transparent 70%);
-    opacity:.55;animation:vsBreath 3.8s ease-in-out infinite}
+    filter:blur(1px);opacity:.55;animation:vsBreath 3.8s ease-in-out infinite}
   .vsName{font-family:var(--fd);font-weight:700;font-style:italic;letter-spacing:.03em;
     text-transform:uppercase;font-size:clamp(13px,3.5vw,24px);
     text-shadow:0 0 18px currentColor,0 3px 0 rgba(0,0,0,.7)}
@@ -476,9 +481,8 @@
     clip-path:polygon(9px 0,100% 0,calc(100% - 9px) 100%,0 100%)}
   /* Biên độ hẹp lại: bản cũ .26↔.62 là hơn gấp đôi độ sáng mỗi 0.75 giây, nhìn ra
      một cái đèn nhấp nháy. .34↔.58 thì nó THỞ. */
-  @keyframes vsBreath{0%,100%{opacity:.34}50%{opacity:.58}}
-  @keyframes vsSweep{from{opacity:.26;transform:translate3d(0,2%,0) scaleY(.97)}
-    to{opacity:.5;transform:translate3d(0,-2%,0) scaleY(1.03)}}
+  @keyframes vsBreath{0%,100%{opacity:.4}50%{opacity:.8}}
+  @keyframes vsSweep{from{background-position:0 0,50% 0}to{background-position:200% 0,50% 0}}
   /* Logo màn tiêu đề: mặt chữ HUD nghiêng, siết chữ, và BA lớp bóng — lam lệch trái,
      hồng lệch phải, đen khối bên dưới. Đó là mẹo "lệch màu ống kính"; nó cho ra cảm giác
      đèn neon mà KHÔNG phải tô gradient lên chữ (lối đó đã thử và bỏ hẳn, xem mục 2h). */
@@ -1390,37 +1394,48 @@
     background:#04070B}
   body.arcade #charSelect[data-step="pick0"] .pickSplash.show,
   body.arcade #charSelect[data-step="pick"] .pickSplash.show{display:block;opacity:1}
-  /* Sân khấu: một vũng đèn dưới chân + một quầng key light sau lưng, cùng tông với
-     nhân vật. Không còn vạt trắng, không còn đường chéo cắt khung làm đôi. */
+  /* Sân khấu. Lượt đầu dựng lại tôi hạ tay quá đà thành một cái hốc đen trơn —
+     người dùng bác ngay: *"hiệu ứng nhìn sao thấy nhạt và khô dữ vậy"*. Bài học:
+     cái sai của bản gốc KHÔNG phải là "nhiều hiệu ứng", mà là **đặt chỗ sáng nhầm
+     chỗ** (một vạt trắng to hơn cả người). Vậy nên năng lượng được trả về đủ —
+     chỉ khác là nó bám vào NHÂN VẬT: đèn màu theo `--psColor`, không còn mảng
+     trắng nào, và mọi thứ vẫn dưới mốc `--psFace`.
+     Bốn lớp: hai vũng đèn màu (chân + sau lưng), một vệt đèn chéo, và nền dốc. */
   .pickSplash::before{content:'';position:absolute;z-index:-3;inset:0;background:
-      radial-gradient(64% 40% at 50% 96%,color-mix(in srgb,var(--psColor,#55D9FF) 30%,transparent),transparent 74%),
-      radial-gradient(50% 42% at 50% 52%,color-mix(in srgb,var(--psColor,#55D9FF) 16%,transparent),transparent 78%),
-      linear-gradient(180deg,#080D16 0%,#05090F 54%,#02040A 100%)}
-  /* Lớp khí mỏng trôi rất chậm cho khung đỡ chết, và một lớp tối dồn ra rìa để
-     khung hẹp lại quanh nhân vật. Dùng `transform` nên không phải tô lại mỗi nhịp. */
-  .pickSplash::after{content:'';position:absolute;z-index:-2;inset:-10%;opacity:.5;background:
-      radial-gradient(38% 58% at 50% 46%,rgba(255,255,255,.055),transparent 70%),
-      radial-gradient(70% 60% at 50% 50%,transparent 48%,rgba(2,4,9,.72) 100%);
+      radial-gradient(66% 42% at 50% 97%,color-mix(in srgb,var(--psColor,#55D9FF) 62%,transparent),transparent 72%),
+      radial-gradient(54% 46% at 50% 54%,color-mix(in srgb,var(--psColor,#55D9FF) 34%,transparent),transparent 76%),
+      linear-gradient(118deg,transparent 34%,color-mix(in srgb,var(--psColor,#55D9FF) 20%,transparent) 50%,transparent 66%),
+      linear-gradient(180deg,#0B1420 0%,#070D17 52%,#03060C 100%)}
+  /* Lớp CHẤT LIỆU: lưới chấm halftone theo màu nhân vật + một luồng khí mỏng, rồi
+     mới tới lớp tối dồn ra rìa. Gỡ sạch texture là khung đọc ra "phẳng và khô" —
+     đó chính là chỗ lượt trước làm hỏng. Halftone tô bằng `--psColor` chứ không
+     bằng trắng nên nó là ÁNH ĐÈN trên sân, không phải một mảng giấy dán đè lên. */
+  .pickSplash::after{content:'';position:absolute;z-index:-2;inset:-4%;opacity:.9;background-image:
+      radial-gradient(circle,color-mix(in srgb,var(--psColor,#55D9FF) 34%,transparent) 0 1.1px,transparent 1.6px),
+      radial-gradient(40% 60% at 50% 46%,color-mix(in srgb,var(--psColor,#55D9FF) 16%,transparent),transparent 70%),
+      radial-gradient(72% 62% at 50% 50%,transparent 46%,rgba(2,4,9,.78) 100%);
+    background-size:9px 9px,100% 100%,100% 100%;
     animation:pickBackdrop 15s ease-in-out infinite alternate}
   .pickSplashArt{position:absolute;z-index:2;left:3%;right:3%;bottom:-2%;height:94%;display:flex;
     align-items:flex-end;justify-content:center;transform-origin:50% 100%;
-    filter:drop-shadow(0 16px 20px rgba(0,0,0,.74)) drop-shadow(0 0 18px color-mix(in srgb,var(--psColor) 28%,transparent))}
+    filter:drop-shadow(0 14px 18px rgba(0,0,0,.78))
+      drop-shadow(0 0 2px color-mix(in srgb,var(--psColor) 78%,transparent))}
   .pickSplash.show .pickSplashArt{animation:pickArtIn .62s cubic-bezier(.16,.86,.24,1) both,pickArtIdle 6.6s .62s ease-in-out infinite}
   .pickSplash.right .pickSplashArt{transform:scaleX(-1)}
   .pickSplash.right.show .pickSplashArt{animation:pickArtInR .62s cubic-bezier(.16,.86,.24,1) both,pickArtIdleR 6.6s .62s ease-in-out infinite}
   /* Vũng sáng tiếp đất. `filter:blur()` là HẰNG SỐ, chỉ opacity/scale chạy. */
-  .pickSplashArt::before{content:'';position:absolute;z-index:-1;left:13%;right:13%;bottom:1%;height:12%;border-radius:50%;
-    background:radial-gradient(ellipse,color-mix(in srgb,var(--psColor) 44%,#fff 6%),transparent 72%);
-    filter:blur(8px);transform-origin:50% 100%;animation:pickAura 5.4s ease-in-out infinite alternate}
-  .pickSplashArt::after{content:'';position:absolute;z-index:-2;inset:10% 4% 2%;pointer-events:none;
-    background:radial-gradient(ellipse at 50% 62%,color-mix(in srgb,var(--psColor) 26%,transparent) 0,
-      color-mix(in srgb,var(--psColor) 11%,transparent) 44%,transparent 74%);
-    filter:blur(16px);transform-origin:50% 66%;animation:pickBodyAura 5.4s ease-in-out infinite alternate}
+  .pickSplashArt::before{content:'';position:absolute;z-index:-1;left:11%;right:11%;bottom:0;height:15%;border-radius:50%;
+    background:radial-gradient(ellipse,color-mix(in srgb,var(--psColor) 88%,#fff 14%),transparent 70%);
+    filter:blur(9px);transform-origin:50% 100%;animation:pickAura 5.4s ease-in-out infinite alternate}
+  .pickSplashArt::after{content:'';position:absolute;z-index:-2;inset:8% 2% 0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 58%,color-mix(in srgb,var(--psColor) 88%,transparent) 0,
+      color-mix(in srgb,var(--psColor) 40%,transparent) 40%,transparent 72%);
+    filter:blur(20px);transform-origin:50% 66%;animation:pickBodyAura 5.4s ease-in-out infinite alternate}
   .pickSplashArt img{max-width:100%;max-height:100%;object-fit:contain;object-position:bottom center}
   /* Fighter chưa dán ảnh thì rơi về emoji. Cỡ phải vừa phải và đệm đáy tính theo CHIỀU
      CAO KHUNG chứ đừng theo `vh` — `10vh` đo theo cửa sổ nên khung nhỏ thì emoji bị đội
      lên lơ lửng, khung lớn thì tụt xuống dưới tấm tên. */
-  .pickSplashArt i{font-style:normal;font-size:min(15vw,168px);line-height:1;padding-bottom:14%;
+  .pickSplashArt i{font-style:normal;font-size:min(18vw,198px);line-height:1;padding-bottom:12%;
     filter:drop-shadow(0 0 26px color-mix(in srgb,var(--psColor) 70%,transparent))}
   /* 2.5D rig: ba bản sao của cùng một PNG chỉ vẽ từng vùng chồng nhẹ lên nhau. Chân làm
      neo, thân thở trước và đầu đi sau một nhịp — có biến dạng thật thay vì lắc nguyên ảnh.
@@ -1451,24 +1466,27 @@
      cũng y hệt, chỉ có nét đứt là chạy — đúng thứ cần, và tuyệt đối không phình lên
      tới thân người. Ghìm luôn bằng `transform-origin:50% 100%` để nó nở xuống chân
      chứ không nở lên ngực. */
-  .pickEnergyRing{position:absolute;z-index:0;left:50%;bottom:-3%;width:56%;aspect-ratio:1;margin-left:-28%;
-    border-radius:50%;border:1px dashed color-mix(in srgb,var(--psColor) 30%,transparent);
+  .pickEnergyRing{position:absolute;z-index:0;left:50%;bottom:-3%;width:58%;aspect-ratio:1;margin-left:-29%;
+    border-radius:50%;border:2px dashed color-mix(in srgb,var(--psColor) 80%,transparent);
+    box-shadow:0 0 14px color-mix(in srgb,var(--psColor) 55%,transparent);
     transform-origin:50% 100%;transform:scaleY(.24);animation:pickRingSpin 20s linear infinite}
   .pickEnergyRing::before,.pickEnergyRing::after{content:'';position:absolute;border-radius:50%;inset:15%;
-    border:1px dashed color-mix(in srgb,var(--psColor) 26%,transparent)}
+    border:1px dashed color-mix(in srgb,var(--psColor) 62%,transparent)}
   .pickEnergyRing::before{animation:pickRingSpinBack 26s linear infinite}
-  .pickEnergyRing::after{inset:38%;border-style:solid;animation:pickRingPulse 4.6s ease-in-out infinite alternate}
+  .pickEnergyRing::after{inset:38%;border-style:solid;
+    animation:pickRingPulse 4.6s ease-in-out infinite alternate}
   /* Hạt aura: nằm SAU model (`z-index:0`) và cả khung chỉ bắt đầu từ mốc `--psFace`
-     trở xuống, nên không bao giờ có đốm sáng nào đậu lên mặt. Bỏ `box-shadow` glow —
-     chính cái đó làm chúng đọc ra thành vết bẩn trên tấm art chứ không phải tro bay. */
+     trở xuống, nên không bao giờ có đốm sáng nào đậu lên mặt. Đứng sau model rồi thì
+     cho phát sáng thoải mái — chúng chỉ đọc ra "vết bẩn trên tấm art" khi còn nằm ĐÈ
+     LÊN người, mà đó là chuyện của `z-index`, không phải của độ sáng. */
   .pickMotes{position:absolute;z-index:0;inset:var(--psFace) 8% 4%;overflow:hidden}
-  .pickMote{position:absolute;left:var(--mx);bottom:-8px;width:var(--ms);height:calc(var(--ms) + 5px);border-radius:999px;
-    background:linear-gradient(180deg,color-mix(in srgb,var(--psColor) 72%,#fff),transparent);opacity:0;
-    animation:pickMoteRise var(--md) var(--delay) linear infinite}
+  .pickMote{position:absolute;left:var(--mx);bottom:-8px;width:var(--ms);height:calc(var(--ms) + 6px);border-radius:999px;
+    background:radial-gradient(ellipse at 50% 30%,#fff 0 22%,color-mix(in srgb,var(--psColor) 90%,#fff) 46%,transparent 78%);
+    opacity:0;animation:pickMoteRise var(--md) var(--delay) linear infinite}
   /* Vệt sáng và nhát lock-in đều nằm SAU model (`z-index:1` < art `z-index:2`). */
   .pickSplashFx{position:absolute;z-index:1;inset:0;overflow:hidden;pointer-events:none}
-  .pickStreak{position:absolute;top:-14%;width:1px;height:58%;opacity:0;
-    background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--psColor) 62%,#fff 12%) 50%,transparent);
+  .pickStreak{position:absolute;top:-14%;width:2px;height:58%;opacity:0;
+    background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--psColor) 85%,#fff 25%) 50%,transparent);
     transform:rotate(16deg);animation:pickStreakFall 8.5s linear infinite}
   .pickStreak.s1{left:17%;animation-delay:-1.2s}.pickStreak.s2{left:51%;height:44%;animation-delay:-4.6s}
   .pickStreak.s3{left:83%;height:52%;animation-delay:-7.1s}
@@ -1497,13 +1515,13 @@
   .pickSplash.right .pickSplashCopy::before{inset:-14px 0 -22px -14px;
     background:linear-gradient(270deg,rgba(3,7,12,.94),rgba(3,7,12,.5) 58%,transparent)}
   .pickSplashKicker{display:block;font:700 clamp(9px,1.4vw,13px)/1 "Space Mono",monospace;
-    letter-spacing:.28em;text-transform:uppercase;color:#A4B2C3;margin-bottom:5px;
+    letter-spacing:.28em;text-transform:uppercase;color:#A9B6C6;margin-bottom:5px;
     text-shadow:0 1px 3px rgba(0,0,0,.9)}   /* dòng này hay rơi trúng thân người, cần nét bóng */
   /* `overflow-wrap:anywhere` là chốt chặn cuối: tên một từ dài (DORAEMON, KONOHAMARU)
      không xuống dòng được nên nó tràn khỏi tấm plate rồi bị mép khung cắt cụt. */
-  .pickSplashName{display:block;font-family:var(--fd);font-size:clamp(28px,3.7vw,52px);font-weight:800;
+  .pickSplashName{display:block;font-family:var(--fd);font-size:calc(clamp(28px,3.7vw,52px)*var(--psNameK,1));font-weight:800;
     line-height:.86;letter-spacing:-.045em;text-transform:uppercase;color:#F5F8FB;overflow-wrap:anywhere;
-    text-shadow:0 2px 0 color-mix(in srgb,var(--psColor) 30%,transparent),0 8px 20px rgba(0,0,0,.8)}
+    text-shadow:2px 2px 0 color-mix(in srgb,var(--psColor) 58%,transparent),0 8px 22px #000}
   .pickSplashRole{display:inline-flex;margin-top:9px;padding:4px 9px;
     font:700 clamp(8px,.9vw,11px)/1.25 "Space Mono",monospace;letter-spacing:.12em;text-transform:uppercase;
     color:#DCE6EF;background:color-mix(in srgb,var(--psColor) 16%,rgba(4,9,15,.84))}
@@ -1511,7 +1529,7 @@
      mặt nhân vật. Giờ nó tụt hẳn xuống chân khung, nằm sau model, chỉ còn là một lớp
      nền rất mờ — đúng lối key art của game đối kháng, và không đụng tới mặt. */
   .pickSplashWatermark{position:absolute;z-index:0;left:-3%;bottom:7%;max-width:106%;overflow:hidden;
-    white-space:nowrap;font-family:var(--fd);font-size:clamp(44px,6.6vw,100px);font-weight:900;line-height:.75;
+    white-space:nowrap;font-family:var(--fd);font-size:clamp(55px,8vw,118px);font-weight:900;line-height:.75;
     letter-spacing:-.06em;text-transform:uppercase;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.08)}
   .pickSplash.right .pickSplashWatermark{left:auto;right:-3%;text-align:right}
   @keyframes pickBackdrop{from{transform:translate3d(-1.2%,0,0) scale(1)}to{transform:translate3d(1.2%,-1%,0) scale(1.035)}}
@@ -1578,44 +1596,49 @@
   /* Nền màn đấu lùi hẳn ra sau: mờ hơn, tối hơn, bạc màu hơn bản cũ. Nó chỉ để
      người chơi nhận ra sắp đánh ở đâu, không phải để nhìn. */
   .vsStageBg{position:absolute;z-index:0;inset:-3%;background-position:center;background-size:cover;
-    filter:blur(7px) saturate(.5) brightness(.24);transform:scale(1.06)}
+    filter:blur(5px) saturate(.72) brightness(.4);transform:scale(1.06)}
   .vsStageBg::after{content:'';position:absolute;inset:0;background:
-      radial-gradient(ellipse at 50% 70%,transparent 0 20%,rgba(2,5,10,.9) 78%),
-      linear-gradient(180deg,rgba(2,5,10,.5),transparent 34% 62%,rgba(2,4,9,.82))}
+      radial-gradient(ellipse at 50% 70%,transparent 0 26%,rgba(2,5,10,.82) 80%),
+      linear-gradient(180deg,rgba(2,5,10,.42),transparent 34% 62%,rgba(2,4,9,.74))}
   #arcVs>div{z-index:2}
   /* Đường chia đôi màn: một nét mảnh, mờ, KHÔNG glow. Và nó phải TAN ĐI ở đúng dải
      chiều cao mà hai fighter đứng — kẻ suốt từ trên xuống dưới thì nó chạy ngang qua
      người, đúng cái lỗi "che mặt". Mask giữ nét ở trên và dưới, bỏ hẳn khúc giữa. */
-  #arcVs::before{z-index:1;width:2px;left:50%;right:auto;top:-8%;bottom:-8%;transform:translateX(-50%) rotate(7deg);
-    background:linear-gradient(180deg,transparent,rgba(214,230,246,.34) 16%,rgba(214,230,246,.34) 84%,transparent);
-    box-shadow:none;
+  #arcVs::before{z-index:1;width:5px;left:50%;right:auto;top:-8%;bottom:-8%;transform:translateX(-50%) rotate(7deg);
+    background:linear-gradient(180deg,transparent,rgba(226,240,255,.8) 16%,rgba(226,240,255,.8) 84%,transparent);
+    box-shadow:0 0 18px rgba(180,215,255,.45);
     -webkit-mask-image:linear-gradient(180deg,#000 0 24%,transparent 33% 67%,#000 76% 100%);
     mask-image:linear-gradient(180deg,#000 0 24%,transparent 33% 67%,#000 76% 100%)}
   #arcVs::after{z-index:1;background:
-      linear-gradient(102deg,rgba(54,212,255,.1),transparent 44%),
-      linear-gradient(102deg,transparent 56%,rgba(255,73,145,.09));opacity:1}
+      linear-gradient(102deg,rgba(54,212,255,.2),transparent 46%),
+      linear-gradient(102deg,transparent 54%,rgba(255,73,145,.19));opacity:1}
   .vsRow{width:min(1180px,100%);margin:auto;gap:clamp(2px,1.5vw,18px);position:relative}
   .vsSide{position:relative;min-width:0;flex:1;gap:7px;padding:12px 10px 10px;
-    border-top:1px solid color-mix(in srgb,currentColor 34%,transparent);
-    background:linear-gradient(180deg,rgba(6,11,19,.05),rgba(3,7,13,.66));overflow:hidden}
+    border-top:2px solid color-mix(in srgb,currentColor 78%,transparent);
+    /* Lớp màu phủ CẢ tấm card. `.vsGlow` nằm trong `.vsPanel` nên nó chỉ rọi đúng dải
+       giữa; màn rộng thì hai bên card trơ ra một mảng đen và cả khung đọc ra khô khốc. */
+    background:
+      radial-gradient(78% 58% at 50% 78%,color-mix(in srgb,currentColor 30%,transparent),transparent 72%),
+      linear-gradient(180deg,color-mix(in srgb,currentColor 12%,transparent),rgba(3,7,13,.7));
+    overflow:hidden}
   .vsSide.a{clip-path:polygon(0 0,100% 0,94% 100%,0 100%)}
   .vsSide.b{clip-path:polygon(6% 0,100% 0,100% 100%,0 100%)}
-  .vsSide::after{content:'';position:absolute;inset:0;z-index:-1;opacity:.09;background-image:
+  .vsSide::after{content:'';position:absolute;inset:0;z-index:-1;opacity:.2;background-image:
       radial-gradient(circle,currentColor 0 1px,transparent 1.4px);background-size:9px 9px;
       -webkit-mask-image:linear-gradient(115deg,#000,transparent 66%);mask-image:linear-gradient(115deg,#000,transparent 66%)}
   .vsSide.b::after{transform:scaleX(-1)}
   /* Tên mờ khổ lớn tụt xuống chân khung, đúng lý do đã ghi ở showcase: để `top:8%`
      thì mấy chữ cái chạy ngang đầu và mặt fighter. */
   .vsGhostName{position:absolute;z-index:-1;bottom:14%;left:2%;max-width:96%;white-space:nowrap;overflow:hidden;
-    font-family:var(--fd);font-size:clamp(46px,8.4vw,116px);font-weight:900;font-style:normal;line-height:.8;
-    letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,currentColor 15%,transparent)}
+    font-family:var(--fd);font-size:clamp(54px,10vw,138px);font-weight:900;font-style:normal;line-height:.8;
+    letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,currentColor 30%,transparent)}
   .vsSide.b .vsGhostName{left:auto;right:2%;text-align:right}
   .vsMob{position:relative;z-index:1;justify-content:center;width:100%}
   .vsPanel{max-width:44vw}
   /* Bỏ viền trắng 1px quanh model — nó làm tấm art đọc ra như một cái sticker dán
      lên nền. Thay bằng bóng đổ sâu cho tách khỏi nền, cộng một vành sáng rất nhạt
      đúng tông nhân vật. */
-  .vsBody img{filter:drop-shadow(0 14px 24px rgba(0,0,0,.9)) drop-shadow(0 0 16px color-mix(in srgb,currentColor 26%,transparent))}
+  .vsBody img{filter:drop-shadow(0 14px 24px rgba(0,0,0,.9)) drop-shadow(0 0 2px color-mix(in srgb,currentColor 70%,transparent)) drop-shadow(0 0 20px color-mix(in srgb,currentColor 58%,transparent))}
   .vsPlate{position:relative;z-index:2;width:min(94%,420px);margin-top:-6px;padding:9px 12px 10px;
     background:linear-gradient(90deg,rgba(4,8,14,.95),rgba(13,21,33,.72));
     border-left:3px solid currentColor;text-align:left;box-shadow:0 10px 28px rgba(0,0,0,.42)}
@@ -1633,9 +1656,7 @@
   /* Tên trên tấm HUD bỏ quầng sáng 18px — chữ trắng mà bloom dày thì nhoè và đọc ra
      "loè loẹt"; ở đây chỉ cần một nét bóng cho tách khỏi nền. */
   .vsPlate .vsName{display:block;font-size:clamp(14px,2.8vw,27px);line-height:1.02;color:#F4F7FA!important;
-    text-shadow:0 2px 0 rgba(0,0,0,.66),0 6px 16px rgba(0,0,0,.5)}
-  .vsBig b{text-shadow:-2px 0 0 rgba(77,226,255,.34),2px 0 0 rgba(255,79,163,.3),
-    0 4px 0 #5A3000,0 0 24px rgba(255,197,66,.5)}
+    text-shadow:0 2px 0 rgba(0,0,0,.7),0 0 16px currentColor,0 6px 18px rgba(0,0,0,.55)}
   .vsLoadout{display:flex;gap:5px;margin-top:7px}.vsSide.b .vsLoadout{justify-content:flex-end}
   .vsLoadout i{display:grid;place-items:center;width:18px;height:18px;transform:rotate(45deg);
     border:1px solid color-mix(in srgb,currentColor 46%,#fff 8%);background:color-mix(in srgb,currentColor 14%,#07101A)}
@@ -1665,10 +1686,10 @@
        `bottom:-1%` chứ đừng -12% như bản cũ: cắt sâu thế thì mất cả bàn chân lẫn vũng
        sáng tiếp đất, nhân vật nhìn như bị chôn dưới mép khung. */
     .pickSplashArt{height:95%;left:1%;right:44%;bottom:-1%}.pickSplash.right .pickSplashArt{left:44%;right:1%}
-    .pickSplashCopy{left:auto;right:12px;bottom:14px;width:50%;padding:9px 10px}.pickSplash.right .pickSplashCopy{left:12px;right:auto}
-    .pickSplashName{font-size:clamp(22px,5.6vw,36px)}
+    .pickSplashCopy{left:auto;right:12px;bottom:14px;width:54%;padding:9px 10px}.pickSplash.right .pickSplashCopy{left:12px;right:auto}
+    .pickSplashName{font-size:calc(clamp(25px,7vw,40px)*var(--psNameK,1))}
     /* Watermark ở khung hẹp phải nhỏ và tụt sâu hơn nữa, không thì nó vẫn với tới ngực. */
-    .pickSplashWatermark{font-size:clamp(40px,13vw,80px);bottom:4%}
+    .pickSplashWatermark{font-size:clamp(48px,16vw,92px);bottom:4%}
     .pickMotes{inset:52% 8% 4%}
     .vsSide{padding-inline:4px}.vsPlate{padding:7px 8px}.vsMeta{font-size:7px;letter-spacing:.1em}
     .vsLoadout i{width:15px;height:15px}.vsStage{margin-top:10px}
@@ -20754,6 +20775,12 @@ function pickSplashShow(key){
   box.style.setProperty('--psColor',C.color);
   el('pickSplashArt').innerHTML=pickArtHtml(key,src);
   el('pickSplashName').textContent=C.name;
+  /* Cỡ chữ tên co theo TỪ DÀI NHẤT, không phải theo cả chuỗi: chỗ duy nhất tràn là
+     một từ không xuống dòng được. Tên ngắn (GOJO, CONAN) vẫn giữ nguyên cỡ arcade to;
+     chỉ mấy cái tên một từ dài (DORAEMON, KONOHAMARU) mới bị bóp lại vừa tấm plate.
+     Đặt một cỡ chung nhỏ cho tất cả thì tên ngắn trông hụt hẳn — đã thử và bị bác. */
+  const tuDai=Math.max(...C.name.split(/\s+/).map(w=>w.length));
+  box.style.setProperty('--psNameK',String(tuDai<=7?1:Math.max(.68,1-(tuDai-7)*.08)));
   el('pickSplashWatermark').textContent=(C.short||C.name).toUpperCase();
   el('pickSplashKicker').textContent=tr({
     vi:right?'NGƯỜI CHƠI 2 · ĐÃ CHỌN':'NGƯỜI CHƠI 1 · ĐÃ CHỌN',
