@@ -86,8 +86,7 @@ async function boot(){
   await wait(850);
   await clickStage(doc,['press start','bắt đầu'],650);
   await clickStage(doc,['watch the ai','xem ai'],650);
-  await clickStage(doc,['duel','đấu đơn'],260);
-  await clickStage(doc,['next ▸ fighters','fighters','nhân vật'],900);
+  await clickStage(doc,['duel','đấu đơn'],900);
   status.textContent=doc.getElementById('pickSplash')?'V4 LIVE · PICK A FIGHTER':'OPEN FIGHTER SELECT';
 }
 frame.addEventListener('load',boot);
