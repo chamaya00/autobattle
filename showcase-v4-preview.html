@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Multiverse Battler — V4 Signature Scene Proof</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/tphuc3519-coder/autobattle@3dfc6ddce1065ca67b84ae3290593bcb162cbd24/assets/ui/showcase-v4-director.css">
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  html{background:#02050c}
+  body{
+    margin:0;min-height:100vh;color:#eef7ff;
+    background:
+      radial-gradient(circle at 50% -10%,rgba(29,106,181,.22),transparent 34%),
+      linear-gradient(180deg,#07101e,#02050c 48%,#05020d);
+    font-family:Inter,system-ui,sans-serif
+  }
+  header{padding:18px 20px 12px;text-align:center}
+  h1{margin:0;font:900 clamp(25px,4vw,52px)/1 "Chakra Petch",system-ui;letter-spacing:.055em}
+  h1 span{color:#5ddcff;text-shadow:0 0 20px rgba(93,220,255,.56)}
+  header p{margin:10px auto 0;max-width:760px;color:#8ca3bf;font:600 12px/1.6 monospace}
+  .jump{
+    position:sticky;z-index:20;top:0;display:flex;gap:6px;overflow:auto;padding:9px 14px;
+    background:rgba(3,8,18,.88);border-block:1px solid rgba(93,220,255,.18);backdrop-filter:blur(14px)
+  }
+  .jump button{
+    flex:0 0 auto;border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:7px 9px;
+    background:#0b1526;color:#cde7ff;font:800 9px/1 system-ui;letter-spacing:.08em;cursor:pointer
+  }
+  .jump button:hover{border-color:#5ddcff;color:#fff;box-shadow:0 0 14px rgba(93,220,255,.28)}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:1240px;margin:0 auto;padding:12px}
+  .pickSplash{
+    --psColor:#5ddcff;--fxA:#5ddcff;--fxB:#fff;--beatDur:4.8s;
+    position:relative;display:block!important;height:300px;overflow:hidden;border-radius:18px;
+    background:
+      linear-gradient(150deg,rgba(18,34,58,.98),rgba(4,8,17,.98) 56%,rgba(12,9,28,.98));
+    border:1px solid color-mix(in srgb,var(--fxA) 45%,#fff 8%);
+    box-shadow:0 22px 46px rgba(0,0,0,.5),inset 0 0 42px rgba(0,0,0,.28);
+    isolation:isolate
+  }
+  .pickSplash::before{
+    content:"";position:absolute;inset:0;z-index:0;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--fxA) 12%,transparent),transparent 40%);
+  }
+  .pickSplashFx{position:absolute;inset:0;z-index:2;overflow:hidden}
+  .previewWatermark{
+    position:absolute;z-index:1;left:15px;top:10px;color:rgba(225,240,255,.09);
+    font:900 35px/1 "Chakra Petch",system-ui;letter-spacing:-.05em
+  }
+  .previewFighter{
+    position:absolute;z-index:3;left:50%;bottom:47px;width:68%;height:73%;transform:translateX(-50%);
+    display:grid;place-items:center;font-size:72px;
+    filter:drop-shadow(0 18px 16px rgba(0,0,0,.78)) drop-shadow(0 0 14px color-mix(in srgb,var(--fxA) 55%,transparent));
+    animation:previewFloat 4.6s ease-in-out infinite
+  }
+  .previewFighter::before{
+    content:"";position:absolute;left:20%;right:20%;top:16%;bottom:5%;z-index:-1;border-radius:48% 48% 34% 34%;
+    background:linear-gradient(180deg,rgba(6,11,22,.62),rgba(2,4,9,.94));
+    border:1px solid color-mix(in srgb,var(--fxA) 38%,transparent);
+    box-shadow:inset 0 0 34px color-mix(in srgb,var(--fxA) 18%,transparent)
+  }
+  .previewCaption{
+    position:absolute;z-index:9;left:12px;right:12px;bottom:12px;padding:10px 12px;
+    background:linear-gradient(90deg,rgba(2,7,15,.96),rgba(2,7,15,.74),transparent);
+    border-left:3px solid var(--fxA)
+  }
+  .previewCaption b{display:block;font:900 18px/1 "Chakra Petch",system-ui;letter-spacing:.06em}
+  .previewCaption small{display:block;margin-top:5px;color:var(--fxB);font:700 8px/1 monospace;letter-spacing:.12em}
+  .sigHud{top:58px!important}
+  @keyframes previewFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-.25deg)}50%{transform:translateX(-50%) translateY(-7px) rotate(.25deg)}}
+  footer{padding:10px 22px 28px;text-align:center;color:#61748d;font:600 10px/1.5 monospace}
+  
+</style>
+</head>
+<body>
+<header>
+  <h1>V4 <span>SIGNATURE SCENE PROOF</span></h1>
+  <p>Same fighter frame, fourteen different visual languages. These are the exact scene layers loaded into the in-game splash card.</p>
+</header>
+<nav class="jump" id="jump"></nav>
+<main class="grid" id="grid"></main>
+<footer>Single intact fighter layer · scene FX never duplicate arms or legs · mobile-safe fallbacks included</footer>
+<script>
+const fighters=[
+  {key:'dora',name:'DORAEMON',emoji:'🤖',a:'#20bfff',b:'#ffe04b',line:'GADGET DIMENSION · PORTAL ONLINE'},
+  {key:'sakura',name:'SAKURA',emoji:'🌸',a:'#ff5fa2',b:'#fff0f7',line:'CHAKRA CONTROL · BYAKUGŌ FLOW'},
+  {key:'isagi',name:'ISAGI',emoji:'🧩',a:'#00bdff',b:'#7dffe9',line:'META VISION · GOAL ROUTE LOCKED'},
+  {key:'kono',name:'KONOHAMARU',emoji:'🥷',a:'#218cff',b:'#ffad32',line:'SHINOBI ARTS · SEAL COMPLETE'},
+  {key:'chichi',name:'CHICHI',emoji:'🥋',a:'#ff315f',b:'#ffd05b',line:'MARTIAL SPIRIT · KI PRESSURE RISING'},
+  {key:'shika',name:'SHIKAMARU',emoji:'♟',a:'#7d64c8',b:'#d8d1f0',line:'SHADOW POSSESSION · TARGET CAPTURED'},
+  {key:'tsubasa',name:'TSUBASA',emoji:'⚽',a:'#1c9fff',b:'#ffffff',line:'DRIVE SHOT · GOAL LINE OPEN'},
+  {key:'suzune',name:'SUZUNE',emoji:'◆',a:'#8262ff',b:'#e8e0ff',line:'COLD LOGIC · OUTCOME CALCULATED'},
+  {key:'superman',name:'SUPERMAN',emoji:'🦸',a:'#ff283d',b:'#ffd53f',line:'SOLAR CHARGE · KRYPTONIAN POWER'},
+  {key:'ginyu',name:'GINYU',emoji:'👽',a:'#a950ff',b:'#50ffd2',line:'GINYU FORCE · SCOUTER OVERDRIVE'},
+  {key:'beatrice',name:'BEATRICE',emoji:'📕',a:'#e9ae32',b:'#fff1aa',line:'FORBIDDEN LIBRARY · MANA SCRIPT ACTIVE'},
+  {key:'tanjiro',name:'TANJIRO',emoji:'⚔',a:'#2dd6e8',b:'#ff613e',line:'TOTAL CONCENTRATION · WATER × HINOKAMI'},
+  {key:'gojo',name:'GOJO',emoji:'∞',a:'#29c8ff',b:'#ff3f6c',line:'LIMITLESS · BLUE + RED = PURPLE'},
+  {key:'conan',name:'CONAN',emoji:'🔎',a:'#2d9dff',b:'#ff394f',line:'DEDUCTION MODE · ONE TRUTH REMAINS'}
+];
+const marks={dora:'◉',sakura:'✿',isagi:'⬡',kono:'✦',chichi:'◒',shika:'⌁',tsubasa:'➤',suzune:'◇',superman:'◆',ginyu:'◎',beatrice:'✥',tanjiro:'☯',gojo:'∞',conan:'⌖'};
+const shardMarkup=Array.from({length:12},(_,i)=>'<i style="--i:'+i+';--x:'+(8+(i*29)%84)+'%;--y:'+(8+(i*47)%78)+'%;--delay:-'+(i*.31).toFixed(2)+'s"></i>').join('');
+const orbitMarkup=Array.from({length:6},(_,i)=>'<i style="--i:'+i+';--a:'+(i*60)+'deg"></i>').join('');
+function scene(f){
+  const parts=f.line.split(' · ');
+  return '<article class="pickSplash show" id="'+f.key+'" data-key="'+f.key+'" style="--fxA:'+f.a+';--fxB:'+f.b+';--psColor:'+f.a+'">'+
+    '<div class="previewWatermark">'+f.name+'</div>'+
+    '<div class="pickSplashFx"><div class="sigDirector" aria-hidden="true">'+
+      '<div class="sigAtmosphere"></div><div class="sigArena"></div><div class="sigSpeed"></div>'+
+      '<div class="sigEmblem"><span>'+marks[f.key]+'</span></div>'+
+      '<div class="sigCore"><i></i><i></i><i></i></div>'+
+      '<div class="sigOrbit">'+orbitMarkup+'</div><div class="sigShards">'+shardMarkup+'</div>'+
+      '<div class="sigSweep"></div><div class="sigImpact"></div>'+
+      '<div class="sigHud"><b>'+parts[0]+'</b><small>'+(parts[1]||'SIGNATURE ACTIVE')+'</small></div>'+
+    '</div></div>'+
+    '<div class="previewFighter">'+f.emoji+'</div>'+
+    '<div class="previewCaption"><b>'+f.name+'</b><small>'+f.line+'</small></div>'+
+  '</article>';
+}
+document.getElementById('grid').innerHTML=fighters.map(scene).join('');
+document.getElementById('jump').innerHTML=fighters.map(f=>'<button type="button" data-go="'+f.key+'">'+f.name+'</button>').join('');
+document.getElementById('jump').addEventListener('click',e=>{
+  const b=e.target.closest('[data-go]');if(!b)return;
+  document.getElementById(b.dataset.go).scrollIntoView({behavior:'smooth',block:'center'});
+});
+</script>
+</body>
+</html>
