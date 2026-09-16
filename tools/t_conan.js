@@ -4,7 +4,7 @@ const s=fs.readFileSync('index.html','utf8');
 const p=fs.readFileSync('play.html','utf8');
 function has(x,msg){assert(s.includes(x),msg||x)}
 function lacks(x,msg){assert(!s.includes(x),msg||('unexpected: '+x))}
-has("conan:{},ayanokouji",'sprite registration');
+has("conan:{},sakura:{},ayanokouji",'sprite registration');
 has("conan:'#4B8BFF'",'color registration');
 has('conan:HP_STD','shared HP registration');
 has('clueMax:6','six total clues');
