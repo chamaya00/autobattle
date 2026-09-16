@@ -1338,6 +1338,114 @@
   .vsName{font-style:normal;text-shadow:0 8px 24px rgba(0,0,0,.75),0 0 14px currentColor}
   .vsStage{border:1px solid rgba(148,163,184,.2);border-radius:999px;clip-path:none;background:rgba(5,10,17,.72);box-shadow:none}
 
+  /* Character-lock splash: a short, non-blocking takeover after choosing a fighter. */
+  .pickSplash{position:fixed;inset:0;z-index:65;display:grid;place-items:stretch;overflow:hidden;
+    pointer-events:none;visibility:hidden;opacity:0;background:#03070C}
+  .pickSplash.show{visibility:visible;animation:pickSplashLife .82s cubic-bezier(.2,.82,.2,1) both}
+  .pickSplash::before{content:'';position:absolute;inset:-12%;background:
+      radial-gradient(circle at 24% 55%,color-mix(in srgb,var(--psColor,#55D9FF) 48%,transparent),transparent 33%),
+      linear-gradient(105deg,#09111D 0 51%,#E8EDF3 51.2% 100%)}
+  .pickSplash.show::before{animation:pickSplashWipe .82s cubic-bezier(.16,.84,.24,1) both}
+  .pickSplash::after{content:'';position:absolute;inset:0;opacity:.42;background-image:
+      radial-gradient(circle,rgba(5,10,17,.8) 0 1.2px,transparent 1.5px);
+    background-size:8px 8px;clip-path:polygon(51% 0,100% 0,100% 100%,39% 100%)}
+  .pickSplash.right::before{background:
+      radial-gradient(circle at 76% 55%,color-mix(in srgb,var(--psColor,#FF6F9F) 48%,transparent),transparent 33%),
+      linear-gradient(75deg,#E8EDF3 0 48.8%,#09111D 49% 100%)}
+  .pickSplash.right::after{clip-path:polygon(0 0,49% 0,61% 100%,0 100%)}
+  .pickSplashArt{position:absolute;z-index:2;left:4%;bottom:-5%;width:54%;height:103%;display:flex;
+    align-items:flex-end;justify-content:center;filter:drop-shadow(0 18px 26px rgba(0,0,0,.72))}
+  .pickSplash.show .pickSplashArt{animation:pickArtIn .62s cubic-bezier(.16,.88,.22,1) both}
+  .pickSplash.right .pickSplashArt{left:auto;right:4%;transform:scaleX(-1)}
+  .pickSplash.right.show .pickSplashArt{animation-name:pickArtInR}
+  .pickSplashArt img{max-width:100%;max-height:100%;object-fit:contain;object-position:bottom center}
+  .pickSplashArt i{font-style:normal;font-size:min(42vw,360px);line-height:1;padding-bottom:10vh;
+    filter:drop-shadow(0 0 32px var(--psColor))}
+  .pickSplashCopy{position:absolute;z-index:3;right:6%;top:50%;width:42%;transform:translateY(-50%);
+    color:#07101A;text-align:left}
+  .pickSplash.show .pickSplashCopy{animation:pickCopyIn .48s .13s cubic-bezier(.2,.86,.25,1) both}
+  .pickSplash.right .pickSplashCopy{right:auto;left:6%;text-align:right}
+  .pickSplashKicker{display:block;font:700 clamp(9px,1.4vw,13px)/1 "Space Mono",monospace;
+    letter-spacing:.28em;text-transform:uppercase;color:#4B5663;margin-bottom:10px}
+  .pickSplashName{display:block;font-family:var(--fd);font-size:clamp(38px,8.6vw,104px);font-weight:800;
+    line-height:.82;letter-spacing:-.045em;text-transform:uppercase;color:#07101A;
+    text-shadow:3px 3px 0 color-mix(in srgb,var(--psColor) 52%,transparent)}
+  .pickSplashRole{display:inline-flex;margin-top:16px;padding:6px 12px;border-left:4px solid var(--psColor);
+    font:700 clamp(9px,1.35vw,13px)/1.25 "Space Mono",monospace;letter-spacing:.12em;text-transform:uppercase;
+    color:#273443;background:rgba(255,255,255,.42)}
+  .pickSplash.right .pickSplashRole{border-left:0;border-right:4px solid var(--psColor)}
+  .pickSplashWatermark{position:absolute;z-index:1;left:-1%;bottom:1%;max-width:100%;overflow:hidden;
+    white-space:nowrap;font-family:var(--fd);font-size:clamp(64px,16vw,190px);font-weight:900;line-height:.72;
+    letter-spacing:-.06em;text-transform:uppercase;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.15)}
+  .pickSplash.right .pickSplashWatermark{left:auto;right:-1%}
+  @keyframes pickSplashLife{0%{opacity:0}10%,84%{opacity:1}100%{opacity:0}}
+  @keyframes pickSplashWipe{from{clip-path:inset(0 48% 0 48%)}to{clip-path:inset(0)}}
+  @keyframes pickArtIn{from{opacity:0;transform:translateX(-70px) scale(.94)}to{opacity:1;transform:none}}
+  @keyframes pickArtInR{from{opacity:0;transform:translateX(70px) scaleX(-1) scale(.94)}to{opacity:1;transform:scaleX(-1)}}
+  @keyframes pickCopyIn{from{opacity:0;transform:translate(36px,-50%)}to{opacity:1;transform:translate(0,-50%)}}
+
+  /* Cinematic VS rebuild: real stage art, strong silhouettes and compact HUD plates. */
+  #arcVs{isolation:isolate;padding:clamp(12px,3vw,34px);background:#03070C}
+  .vsStageBg{position:absolute;z-index:0;inset:-3%;background-position:center;background-size:cover;
+    filter:blur(3px) saturate(.7) brightness(.34);transform:scale(1.05)}
+  .vsStageBg::after{content:'';position:absolute;inset:0;background:
+      radial-gradient(ellipse at 50% 72%,transparent 0 24%,rgba(2,5,10,.82) 76%),
+      linear-gradient(90deg,rgba(4,14,24,.7),transparent 42% 58%,rgba(28,7,20,.7))}
+  #arcVs>div{z-index:2}
+  #arcVs::before{z-index:1;width:9px;left:50%;right:auto;top:-8%;bottom:-8%;transform:translateX(-50%) rotate(7deg);
+    background:linear-gradient(180deg,transparent,#FFF 14% 86%,transparent);box-shadow:0 0 20px rgba(255,255,255,.46)}
+  #arcVs::after{z-index:1;background:
+      linear-gradient(102deg,rgba(54,212,255,.19),transparent 46%),
+      linear-gradient(102deg,transparent 54%,rgba(255,73,145,.18));opacity:1}
+  .vsRow{width:min(1180px,100%);margin:auto;gap:clamp(2px,1.5vw,18px);position:relative}
+  .vsSide{position:relative;min-width:0;flex:1;gap:7px;padding:12px 10px 10px;
+    border-top:1px solid color-mix(in srgb,currentColor 62%,transparent);
+    background:linear-gradient(180deg,rgba(5,10,18,.06),rgba(4,8,14,.72));overflow:hidden}
+  .vsSide.a{clip-path:polygon(0 0,100% 0,94% 100%,0 100%)}
+  .vsSide.b{clip-path:polygon(6% 0,100% 0,100% 100%,0 100%)}
+  .vsSide::after{content:'';position:absolute;inset:0;z-index:-1;opacity:.2;background-image:
+      radial-gradient(circle,currentColor 0 1px,transparent 1.4px);background-size:8px 8px;
+      -webkit-mask-image:linear-gradient(115deg,#000,transparent 70%);mask-image:linear-gradient(115deg,#000,transparent 70%)}
+  .vsSide.b::after{transform:scaleX(-1)}
+  .vsGhostName{position:absolute;z-index:-1;top:8%;left:2%;max-width:96%;white-space:nowrap;overflow:hidden;
+    font-family:var(--fd);font-size:clamp(54px,10vw,138px);font-weight:900;font-style:normal;line-height:.8;
+    letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,currentColor 28%,transparent)}
+  .vsSide.b .vsGhostName{left:auto;right:2%;text-align:right}
+  .vsMob{position:relative;z-index:1;justify-content:center;width:100%}
+  .vsPanel{max-width:42vw}
+  .vsBody img{filter:drop-shadow(0 0 1px rgba(255,255,255,.7)) drop-shadow(0 12px 22px rgba(0,0,0,.86))}
+  .vsPlate{position:relative;z-index:2;width:min(94%,420px);margin-top:-6px;padding:9px 12px 10px;
+    background:linear-gradient(90deg,rgba(5,10,17,.94),rgba(16,25,38,.76));
+    border-left:3px solid currentColor;text-align:left;box-shadow:0 10px 28px rgba(0,0,0,.38)}
+  .vsSide.b .vsPlate{border-left:0;border-right:3px solid currentColor;text-align:right}
+  .vsMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;
+    font:700 8px/1 "Space Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:#9DABBB}
+  .vsSide.b .vsMeta{flex-direction:row-reverse}
+  .vsPlate .vsName{display:block;font-size:clamp(14px,2.8vw,27px);line-height:1.02;color:#F4F7FA!important}
+  .vsLoadout{display:flex;gap:5px;margin-top:7px}.vsSide.b .vsLoadout{justify-content:flex-end}
+  .vsLoadout i{display:grid;place-items:center;width:18px;height:18px;transform:rotate(45deg);
+    border:1px solid color-mix(in srgb,currentColor 62%,#fff 10%);background:color-mix(in srgb,currentColor 18%,#07101A)}
+  .vsLoadout i::after{content:attr(data-tag);transform:rotate(-45deg);font:800 7px/1 "Space Mono",monospace;color:#F6F8FB}
+  .vsBig{z-index:5;width:clamp(42px,10vw,88px);height:clamp(42px,10vw,88px);margin-inline:clamp(-12px,-1vw,-4px)}
+  .vsBig b{font-size:clamp(30px,7vw,62px)}
+  .vsStage{position:relative;z-index:3;margin-top:16px;padding:7px 22px;color:#EEF3F8;
+    border-color:rgba(255,255,255,.24);background:rgba(2,6,11,.78);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
+  .vsRow.many{gap:2px}.vsRow.many .vsSide{padding:7px 2px;clip-path:none}
+  .vsRow.many .vsPanel{width:clamp(40px,12vw,100px);height:clamp(76px,22vw,180px)}
+  .vsRow.many .vsBig{width:clamp(16px,4vw,34px);height:clamp(28px,5vw,46px);margin-inline:-4px}
+  .vsRow.many .vsBig b{font-size:clamp(14px,3.5vw,28px)}
+  .vsRow.many .vsMeta,.vsRow.many .vsLoadout{display:none}
+  .vsRow.many .vsPlate{width:96%;padding:5px 3px;text-align:center;border-inline:0;border-bottom:2px solid currentColor}
+  .vsRow.many .vsPlate .vsName{font-size:clamp(7px,1.7vw,12px)}
+
+  @media(max-width:640px){
+    .pickSplashArt{left:-7%;width:67%}.pickSplash.right .pickSplashArt{right:-7%}
+    .pickSplashCopy{right:4%;width:46%}.pickSplash.right .pickSplashCopy{left:4%}
+    .pickSplashName{font-size:clamp(31px,10vw,58px)}
+    .vsSide{padding-inline:4px}.vsPlate{padding:7px 8px}.vsMeta{font-size:7px;letter-spacing:.1em}
+    .vsLoadout i{width:15px;height:15px}.vsStage{margin-top:10px}
+  }
+
   .nextM,.brM{border:1px solid rgba(148,163,184,.14);border-radius:16px;clip-path:none;background:linear-gradient(180deg,#121D30,#090F1B);box-shadow:0 12px 28px rgba(0,0,0,.2)}
   .nextM::before{left:18px;right:18px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
   .rsRow{border-radius:10px;background:linear-gradient(90deg,#111C2E,#090F1A);box-shadow:inset 2px 0 0 #40516D}
@@ -1672,9 +1780,22 @@
   </div>
 </div>
 
+<!-- Splash ngắn sau khi khoá nhân vật. Không chặn thao tác; ảnh splash riêng nếu có,
+     nếu chưa nạp thì tự dùng dáng idle để toàn bộ roster hoạt động ngay. -->
+<div class="pickSplash" id="pickSplash" aria-hidden="true">
+  <div class="pickSplashWatermark" id="pickSplashWatermark"></div>
+  <div class="pickSplashArt" id="pickSplashArt"></div>
+  <div class="pickSplashCopy">
+    <span class="pickSplashKicker" id="pickSplashKicker"></span>
+    <b class="pickSplashName" id="pickSplashName"></b>
+    <span class="pickSplashRole" id="pickSplashRole"></span>
+  </div>
+</div>
+
 <!-- Màn VS trước trận, kiểu Street Fighter: mặt hai bên rõ ràng rồi mới vào đánh.
      Chạm là vào ngay, không chạm thì tự vào sau VS_HOLD giây. Chỉ có ở TRANG CHƠI. -->
 <div class="arc off" id="arcVs" style="z-index:66">
+  <i class="vsStageBg" id="vsStageBg"></i>
   <i class="vsFlash"></i>
   <div style="width:100%;position:relative">
     <div class="vsRow" id="vsRow"></div>
@@ -2185,6 +2306,7 @@ const SETS=[
   {key:'beatrice', name:'Beatrice', poses:[['idle','Thủ thế (khoanh tay)'],['minya','Minya (bắn tinh thể)'],['shamac','Al Shamac (giơ tay)'],['murak','Murak (bay lên, vòng phép)'],['emt','E.M.T (kén kết giới)'],['elminya','El Minya (mở sách, vòng phép)'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)'],['win','Ăn mừng (đóng sách, khoanh tay)'],['down','Gục xuống (quỳ rồi ngã)']]},
   {key:'tanjiro', name:'Tanjiro Kamado', poses:[['idle','Thủ thế với Nichirin Sword'],['run','Chạy vào sân'],['draw','Rút Nichirin Sword'],['ready','Hạ thấp trọng tâm'],['slash1','First Slash'],['slash2','Second Slash'],['surface','Water Surface Slash'],['wheel','Water Wheel'],['flux','Constant Flux'],['sun','Dragon Sun Halo Head Dance'],['mark','Demon Slayer Mark'],['ultimate','Sun Breathing: Thirteenth Form'],['hurt','Trúng đòn'],['injured','Tơi tả (<20% máu)'],['win','Tra kiếm và cúi đầu'],['down','Quỳ rồi ngã xuống']]},
   {key:'gojo', name:'Satoru Gojo', poses:[['idle','Combat stance'],['entry','Space distortion entrance'],['adjust','Adjust blindfold'],['strike1','Limitless Combat · strike 1'],['strike2','Limitless Combat · strike 2'],['bluehit','Blue-Enhanced Strike'],['blue','Cursed Technique Lapse: Blue'],['red','Cursed Technique Reversal: Red'],['purple','Hollow Technique: Purple'],['domain','Domain Expansion: Unlimited Void'],['hurt','Hit reaction'],['injured','Injured'],['win','Victory'],['down','Defeat']]},
+  {key:'isagi', name:'Isagi Yoichi', poses:[['idle','Combat stance'],['run','Blind Spot Run'],['kick','Direct Shot'],['adjust','Puzzle Pieces'],['ultimate','Two-Gun Volley'],['hurt','Hit reaction'],['injured','Injured'],['win','Victory'],['down','Defeat']]},
   {key:'conan', name:'Conan Edogawa', poses:[['idle','Idle'],['board','Turbo Engine Skateboard entry'],['jump','Jump off skateboard'],['stop','Stop skateboard with foot'],['adjust','Adjust glasses'],['basic','Deduction / Clue'],['kick','Soccer Ball Shot · Power-Enhancing Kick Shoes'],['watch','Stun-Gun Wristwatch'],['skate','Turbo Engine Skateboard'],['ultimate','Decisive Evidence · One Truth Prevails'],['hurt','Hit reaction'],['win','Victory'],['down','Defeat']]},
   {key:'ayanokouji', name:'Ayanokouji', poses:[['idle','Đứng'],['guard','Đỡ đòn thay Horikita'],['strike','Đòn đột kích'],['leave','Rời sàn đấu']]},
   {key:'nara', name:'Con nai nhà Nara', poses:[['idle','Đứng cạnh Shikamaru trong lãnh địa']]},
@@ -2198,6 +2320,13 @@ const SETS=[
   /* Ảnh nền của sáu màn đấu. Dán ảnh vào là màn đó dùng ảnh thay cho hình vector. */
   {key:'stages', name:'Màn đấu — ảnh nền', poses:STAGES.map(s=>[s.key,s.vn])},
 ];
+/* Key art riêng cho màn khoá nhân vật và VS. Chèn bằng một danh sách tập trung để nhân
+   vật hỗ trợ không phải lặp cùng một nhãn dài trong từng dòng SETS; trợ thủ / cảnh nền
+   không có ô splash vì họ không xuất hiện trong màn chọn. */
+const SPLASH_KEYS=new Set(['sakura','kono','chichi','tsubasa','shika','suzune','ginyu','dora',
+  'superman','beatrice','tanjiro','gojo','isagi','conan']);
+for(const set of SETS) if(SPLASH_KEYS.has(set.key))
+  set.poses.unshift(['splash','Splash art (màn chọn / VS)']);
 const SLOT={};
 
 /* Tầm tay của mọi đòn cận chiến, cộng vào r+r (26+26) => 76px. Nới rộng hơn mốc cũ 16
@@ -20198,6 +20327,12 @@ function avaSrc(key){
   }
   return '';
 }
+/* Splash art có ô riêng để người dùng đưa tranh key art khổ lớn vào. Chưa có thì dùng
+   chính dáng idle hiện tại, nên nâng giao diện không bắt buộc phải làm lại asset ngay. */
+function splashSrc(key){
+  const set=SPR[key]||{}, a=set.splash;
+  return a&&a.length&&a[0]&&a[0].src?a[0].src:avaSrc(key);
+}
 function avaHtml(key){
   const C=CHARS[key], src=avaSrc(key);
   return src?`<img alt="" src="${src}">`:C.emoji;
@@ -20216,6 +20351,27 @@ function avaRefresh(){
    `touch-action:manipulation` để chặn cú phóng to đó). */
 const DBL_TAP=380;
 let tapKey='', tapAt=0;
+let pickSplashTimer=0;
+function pickSplashShow(key){
+  if(!ARCADE||!CHARS[key]) return;
+  const box=document.getElementById('pickSplash'); if(!box) return;
+  const C=CHARS[key], D=DEX[key]||{}, src=splashSrc(key);
+  const right=cselPage==='p2'||teamStep()%2===1;
+  box.className='pickSplash'+(right?' right':'');
+  box.style.setProperty('--psColor',C.color);
+  el('pickSplashArt').innerHTML=src?`<img alt="" src="${src}">`:`<i>${C.emoji}</i>`;
+  el('pickSplashName').textContent=C.name;
+  el('pickSplashWatermark').textContent=(C.short||C.name).toUpperCase();
+  el('pickSplashKicker').textContent=tr({
+    vi:right?'NGƯỜI CHƠI 2 · ĐÃ CHỌN':'NGƯỜI CHƠI 1 · ĐÃ CHỌN',
+    en:right?'PLAYER 2 · FIGHTER LOCKED':'PLAYER 1 · FIGHTER LOCKED'
+  });
+  el('pickSplashRole').textContent=tr(D.role)||C.tag||'';
+  /* Gỡ rồi gắn lại class để animation chạy từ đầu kể cả đổi nhân vật rất nhanh. */
+  void box.offsetWidth; box.classList.add('show');
+  clearTimeout(pickSplashTimer);
+  pickSplashTimer=setTimeout(()=>box.classList.remove('show'),850);
+}
 /* `id` phải gồm CẢ LƯỚI lẫn tên nhân vật, đừng chỉ tên nhân vật: trận đấu gương bấm
    Konohamaru ở lưới trái rồi Konohamaru ở lưới phải là hai cú liên tiếp cùng tên, tính
    theo tên thì game hiểu nhầm thành chạm hai lần và bật bảng thông số lên chặn mất nút
@@ -20245,6 +20401,7 @@ function tile(key,onClick,on){
     const hai=tapTwice(((o.parentNode&&o.parentNode.id)||'')+'/'+key);
     sfx('ui_pick');
     onClick(e,hai);                  // cú bấm đầu vẫn CHỌN người đó như cũ
+    if(!hai) pickSplashShow(key);
     if(hai) dexPopOpen(key);
   });
   return o;
@@ -21323,22 +21480,32 @@ function vsShow(){
   if(!box||!row) return;
   const sides=vsSides();
   if(sides.length<2) return;                    // không có ai để đối đầu thì thôi
+  row.classList.toggle('many',sides.length>2);
   /* Đông người thì thu nhỏ lại cho vừa bề ngang, chứ đừng để tràn ra ngoài màn. */
   const dong=sides.reduce((m,side)=>Math.max(m,side.length),1);
-  const k=dong>=3?.56:dong===2?.74:1;
+  const total=sides.reduce((n,side)=>n+side.length,0);
+  const k=total>=6?.46:total>=4?.58:dong>=3?.56:dong===2?.74:1;
   row.innerHTML=sides.map((side,i)=>{
     const mob=side.map(f=>{
-      const src=avaSrc(f.key);
+      const src=splashSrc(f.key);
       const than=src?`<img alt="" src="${src}">`:((CHARS[f.key]&&CHARS[f.key].emoji)||'?');
       return `<div class="vsPanel" style="--k:${k}">`+
         `<i class="vsGlow"></i><i class="vsLines"></i>`+
         `<div class="vsBody">${than}</div><i class="vsFloor"></i></div>`;
     }).join('');
+    const names=side.map(f=>(f.name||'').toUpperCase());
     const ten=side.map(f=>`<span class="vsName" style="color:${f.color}">${(f.name||'').toUpperCase()}</span>`)
       .join('<span class="vsName" style="color:#5A5A66"> + </span>');
+    const lead=CHARS[side[0].key]||{}, dex=DEX[side[0].key]||{};
+    const tags=(dex.skills||[]).slice(0,4).map((s,j)=>
+      `<i data-tag="${s.tag==='P'?'P':s.tag==='U'?'U':j+1}" title="${s.name||''}"></i>`).join('');
     return (i?'<div class="vsBig"><i class="vsBurst"></i><b>VS</b></div>':'')+
       `<div class="vsSide ${i?'b':'a'}" style="color:${side[0].color}">`+
-      `<div class="vsMob">${mob}</div><div>${ten}</div></div>`;
+      `<i class="vsGhostName">${names.join(' + ')}</i>`+
+      `<div class="vsMob">${mob}</div><div class="vsPlate">`+
+      `<div class="vsMeta"><span>${sides.length===2?(i?'PLAYER 2':'PLAYER 1'):'FIGHTER '+(i+1)}</span>`+
+      `<span>${tr(dex.role)||lead.tag||'FIGHTER'}</span></div>`+
+      `<div>${ten}</div><div class="vsLoadout">${tags}</div></div></div>`;
   }).join('');
   /* Chớp màn mở đầu phải chạy LẠI mỗi lần mở, mà animation chỉ chạy một lần cho mỗi lần
      phần tử vào cây DOM — nên thay hẳn nút đó đi. */
@@ -21347,6 +21514,8 @@ function vsShow(){
   const st=document.getElementById('vsStage');
   const S=stageOf(STAGE);
   if(st) st.textContent=S.name;                 // tên màn giữ nguyên ở cả hai ngôn ngữ
+  const bg=document.getElementById('vsStageBg');
+  if(bg) bg.style.backgroundImage=`url("${stageThumb(STAGE)}")`;
   box.style.setProperty('--vsFog',S.fog);       // nền màn VS ăn theo tông màu của sàn đấu
   vsOn=true; box.classList.remove('off');
   sfx('ui_vs');
