@@ -103,7 +103,7 @@
 }
 @keyframes v5GroundBreath{0%,100%{transform:scale(.97);opacity:.25}50%{transform:scale(1.025);opacity:.42}}
 @keyframes v5BodySignature{0%,62%,100%{transform:scale(.975);opacity:.08}74%{transform:scale(1.025);opacity:.24}86%{transform:scale(1.005);opacity:.13}}
-@keyframes v5AccentBreath{0%,100%{transform:scale(.975) rotate(-1deg);opacity:calc(var(--v5Accent) * .72)}50%{transform:scale(1.02) rotate(1deg);opacity:var(--v5Accent)}}
+@keyframes v5AccentBreath{0%,100%{transform:scale(.975) rotate(-1deg);opacity:.13}50%{transform:scale(1.02) rotate(1deg);opacity:var(--v5Accent)}}
 @keyframes v5QuietSweep{0%,72%,100%{opacity:0;transform:translateX(-20%) rotate(-9deg) scaleX(.4)}82%{opacity:.28;transform:translateX(0) rotate(-9deg) scaleX(.9)}90%{opacity:0;transform:translateX(20%) rotate(-9deg) scaleX(1.1)}}
 @keyframes v5Drift{0%,100%{opacity:.08;transform:translate3d(0,5px,0) rotate(0) scale(.82)}50%{opacity:.3;transform:translate3d(4px,-8px,0) rotate(90deg) scale(1)}}
 @keyframes v5SoftOrbit{to{transform:rotate(360deg)}}
@@ -268,7 +268,7 @@
 /* ---------- smaller screens: preserve contrast, spend less GPU ---------- */
 @media(max-width:760px){
   .pickSplash .sigDirector{opacity:.62!important}
-  .pickSplash .sigAtmosphere{opacity:calc(var(--v5Aura) * .82)!important;filter:blur(7px)!important}
+  .pickSplash .sigAtmosphere{opacity:.16!important;filter:blur(7px)!important}
   .pickSplash .sigShards i:nth-child(n+4){display:none!important}
   .pickSplash .pickSplashArt::after{opacity:.14!important;filter:blur(11px)!important}
 }
