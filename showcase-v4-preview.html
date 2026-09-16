@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Multiverse Battler — Showcase V4 Preview</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#030711;font-family:Inter,system-ui,sans-serif}
+  .bar{
+    position:fixed;z-index:10;left:12px;right:12px;top:10px;display:flex;align-items:center;gap:8px;
+    padding:8px 10px;border:1px solid rgba(91,200,255,.35);border-radius:12px;
+    background:rgba(3,8,18,.88);backdrop-filter:blur(14px);box-shadow:0 14px 35px rgba(0,0,0,.45)
+  }
+  .brand{margin-right:6px;white-space:nowrap;color:#fff;font-weight:900;letter-spacing:.08em;font-size:12px}
+  .brand span{color:#52d8ff}
+  .fighters{display:flex;gap:5px;overflow:auto;scrollbar-width:none}
+  button{
+    flex:0 0 auto;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 9px;
+    background:#0b1527;color:#cfe7ff;font-weight:800;font-size:10px;letter-spacing:.04em;cursor:pointer
+  }
+  button:hover{border-color:#52d8ff;color:#fff;box-shadow:0 0 14px rgba(82,216,255,.24)}
+  .status{margin-left:auto;white-space:nowrap;color:#7dffca;font:700 9px/1 monospace}
+  iframe{position:absolute;inset:0;width:100%;height:100%;border:0;padding-top:58px;background:#030711}
+  .tip{
+    position:fixed;z-index:11;right:18px;bottom:14px;padding:7px 10px;border-radius:8px;
+    color:#b8c9df;background:rgba(3,8,18,.84);font-size:10px;pointer-events:none
+  }
+  @media(max-width:760px){.brand{display:none}.status{display:none}.bar{left:6px;right:6px}.tip{display:none}}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="brand">SHOWCASE <span>V4 DIRECTOR</span></div>
+    <div class="fighters" id="fighters"></div>
+    <div class="status" id="status">LOADING ARENA…</div>
+  </div>
+  <iframe id="game" title="Multiverse Battler V4 preview" src="./"></iframe>
+  <div class="tip">Each fighter now changes the whole scene—not just the aura color.</div>
+<script>
+const fighters=[
+  ['Sakura','SAKURA'],['Isagi','ISAGI'],['Kono','KONOHAMARU'],['ChiChi','CHICHI'],
+  ['Tsubasa','TSUBASA'],['Shika','SHIKAMARU'],['Horikita','SUZUNE'],['Ginyu','GINYU'],
+  ['Dora','DORAEMON'],['Superman','SUPERMAN'],['Beatrice','BEATRICE'],['Tanjiro','TANJIRO'],
+  ['Gojo','GOJO'],['Conan','CONAN']
+];
+const frame=document.getElementById('game');
+const status=document.getElementById('status');
+document.getElementById('fighters').innerHTML=fighters.map(([find,label])=>
+  '<button type="button" data-find="'+find+'">'+label+'</button>'
+).join('');
+
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function findButton(doc,needles){
+  return [...doc.querySelectorAll('button')].find(b=>{
+    const t=(b.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+    return needles.some(n=>t.includes(n));
+  });
+}
+async function clickStage(doc,needles,delay=520){
+  const b=findButton(doc,needles);
+  if(b){b.click();await wait(delay);return true}
+  return false;
+}
+async function boot(){
+  const doc=frame.contentDocument;
+  if(!doc)return;
+  ['showcase-v2.css','showcase-v2-motion.css','showcase-v3-wow.css','showcase-v4-director.css'].forEach(file=>{
+    if(!doc.querySelector('link[href*="'+file+'"]')){
+      const link=doc.createElement('link');
+      link.rel='stylesheet';link.href='assets/ui/'+file;doc.head.appendChild(link);
+    }
+  });
+  if(!doc.querySelector('script[src*="showcase-v4-director.js"]')){
+    const script=doc.createElement('script');
+    script.src='assets/ui/showcase-v4-director.js';script.defer=true;doc.body.appendChild(script);
+  }
+  await wait(850);
+  await clickStage(doc,['press start','bắt đầu'],650);
+  await clickStage(doc,['watch the ai','xem ai'],650);
+  await clickStage(doc,['duel','đấu đơn'],260);
+  await clickStage(doc,['next ▸ fighters','fighters','nhân vật'],900);
+  status.textContent=doc.getElementById('pickSplash')?'V4 LIVE · PICK A FIGHTER':'OPEN FIGHTER SELECT';
+}
+frame.addEventListener('load',boot);
+document.getElementById('fighters').addEventListener('click',async e=>{
+  const btn=e.target.closest('button[data-find]');if(!btn)return;
+  const doc=frame.contentDocument;
+  const target=findButton(doc,[btn.dataset.find.toLowerCase()]);
+  if(target){
+    target.click();
+    status.textContent='LIVE · '+btn.textContent;
+    [...document.querySelectorAll('.fighters button')].forEach(x=>x.style.borderColor='');
+    btn.style.borderColor='#52d8ff';
+  }else{
+    status.textContent='OPEN FIGHTER SELECT FIRST';
+  }
+});
+</script>
+</body>
+</html>
