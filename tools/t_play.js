@@ -42,7 +42,7 @@ function wavUrl() {
   const dir = path.dirname(buildPlay());
   fs.mkdirSync(path.join(dir, 'assets', 'pack'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'assets', 'pack', 'pack.json'), JSON.stringify({
-    v: 1, at: '2026-09-08', spr: { kono: { idle: [PNG] } }, sfx: { punch: wavUrl() }
+    v: 1, at: '2026-09-08', spr: { kono: { idle: [PNG] }, ginyu: { idle: [PNG] } }, sfx: { punch: wavUrl() }
   }));
   const mime = f => f.endsWith('.json') ? 'application/json' : f.endsWith('.wav') ? 'audio/wav' : 'text/html';
   const sv = http.createServer((rq, rs) => {
@@ -119,6 +119,82 @@ function wavUrl() {
   ok(await page.evaluate(() => document.querySelectorAll('.pickChip').length) === 0,
      'buoc P1 chua co dai "da chon"');
   await page.click('#listA .cTile[data-key="ginyu"]');
+  const khoa = await page.evaluate(() => ({
+    hien: document.getElementById('pickSplash').classList.contains('show'),
+    ten: document.getElementById('pickSplashName').textContent,
+    art: !!document.querySelector('#pickSplashArt img, #pickSplashArt i')
+  }));
+  ok(khoa.hien && /GINYU/i.test(khoa.ten) && khoa.art,
+     `chon fighter co splash art khoa nhan vat (${khoa.ten})`);
+  await page.waitForTimeout(1100);
+  const giu = await page.evaluate(() => {
+    const box=document.getElementById('pickSplash');
+    const art=document.getElementById('pickSplashArt');
+    return {
+      hien:box.classList.contains('show')&&getComputedStyle(box).display!=='none',
+      key:box.dataset.key,
+      motion:getComputedStyle(art).animationName,
+      rig:art.querySelectorAll('.pickRig img').length,
+      motes:art.querySelectorAll('.pickMote').length,
+      ring:!!art.querySelector('.pickEnergyRing'),
+      streaks:document.querySelectorAll('#pickSplash .pickStreak').length
+    };
+  });
+  ok(giu.hien && giu.key==='ginyu', 'showcase Ginyu van nam canh roster sau hon 1 giay');
+  ok(/pickArtIdle/.test(giu.motion), `showcase co idle sway/breath motion (${giu.motion})`);
+  ok(giu.rig===3, `showcase tach thanh chan/than/dau de chuyen dong 2.5D (${giu.rig} lop)`);
+  ok(giu.motes===8 && giu.ring && giu.streaks===3,
+     `showcase co aura particles, energy ring va streaks (${giu.motes}/${giu.streaks})`);
+  ok(await page.evaluate(() => getComputedStyle(document.querySelector('#pickSplashArt'),'::after').animationName==='pickBodyAura'),
+     'showcase co aura bao quanh toan than');
+  /* ---------- hai luật trình bày của showcase (mục "Splash art lúc chọn và màn VS") ----------
+     1 · SÂN KHẤU TỐI, NHÂN VẬT ĐƯỢC RỌI ĐÈN. Bản cũ tô một vạt #E8EDF3 chiếm gần nửa
+         khung nên NỀN sáng hơn NGƯỜI — đo bằng độ sáng trung bình của hai nửa khung.
+     2 · KHÔNG GÌ CẮT NGANG MẶT. Watermark, nhát lock-in và đám hạt bay đều phải nằm
+         dưới mốc `--psFace` hoặc nằm sau model; đo bằng hình học, không đoán. */
+  const anh = (await page.locator('#pickSplash').screenshot()).toString('base64');
+  const sang = await page.evaluate(async b64 => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const cx = c.getContext('2d'); cx.drawImage(img, 0, 0);
+    const box = document.getElementById('pickSplash').getBoundingClientRect();
+    const art = document.getElementById('pickSplashArt').getBoundingClientRect();
+    const s = img.width / box.width;                 // ảnh chụp ở deviceScaleFactor nào cũng đúng
+    // cột nhân vật vs cột nền (nửa khung KHÔNG có model)
+    const aL = Math.round((art.left - box.left) * s), aR = Math.round((art.right - box.left) * s);
+    const mean = (x0, x1, y0, y1) => {
+      if (x1 <= x0 || y1 <= y0) return 0;
+      const d = cx.getImageData(x0, y0, x1 - x0, y1 - y0).data;
+      let t = 0; for (let i = 0; i < d.length; i += 4) t += .2126*d[i] + .7152*d[i+1] + .0722*d[i+2];
+      return t / (d.length / 4);
+    };
+    const nen = aL > img.width - aR ? mean(0, aL, 0, img.height) : mean(aR, img.width, 0, img.height);
+    return { nguoi: mean(aL, aR, 0, img.height), nen };
+  }, anh);
+  ok(sang.nguoi > sang.nen,
+     `cot nhan vat sang hon cot nen (${sang.nguoi.toFixed(1)} vs ${sang.nen.toFixed(1)})`);
+  const mat = await page.evaluate(() => {
+    const art = document.getElementById('pickSplashArt').getBoundingClientRect();
+    /* Fallback 40: bản chưa có `--psFace` phải bị đo theo cùng một mốc, không thì
+       `NaN` làm mọi phép so sánh thành false và mục này đạt suông. */
+    const face = parseFloat(getComputedStyle(document.getElementById('pickSplash')).getPropertyValue('--psFace')) || 40;
+    const day = art.top + art.height * (face / 100);      // mốc dưới của vùng đầu
+    const z = e => +getComputedStyle(e).zIndex || 0;
+    const zArt = z(document.getElementById('pickSplashArt'));
+    const cham = [];
+    /* Mấy lớp nằm SAU model thì chỉ cần không đè lên trên là được. */
+    for (const sel of ['.pickLockSlash', '.pickMotes', '.pickSplashFx']) {
+      const e = document.querySelector('#pickSplash ' + sel); if (!e) continue;
+      if (e.getBoundingClientRect().top < day && z(e) >= zArt) cham.push(sel);
+    }
+    /* Watermark thì KHẮT KHE HƠN: kể cả vẽ sau lưng model, mấy chữ cái khổ lớn vẫn
+       chạy qua hai bên đầu và đọc ra như có gạch ngang mặt. Nó phải nằm hẳn dưới mốc. */
+    const wm = document.querySelector('#pickSplash .pickSplashWatermark');
+    if (wm && wm.getBoundingClientRect().top < day) cham.push('.pickSplashWatermark');
+    return { cham, day: Math.round(day - art.top) };
+  });
+  ok(mat.cham.length === 0,
+     `khong lop trang tri nao cat ngang mat (moc ${mat.day}px${mat.cham.length ? ' — ' + mat.cham.join(', ') : ''})`);
   await page.click('#cselGo');
   await page.waitForTimeout(250);
   const buoc2 = await page.evaluate(() => ({
@@ -164,10 +240,13 @@ function wavUrl() {
     vs: document.querySelectorAll('#arcVs .vsBig').length,
     ten: [...document.querySelectorAll('#arcVs .vsName')].map(e => e.textContent).join('/'),
     san: (document.getElementById('vsStage') || {}).textContent,
+    nen: (document.getElementById('vsStageBg') || {}).style.backgroundImage,
+    hud: document.querySelectorAll('#arcVs .vsPlate').length,
     t: window.__G().t
   }));
   ok(vsm.hien, 'bam vao tran thi mo man VS truoc');
   ok(vsm.mat === 2 && vsm.vs === 1, `hai khung nhan vat va mot chu VS (${vsm.mat} khung / ${vsm.vs} VS)`);
+  ok(vsm.hud === 2 && /^url\(/.test(vsm.nen), `VS co hai HUD plate va nen san dau that (${vsm.hud} plate)`);
   /* Người dùng: "đừng để nó là icon — để nó là full body với nhiều effect trông như một
      battle thật". Khung phải CAO hơn rộng và vẽ trọn cả người, kèm quầng sáng / vệt tốc độ
      / vũng sáng dưới chân / burst sau chữ VS. */
