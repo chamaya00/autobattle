@@ -102,6 +102,15 @@ repo's source, guesses it, gets it crawled by a search engine, etc.). It is **no
 private. Setting `STUDIO_BASIC_AUTH_USER`/`STUDIO_BASIC_AUTH_PASS` on Project A closes that
 gap: `/` stays public and password-free, `/studio/*` requires the credentials.
 
+**Any other internal-only tooling belongs under `/studio/` too**, for the same reason:
+it's the one path both build scripts (`tools/vercel_build.sh` and `.github/workflows/pages.yml`)
+already treat as non-public, and the only one gate 2 above protects. `showcase-v4-preview.html`
+(a visual-QA comparison page for reviewing splash-art changes) was previously copied to the
+site *root* — reachable by anyone, gated by neither mechanism — and has been moved to
+`site/studio/showcase-v4-preview.html` for exactly this reason. Adding a new internal page:
+put its source file wherever's convenient in the repo, then add one `cp` line to
+**both** build scripts pointing at `site/studio/<name>`, not `site/<name>`.
+
 Pick a **different** password from the dev site's — they're separate env vars, so there's no
 reason to reuse one. `node tools/t_vercel_auth.js` exercises both gates without a live deploy.
 

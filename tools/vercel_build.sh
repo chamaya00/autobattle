@@ -15,6 +15,9 @@ rm -rf site
 mkdir -p site/studio
 cp play.html site/index.html          # trang chơi (công khai) nằm ở gốc
 cp index.html site/studio/index.html  # trang xưởng nằm trong /studio/
+# trang QA so sánh splash art là đồ nội bộ, nằm trong /studio/ để đi chung gate
+# STUDIO_BASIC_AUTH_* của middleware.js chứ không đứng trần ở gốc site.
+[ -f showcase-v4-preview.html ] && cp showcase-v4-preview.html site/studio/showcase-v4-preview.html
 
 if [ -d assets ]; then
   cp -r assets site/assets            # gói phát hành + bộ giọng mẫu
