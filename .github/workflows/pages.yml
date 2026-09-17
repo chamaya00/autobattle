@@ -39,7 +39,9 @@ jobs:
           mkdir -p site/studio
           cp play.html site/index.html          # trang chơi nằm ở gốc
           cp index.html site/studio/index.html  # trang xưởng nằm trong /studio/
-          cp showcase-v4-preview.html site/showcase-v4-preview.html
+          # trang QA so sánh splash art là đồ nội bộ (xem PR mô tả), nằm trong /studio/
+          # chứ không ở gốc site — gốc site là chỗ người chơi vào thẳng
+          cp showcase-v4-preview.html site/studio/showcase-v4-preview.html
           # ảnh, tiếng và gói phát hành: cả hai trang cùng đọc
           [ -d assets ] && cp -r assets site/assets || true
 
