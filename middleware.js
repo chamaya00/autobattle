@@ -1,10 +1,18 @@
-// Vercel Edge Middleware — cổng duy nhất làm cho bản DEV NỘI BỘ khác bản PROD CÔNG KHAI.
+// Vercel Edge Middleware — cổng Basic Auth cho cả bản DEV NỘI BỘ lẫn trang XƯỞNG (/studio/).
 //
 // Cùng một repo, cùng một site/ dựng ra từ tools/vercel_build.sh, deploy vào HAI project
-// Vercel riêng (xem docs/deploy-vercel.md). Middleware này chạy trên CẢ HAI, nhưng chỉ
-// thật sự chặn khi project đó có khai hai biến môi trường DEV_BASIC_AUTH_USER /
-// DEV_BASIC_AUTH_PASS — tức chỉ đúng project "dev". Project "prod" không khai hai biến đó
-// nên middleware() return ngay, không thêm một mili-giây nào vào đường công khai.
+// Vercel riêng (xem docs/deploy-vercel.md). Middleware này chạy trên CẢ HAI, và có HAI cổng
+// độc lập, xét theo thứ tự:
+//
+//   1. CẢ TRANG — DEV_BASIC_AUTH_USER / DEV_BASIC_AUTH_PASS. Khai đủ hai biến này thì MỌI
+//      đường dẫn của project đó (kể cả trang chơi ở "/") đòi mật khẩu — đúng project "dev".
+//   2. CHỈ /studio/ — STUDIO_BASIC_AUTH_USER / STUDIO_BASIC_AUTH_PASS. Khai đủ hai biến này
+//      thì riêng trang xưởng đòi mật khẩu, còn trang chơi ở "/" vẫn công khai — đúng project
+//      "prod": người chơi vào thẳng, nhưng "/studio/" không còn chỉ là ẩn đường dẫn (ai biết
+//      URL vẫn mở được xem thẳng như trước) mà đòi mật khẩu thật.
+//
+// Project nào không khai biến nào trong một cặp thì middleware() không chặn phần tương ứng —
+// không thêm một mili-giây nào vào đường công khai của "/".
 //
 // Chọn HTTP Basic Auth qua Edge Middleware (không phải "Deployment Protection" trả phí của
 // Vercel) vì nó chạy được trên MỌI gói Vercel, kể cả Hobby miễn phí — "internal only" không
@@ -15,12 +23,10 @@ export const config = {
   matcher: '/:path*',
 };
 
-const REALM = 'Multiverse Battler internal dev'; // ASCII thuần: header HTTP không nhận Unicode
-
-function unauthorized() {
+function unauthorized(realm) {
   return new Response('Authentication required', {
     status: 401,
-    headers: { 'WWW-Authenticate': `Basic realm="${REALM}"` },
+    headers: { 'WWW-Authenticate': `Basic realm="${realm}"` }, // ASCII thuần: header HTTP không nhận Unicode
   });
 }
 
@@ -33,13 +39,9 @@ function timingSafeEqual(a, b) {
   return diff === 0;
 }
 
-export default function middleware(request) {
-  const wantUser = process.env.DEV_BASIC_AUTH_USER;
-  const wantPass = process.env.DEV_BASIC_AUTH_PASS;
-
-  // Chưa khai đủ hai biến (đúng trường hợp project "prod") ⇒ đi qua thẳng, không khoá gì cả.
-  if (!wantUser || !wantPass) return;
-
+// Kiểm request có đúng Basic Auth wantUser:wantPass không. Đúng thì trả undefined (cho qua),
+// sai/thiếu/hỏng cú pháp thì trả 401 kèm realm truyền vào — dùng chung cho cả hai cổng.
+function requireBasicAuth(request, wantUser, wantPass, realm) {
   const header = request.headers.get('authorization') || '';
   const [scheme, encoded] = header.split(' ');
   if (scheme === 'Basic' && encoded) {
@@ -47,7 +49,7 @@ export default function middleware(request) {
     try {
       decoded = atob(encoded);
     } catch {
-      return unauthorized();
+      return unauthorized(realm);
     }
     const sep = decoded.indexOf(':');
     if (sep !== -1) {
@@ -58,5 +60,29 @@ export default function middleware(request) {
       }
     }
   }
-  return unauthorized();
+  return unauthorized(realm);
+}
+
+export default function middleware(request) {
+  // Cổng 1: cả trang (project "dev"). Có đủ hai biến thì đây là cổng DUY NHẤT được xét —
+  // đã đòi mật khẩu cho cả site rồi thì "/studio/" bên trong đó không cần xét thêm cổng 2.
+  const siteUser = process.env.DEV_BASIC_AUTH_USER;
+  const sitePass = process.env.DEV_BASIC_AUTH_PASS;
+  if (siteUser && sitePass) {
+    return requireBasicAuth(request, siteUser, sitePass, 'Multiverse Battler internal dev');
+  }
+
+  // Cổng 2: chỉ "/studio/" (project "prod"). Đường dẫn khác "/studio/" thì đi qua thẳng dù
+  // có khai biến này hay không.
+  const path = new URL(request.url).pathname;
+  const isStudio = path === '/studio' || path.startsWith('/studio/');
+  if (isStudio) {
+    const studioUser = process.env.STUDIO_BASIC_AUTH_USER;
+    const studioPass = process.env.STUDIO_BASIC_AUTH_PASS;
+    if (studioUser && studioPass) {
+      return requireBasicAuth(request, studioUser, studioPass, 'Multiverse Battler studio');
+    }
+  }
+
+  return; // không có cổng nào áp cho đường dẫn này ⇒ đi qua thẳng
 }

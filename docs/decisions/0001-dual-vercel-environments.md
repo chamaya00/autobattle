@@ -43,6 +43,22 @@ does not depend on which Vercel plan is active. A team on a paid plan can still 
 Deployment Protection on top of the dev project for stronger guarantees (SSO, IP allowlists)
 without touching this file.
 
+## Update (2026-09-17): gate `/studio/` on the public project too
+
+Initially `/studio/` was reachable, unauthenticated, on the public (prod) project — the same
+"hidden by path, not locked" posture GitHub Pages already has. That's not actually private:
+the path is spelled out in this repo's own source (`README.md`, `CLAUDE.md`, this build
+script), so anyone who can read the repo, guesses the path, or gets it crawled can open it.
+
+`middleware.js` now has a second, independent gate: `STUDIO_BASIC_AUTH_USER`/
+`STUDIO_BASIC_AUTH_PASS`, checked only for paths under `/studio/`, applied *in addition to*
+the existing whole-site `DEV_BASIC_AUTH_*` gate (which still wins outright when set, since a
+whole-site gate already covers `/studio/`). Setting the studio pair on the **prod** project
+keeps `/` public while requiring a password for `/studio/` there; the **dev** project doesn't
+need it since its whole-site gate already covers everything. The build output is still
+byte-identical between the two projects — only middleware's routing behavior, driven by which
+env vars a given project sets, differs. See `docs/deploy-vercel.md` for the exact variables.
+
 ## Consequences
 
 - The same commit that is pushed to `main` (prod) can first be pushed to `dev` and previewed

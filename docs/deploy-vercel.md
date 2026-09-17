@@ -62,6 +62,12 @@ GitHub repo to back more than one project.
 - Deploy. The public play page is now at `https://multiverse-battler.vercel.app/`
   (add a custom domain under Settings → Domains if you have one).
 
+On Project A, also set (see "Gating `/studio/` on the public project" below):
+
+- `STUDIO_BASIC_AUTH_USER` / `STUDIO_BASIC_AUTH_PASS` — separate credentials just for
+  `/studio/`. Without these, `/studio/` on the public URL is reachable by anyone who knows
+  the path — see the note below.
+
 ### Project B — dev (internal only)
 
 - Name: `multiverse-battler-dev`.
@@ -74,11 +80,30 @@ GitHub repo to back more than one project.
 - Deploy (push to `dev` if nothing has landed there yet — Vercel needs at least one commit on
   the production branch to build). Every request to
   `https://multiverse-battler-dev.vercel.app/*` now gets an HTTP Basic Auth prompt; only the
-  user/pass you set above gets through. Change either value in the dashboard any time to
-  rotate credentials — no redeploy needed, `middleware.js` reads them at request time.
+  user/pass you set above gets through — this already covers `/studio/` too, since the
+  whole-site gate takes priority (see `middleware.js`). You don't need to also set
+  `STUDIO_BASIC_AUTH_*` here.
 
-Rotate the password by editing the env var in the dashboard (Settings → Environment
-Variables → edit `DEV_BASIC_AUTH_PASS`) — no code change or redeploy required.
+Rotate either password by editing the env var in the dashboard (Settings → Environment
+Variables) — no code change or redeploy required.
+
+## Gating `/studio/` on the public project
+
+`middleware.js` has **two independent gates**:
+
+1. `DEV_BASIC_AUTH_USER`/`DEV_BASIC_AUTH_PASS` — gates the **whole site** when set. This is
+   what Project B (dev) uses.
+2. `STUDIO_BASIC_AUTH_USER`/`STUDIO_BASIC_AUTH_PASS` — gates **only `/studio/`** (and
+   anything under it) when set, leaving `/` public. This is what Project A (prod) should use.
+
+Without gate 2, `/studio/` on the public URL is only "unlisted" — nothing links to it, but
+the page is still served in full to anyone who requests it directly (finds the path in this
+repo's source, guesses it, gets it crawled by a search engine, etc.). It is **not** actually
+private. Setting `STUDIO_BASIC_AUTH_USER`/`STUDIO_BASIC_AUTH_PASS` on Project A closes that
+gap: `/` stays public and password-free, `/studio/*` requires the credentials.
+
+Pick a **different** password from the dev site's — they're separate env vars, so there's no
+reason to reuse one. `node tools/t_vercel_auth.js` exercises both gates without a live deploy.
 
 ## 2. Optional: stack Vercel's own protection on top
 
