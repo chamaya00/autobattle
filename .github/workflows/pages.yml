@@ -39,8 +39,99 @@ jobs:
           mkdir -p site/studio
           cp play.html site/index.html          # trang chơi nằm ở gốc
           cp index.html site/studio/index.html  # trang xưởng nằm trong /studio/
+          cp showcase-v4-preview.html site/showcase-v4-preview.html
           # ảnh, tiếng và gói phát hành: cả hai trang cùng đọc
           [ -d assets ] && cp -r assets site/assets || true
+
+          # Showcase V2–V5 giữ fighter nguyên khối và motion riêng; Stage V6 tăng
+          # model preview, thay toàn bộ stage bằng art 1536px và nối art mới vào battle canvas.
+          python3 - <<'PY'
+          from pathlib import Path
+
+          pages = (
+              (
+                  Path('site/index.html'),
+                  (
+                      'assets/ui/showcase-v2.css',
+                      'assets/ui/showcase-v2-motion.css',
+                      'assets/ui/showcase-v3-wow.css',
+                      'assets/ui/showcase-v4-director.css',
+                      'assets/ui/showcase-v5-character-first.css',
+                      'assets/ui/stage-v6-cinematic.css',
+                  ),
+                  (
+                      'assets/ui/showcase-v4-director.js',
+                      'assets/ui/stage-v6-cinematic.js',
+                  ),
+                  'assets/stages/v6/',
+              ),
+              (
+                  Path('site/studio/index.html'),
+                  (
+                      '../assets/ui/showcase-v2.css',
+                      '../assets/ui/showcase-v2-motion.css',
+                      '../assets/ui/showcase-v3-wow.css',
+                      '../assets/ui/showcase-v4-director.css',
+                      '../assets/ui/showcase-v5-character-first.css',
+                      '../assets/ui/stage-v6-cinematic.css',
+                  ),
+                  (
+                      '../assets/ui/showcase-v4-director.js',
+                      '../assets/ui/stage-v6-cinematic.js',
+                  ),
+                  '../assets/stages/v6/',
+              ),
+          )
+          stage_bootstrap = """/* Stage V6: 1536px defaults inside the battle engine. */
+          const STAGE_ART_V6=['dojo','street','stadium','forest','space','roof','volcano','temple','snow','desert','cavern','sakura'];
+          let stageArtV6Timer=0;
+          for(const key of STAGE_ART_V6){
+            const image=new Image();
+            image.decoding='async';
+            SPR.stages[key]=[image];
+            image.onload=()=>{
+              /* A saved/uploaded stage that arrived meanwhile keeps priority. */
+              if(!SPR.stages[key]||SPR.stages[key][0]!==image)return;
+              stageThumbClear(key);
+              clearTimeout(stageArtV6Timer);
+              stageArtV6Timer=setTimeout(()=>{
+                buildStages();
+                const picker=document.getElementById('arcStage');
+                if(picker&&!picker.classList.contains('off'))stagePaint();
+              },40);
+            };
+            image.src=new URL('__STAGE_ROOT__'+key+'.webp',document.baseURI).href;
+          }
+          """
+          for page, hrefs, script_srcs, stage_root in pages:
+              text = page.read_text(encoding='utf-8')
+              marker = '</head>'
+              if marker not in text:
+                  raise SystemExit(f'{page}: thiếu </head> để gắn showcase CSS')
+              tags = ''.join(f'  <link rel="stylesheet" href="{href}">\n' for href in hrefs)
+              if 'showcase-v2.css' not in text:
+                  text = text.replace(marker, tags + marker, 1)
+              body_marker = '</body>'
+              if body_marker not in text:
+                  raise SystemExit(f'{page}: thiếu </body> để gắn visual director')
+              scripts = ''.join(
+                  f'  <script src="{src}" defer></script>\n'
+                  for src in script_srcs
+                  if Path(src).name not in text
+              )
+              if scripts:
+                  text = text.replace(body_marker, scripts + body_marker, 1)
+              if 'const STAGE_ART_V6=' not in text:
+                  engine_prefix = 'const SPR={stages:{}'
+                  engine_at = text.find(engine_prefix)
+                  if engine_at < 0:
+                      raise SystemExit(f'{page}: thiếu SPR để gắn stage art V6')
+                  line_end = text.find('\n', engine_at)
+                  stage_code = stage_bootstrap.replace('__STAGE_ROOT__', stage_root)
+                  text = text[:line_end + 1] + stage_code + text[line_end + 1:]
+              page.write_text(text, encoding='utf-8')
+          PY
+
           echo "site/ có: $(ls site | tr '\n' ' ')"
 
       # enablement: true = tự BẬT Pages qua API, khỏi phải vào Settings bấm tay.

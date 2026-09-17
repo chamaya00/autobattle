@@ -1,0 +1,17 @@
+/*
+ * Safe motion keyframes for Safari/iOS versions before 18.2.
+ * Avoid CSS Values 4 typed multiplication inside calc(); the user's current
+ * iPhone screenshot is Safari on iOS 18.1.x. Loaded after showcase-v2.css.
+ */
+@keyframes mbShowcaseIdle{
+  0%,100%{transform:translate3d(0,0,0) rotate(0deg) scale(1)}
+  24%{transform:translate3d(var(--idleDrift),-2px,0) rotate(.12deg) scale(1.003,1.007)}
+  49%{transform:translate3d(0,calc(0px - var(--idleLift)),0) rotate(var(--idleTilt)) scale(var(--idleBreathX),var(--idleBreathY))}
+  73%{transform:translate3d(calc(0px - var(--idleDrift)),-2px,0) rotate(-.12deg) scale(1.004,1.009)}
+}
+@keyframes mbShowcaseIdleR{
+  0%,100%{transform:translate3d(0,0,0) rotate(0deg) scaleX(-1) scale(1)}
+  24%{transform:translate3d(calc(0px - var(--idleDrift)),-2px,0) rotate(-.12deg) scaleX(-1) scale(1.003,1.007)}
+  49%{transform:translate3d(0,calc(0px - var(--idleLift)),0) rotate(calc(0deg - var(--idleTilt))) scaleX(-1) scale(var(--idleBreathX),var(--idleBreathY))}
+  73%{transform:translate3d(var(--idleDrift),-2px,0) rotate(.12deg) scaleX(-1) scale(1.004,1.009)}
+}

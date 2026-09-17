@@ -1,0 +1,489 @@
+/*
+ * Multiverse Battler — Showcase V4 Visual Director
+ *
+ * This is intentionally bold. V2 keeps one intact body, V3 provides motion,
+ * and V4 turns the surrounding card into a different scene for every fighter.
+ */
+
+/* ---------- scene graph ---------- */
+.pickSplash .pickSplashFx{
+  z-index:3!important;
+  inset:0!important;
+  overflow:hidden!important;
+  isolation:isolate;
+}
+.pickSplash .pickSplashFx::before,
+.pickSplash .pickSplashFx::after{display:none!important}
+.sigDirector,.sigDirector *{position:absolute;box-sizing:border-box;pointer-events:none}
+.sigDirector{inset:0;overflow:hidden;isolation:isolate;--sigA:var(--fxA);--sigB:var(--fxB);--sigC:#fff}
+.sigAtmosphere{inset:0;z-index:0;opacity:.78;mix-blend-mode:screen}
+.sigArena{z-index:1;inset:7% 4% 9%;opacity:.58;mix-blend-mode:screen}
+.sigSpeed{z-index:2;inset:-10%;opacity:.36;mix-blend-mode:screen}
+.sigEmblem{
+  z-index:2;width:72%;aspect-ratio:1;left:14%;top:8%;
+  display:grid;place-items:center;opacity:.48;mix-blend-mode:screen;
+  color:var(--sigB);font:900 clamp(76px,9vw,136px)/1 "Chakra Petch",sans-serif;
+  text-shadow:0 0 12px var(--sigA),0 0 30px var(--sigA),0 0 54px color-mix(in srgb,var(--sigA) 68%,transparent);
+  transform-origin:50% 50%;
+}
+.sigEmblem span{position:relative!important}
+.sigCore{z-index:2;inset:0;mix-blend-mode:screen}
+.sigCore i{display:block;border-radius:50%;opacity:.56}
+.sigCore i:nth-child(1){width:44%;aspect-ratio:1;left:28%;top:26%}
+.sigCore i:nth-child(2){width:58%;aspect-ratio:1;left:21%;top:19%}
+.sigCore i:nth-child(3){width:76%;aspect-ratio:1;left:12%;top:10%}
+.sigOrbit{z-index:3;width:76%;aspect-ratio:1;left:12%;top:10%;border-radius:50%;mix-blend-mode:screen}
+.sigOrbit i{
+  width:9px;height:9px;left:calc(50% - 4px);top:calc(50% - 4px);border-radius:50%;
+  background:var(--sigB);box-shadow:0 0 8px var(--sigB),0 0 18px var(--sigA);
+  transform:rotate(var(--a)) translateX(clamp(96px,9vw,142px));
+}
+.sigShards{z-index:4;inset:5% 4% 8%;mix-blend-mode:screen}
+.sigShards i{
+  left:var(--x);top:var(--y);width:9px;height:9px;opacity:.42;
+  background:var(--sigB);box-shadow:0 0 8px var(--sigA);
+  animation:sigShardFloat 4.6s var(--delay) ease-in-out infinite;
+}
+.sigSweep{z-index:5;left:-24%;top:46%;width:148%;height:4px;opacity:.45;mix-blend-mode:screen}
+.sigImpact{z-index:5;width:42%;aspect-ratio:1;left:29%;top:28%;border-radius:50%;opacity:.32;mix-blend-mode:screen}
+.sigHud{
+  z-index:8!important;top:64px;right:14px;width:auto;min-width:148px;max-width:68%;
+  padding:7px 10px 7px 12px;border-right:3px solid var(--sigB);
+  background:linear-gradient(90deg,transparent,rgba(4,8,15,.82) 18%,rgba(4,8,15,.94));
+  text-align:right;transform:skewX(-7deg);
+  box-shadow:10px 0 22px color-mix(in srgb,var(--sigA) 28%,transparent);
+}
+.sigHud b,.sigHud small{position:relative!important;display:block;transform:skewX(7deg)}
+.sigHud b{
+  color:#fff;font:900 10px/1.1 "Chakra Petch",sans-serif;letter-spacing:.16em;
+  text-shadow:0 0 8px var(--sigA);
+}
+.sigHud small{
+  margin-top:4px;color:var(--sigB);font:700 7px/1 "Space Mono",monospace;letter-spacing:.11em;
+}
+
+/* V4 effects remain obvious between signature beats. */
+.pickSplash.show .sigDirector{animation:sigSceneIn .62s cubic-bezier(.12,.9,.2,1.08) both}
+.pickSplash.show .sigEmblem{animation:sigEmblemLive var(--beatDur,4.8s) .2s ease-in-out infinite}
+.pickSplash.show .sigOrbit{animation:sigOrbitLive 10s linear infinite}
+.pickSplash.show .sigArena{animation:sigArenaLive var(--beatDur,4.8s) .1s ease-in-out infinite}
+.pickSplash.show .sigImpact{animation:sigImpactLive var(--beatDur,4.8s) .1s ease-out infinite}
+.pickSplash.show .sigSweep{animation:sigSweepLive var(--beatDur,4.8s) .1s ease-out infinite}
+
+@keyframes sigSceneIn{
+  0%{opacity:0;transform:scale(.84);filter:blur(6px)}
+  62%{opacity:1;transform:scale(1.035);filter:blur(0)}
+  100%{opacity:1;transform:scale(1);filter:blur(0)}
+}
+@keyframes sigEmblemLive{
+  0%,36%,100%{opacity:.32;transform:rotate(-4deg) scale(.9)}
+  50%{opacity:.58;transform:rotate(2deg) scale(1.02)}
+  58%{opacity:.9;transform:rotate(6deg) scale(1.13)}
+  72%{opacity:.4;transform:rotate(10deg) scale(.96)}
+}
+@keyframes sigArenaLive{
+  0%,100%{opacity:.38;transform:scale(.97)}
+  52%{opacity:.62;transform:scale(1.02)}
+  60%{opacity:.88;transform:scale(1.07)}
+  72%{opacity:.48;transform:scale(.99)}
+}
+@keyframes sigOrbitLive{to{transform:rotate(360deg)}}
+@keyframes sigImpactLive{
+  0%,45%,100%{opacity:.12;transform:scale(.55)}
+  56%{opacity:.72;transform:scale(1.08)}
+  66%{opacity:0;transform:scale(1.46)}
+}
+@keyframes sigSweepLive{
+  0%,44%,100%{opacity:0;transform:translateX(-34%) rotate(-12deg) scaleX(.25)}
+  53%{opacity:.95;transform:translateX(-5%) rotate(-12deg) scaleX(1)}
+  63%{opacity:0;transform:translateX(32%) rotate(-12deg) scaleX(1.18)}
+}
+@keyframes sigShardFloat{
+  0%,100%{opacity:.16;transform:translate3d(0,8px,0) rotate(0) scale(.72)}
+  50%{opacity:.72;transform:translate3d(6px,-12px,0) rotate(135deg) scale(1.15)}
+}
+@keyframes sigScanDown{
+  0%{opacity:0;transform:translateY(-60px)}
+  20%,70%{opacity:.78}
+  100%{opacity:0;transform:translateY(330px)}
+}
+@keyframes sigRush{
+  0%,38%,100%{opacity:.08;transform:translateX(-18%) skewX(-24deg)}
+  55%{opacity:.75;transform:translateX(8%) skewX(-24deg)}
+  70%{opacity:.16;transform:translateX(32%) skewX(-24deg)}
+}
+@keyframes sigPulseHard{
+  0%,100%{opacity:.2;transform:scale(.78)}
+  48%{opacity:.5;transform:scale(.96)}
+  58%{opacity:1;transform:scale(1.18)}
+  70%{opacity:.26;transform:scale(.9)}
+}
+@keyframes sigShadowReach{
+  0%,100%{opacity:.36;transform:scale(.68,1) translateY(10%)}
+  52%{opacity:.62;transform:scale(.95,1.04) translateY(2%)}
+  62%{opacity:.94;transform:scale(1.36,1.18) translateY(-4%)}
+  74%{opacity:.4;transform:scale(.82,1) translateY(7%)}
+}
+@keyframes sigBlueRed{
+  0%,100%{filter:hue-rotate(0deg) brightness(.9);transform:rotate(0) scale(.86)}
+  48%{filter:hue-rotate(18deg) brightness(1.2);transform:rotate(120deg) scale(1)}
+  58%{filter:hue-rotate(48deg) brightness(1.8);transform:rotate(180deg) scale(1.16)}
+  72%{filter:hue-rotate(0deg) brightness(1);transform:rotate(260deg) scale(.92)}
+}
+
+/* ---------- Doraemon: gadget portal / playful future tech ---------- */
+.pickSplash[data-key="dora"] .sigDirector{--sigA:#20bfff;--sigB:#ffe04b;--sigC:#e9fbff}
+.pickSplash[data-key="dora"] .sigAtmosphere{
+  background:
+    radial-gradient(circle at 50% 46%,rgba(32,191,255,.34),transparent 34%),
+    repeating-linear-gradient(0deg,transparent 0 22px,rgba(32,191,255,.08) 23px 24px);
+}
+.pickSplash[data-key="dora"] .sigArena{
+  inset:17% 14% 16%;border:3px solid rgba(32,191,255,.7);border-radius:44% 44% 12% 12%;
+  box-shadow:inset 0 0 26px rgba(32,191,255,.38),0 0 20px rgba(32,191,255,.35);
+  background:linear-gradient(90deg,transparent 49%,rgba(255,224,75,.72) 49% 51%,transparent 51%);
+}
+.pickSplash[data-key="dora"] .sigEmblem{color:#ffe04b}
+.pickSplash[data-key="dora"] .sigCore i{
+  border:2px dashed rgba(255,224,75,.7);box-shadow:0 0 16px rgba(32,191,255,.55);
+}
+.pickSplash[data-key="dora"] .sigShards i{border-radius:50%;background:#fff;border:2px solid #20bfff}
+.pickSplash[data-key="dora"] .sigSweep{
+  height:3px;background:linear-gradient(90deg,transparent,#ffe04b,#fff,#20bfff,transparent);
+  box-shadow:0 0 12px #20bfff;
+}
+
+/* ---------- Sakura: giant blossom / visible petal cyclone ---------- */
+.pickSplash[data-key="sakura"] .sigDirector{--sigA:#ff5fa2;--sigB:#fff0f7;--sigC:#ffbad7}
+.pickSplash[data-key="sakura"] .sigAtmosphere{
+  background:
+    radial-gradient(ellipse at 50% 58%,rgba(255,95,162,.38),transparent 47%),
+    conic-gradient(from 30deg,transparent,rgba(255,95,162,.12),transparent 32%,rgba(255,255,255,.1),transparent 66%);
+}
+.pickSplash[data-key="sakura"] .sigArena{
+  inset:11% 9% 12%;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0 6%,rgba(255,95,162,.62) 9%,transparent 16% 27%,rgba(255,240,247,.56) 31%,transparent 38% 50%,rgba(255,95,162,.58) 55%,transparent 63% 76%,rgba(255,240,247,.5) 81%,transparent 88%);
+  filter:drop-shadow(0 0 14px rgba(255,95,162,.65));
+}
+.pickSplash[data-key="sakura"] .sigEmblem{font-size:clamp(112px,12vw,190px);color:#ff8fbd}
+.pickSplash[data-key="sakura"] .sigCore i{border:2px solid rgba(255,190,220,.48)}
+.pickSplash[data-key="sakura"] .sigShards i{
+  width:13px;height:8px;border-radius:90% 12% 90% 12%;background:linear-gradient(135deg,#fff,#ff6eac);
+}
+.pickSplash[data-key="sakura"] .sigSweep{
+  height:6px;background:linear-gradient(90deg,transparent,#ff6eac,#fff,#ff6eac,transparent);
+  filter:blur(1px);box-shadow:0 0 18px #ff6eac;
+}
+
+/* ---------- Isagi: pitch perspective / puzzle vision / hard goal lock ---------- */
+.pickSplash[data-key="isagi"] .sigDirector{--sigA:#00bdff;--sigB:#7dffe9;--sigC:#fff}
+.pickSplash[data-key="isagi"] .sigAtmosphere{
+  background:radial-gradient(circle at 52% 44%,rgba(0,189,255,.32),transparent 36%);
+}
+.pickSplash[data-key="isagi"] .sigArena{
+  inset:5% 2% 5%;clip-path:polygon(36% 0,64% 0,96% 100%,4% 100%);
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(125,255,233,.78) 49.5% 50.5%,transparent 50.5%),
+    repeating-linear-gradient(90deg,rgba(0,189,255,.32) 0 1px,transparent 1px 28px),
+    repeating-linear-gradient(0deg,rgba(0,189,255,.28) 0 1px,transparent 1px 25px);
+  box-shadow:inset 0 0 40px rgba(0,189,255,.35);
+}
+.pickSplash[data-key="isagi"] .sigEmblem{
+  color:#7dffe9;clip-path:polygon(25% 7%,75% 7%,100% 50%,75% 93%,25% 93%,0 50%);
+  border:2px solid rgba(125,255,233,.48);
+}
+.pickSplash[data-key="isagi"] .sigCore i{border:2px solid rgba(125,255,233,.58)}
+.pickSplash[data-key="isagi"] .sigShards i{
+  width:14px;height:14px;border:2px solid #7dffe9;background:rgba(0,189,255,.28);
+  clip-path:polygon(0 0,65% 0,65% 28%,100% 28%,100% 100%,0 100%);
+}
+.pickSplash[data-key="isagi"] .sigImpact{
+  border:3px solid #7dffe9;box-shadow:0 0 18px #00bdff,inset 0 0 14px #00bdff;
+  background:linear-gradient(90deg,transparent 49%,#7dffe9 49% 51%,transparent 51%),linear-gradient(0deg,transparent 49%,#7dffe9 49% 51%,transparent 51%);
+}
+
+/* ---------- Konohamaru: huge shuriken seal / crossed slash / smoke rush ---------- */
+.pickSplash[data-key="kono"] .sigDirector{--sigA:#218cff;--sigB:#ffad32;--sigC:#fff}
+.pickSplash[data-key="kono"] .sigAtmosphere{
+  background:
+    radial-gradient(circle at 50% 52%,rgba(33,140,255,.3),transparent 34%),
+    repeating-linear-gradient(118deg,transparent 0 22px,rgba(255,173,50,.1) 23px 25px);
+}
+.pickSplash[data-key="kono"] .sigArena{
+  inset:13% 10% 14%;border:2px dashed rgba(255,173,50,.65);border-radius:50%;
+  -webkit-mask:repeating-conic-gradient(#000 0 7deg,transparent 7deg 20deg);
+  mask:repeating-conic-gradient(#000 0 7deg,transparent 7deg 20deg);
+  box-shadow:0 0 18px #218cff;
+}
+.pickSplash[data-key="kono"] .sigEmblem{
+  color:#ffad32;clip-path:polygon(50% 0,61% 38%,100% 28%,66% 50%,100% 72%,61% 62%,50% 100%,39% 62%,0 72%,34% 50%,0 28%,39% 38%);
+}
+.pickSplash[data-key="kono"] .sigSpeed{
+  background:repeating-linear-gradient(112deg,transparent 0 25px,rgba(255,255,255,.36) 26px 28px,transparent 29px 48px);
+  animation:sigRush 3.7s ease-in-out infinite;
+}
+.pickSplash[data-key="kono"] .sigSweep{
+  height:7px;background:linear-gradient(90deg,transparent,#218cff 20%,#fff 50%,#ffad32 80%,transparent);
+  box-shadow:0 0 12px #fff,0 0 25px #218cff;
+}
+
+/* ---------- ChiChi: martial flame wings / double ki crescent ---------- */
+.pickSplash[data-key="chichi"] .sigDirector{--sigA:#ff315f;--sigB:#ffd05b;--sigC:#fff}
+.pickSplash[data-key="chichi"] .sigAtmosphere{
+  background:radial-gradient(ellipse at 50% 58%,rgba(255,49,95,.4),transparent 50%);
+}
+.pickSplash[data-key="chichi"] .sigArena{
+  inset:5% 2% 9%;border-radius:50%;
+  background:conic-gradient(from 210deg,transparent 0 14%,rgba(255,49,95,.76) 19%,rgba(255,208,91,.52) 24%,transparent 31% 65%,rgba(255,208,91,.64) 71%,rgba(255,49,95,.7) 76%,transparent 83%);
+  filter:drop-shadow(0 0 16px rgba(255,49,95,.68));
+}
+.pickSplash[data-key="chichi"] .sigEmblem{color:#ffd05b}
+.pickSplash[data-key="chichi"] .sigCore i{
+  border:3px solid transparent;border-left-color:#ff315f;border-right-color:#ffd05b;
+  box-shadow:0 0 14px rgba(255,49,95,.58);
+}
+.pickSplash[data-key="chichi"] .sigImpact{
+  border:4px solid #ffd05b;box-shadow:0 0 22px #ff315f,inset 0 0 16px #ff315f;
+}
+.pickSplash[data-key="chichi"] .sigSweep{
+  height:9px;background:linear-gradient(90deg,transparent,#ff315f,#ffd05b,#fff,#ff315f,transparent);
+  filter:blur(1px);box-shadow:0 0 24px #ff315f;
+}
+
+/* ---------- Shikamaru: black shadow trap visibly invades the card ---------- */
+.pickSplash[data-key="shika"] .sigDirector{--sigA:#7d64c8;--sigB:#d8d1f0;--sigC:#08070d}
+.pickSplash[data-key="shika"] .sigAtmosphere{
+  background:linear-gradient(to top,rgba(2,2,6,.92),rgba(24,18,45,.25) 60%,transparent);
+  mix-blend-mode:normal;
+}
+.pickSplash[data-key="shika"] .sigArena{
+  left:-20%;right:-20%;top:38%;bottom:-4%;inset:auto -20% -4%;
+  height:60%;clip-path:polygon(0 78%,35% 56%,45% 0,50% 42%,55% 0,65% 56%,100% 78%,76% 100%,24% 100%);
+  background:radial-gradient(ellipse,#050507 0,#171126 46%,transparent 74%);
+  filter:blur(3px) drop-shadow(0 0 14px #000);
+  animation:sigShadowReach 6.6s ease-in-out infinite!important;
+  opacity:.88;
+}
+.pickSplash[data-key="shika"] .sigEmblem{
+  color:#181322;text-shadow:0 0 12px #7d64c8,0 0 28px #000;opacity:.72;
+}
+.pickSplash[data-key="shika"] .sigCore i{border:2px solid rgba(125,100,200,.38)}
+.pickSplash[data-key="shika"] .sigShards i{
+  width:3px;height:34px;background:linear-gradient(#7d64c8,#06050a);box-shadow:0 0 10px #000;
+}
+.pickSplash[data-key="shika"] .sigSweep{background:linear-gradient(90deg,transparent,#07060c,#7d64c8,#07060c,transparent);height:10px}
+
+/* ---------- Tsubasa: stadium lane tunnel / drive-shot trajectory ---------- */
+.pickSplash[data-key="tsubasa"] .sigDirector{--sigA:#1c9fff;--sigB:#ffffff;--sigC:#4dff88}
+.pickSplash[data-key="tsubasa"] .sigAtmosphere{
+  background:linear-gradient(to top,rgba(27,167,92,.28),transparent 52%),radial-gradient(circle at 50% 38%,rgba(28,159,255,.3),transparent 32%);
+}
+.pickSplash[data-key="tsubasa"] .sigArena{
+  inset:8% -5% 4%;clip-path:polygon(36% 0,64% 0,100% 100%,0 100%);
+  background:
+    linear-gradient(90deg,transparent 49.5%,rgba(255,255,255,.72) 49.5% 50.5%,transparent 50.5%),
+    repeating-linear-gradient(100deg,transparent 0 38px,rgba(255,255,255,.26) 39px 41px,transparent 42px 66px);
+}
+.pickSplash[data-key="tsubasa"] .sigSpeed{
+  background:repeating-linear-gradient(108deg,transparent 0 17px,rgba(255,255,255,.52) 18px 20px,transparent 21px 34px);
+  animation:sigRush 3.7s ease-in-out infinite;
+}
+.pickSplash[data-key="tsubasa"] .sigEmblem{color:#fff;transform:skewX(-14deg)}
+.pickSplash[data-key="tsubasa"] .sigCore i{
+  border:3px solid transparent;border-top-color:#fff;border-right-color:#1c9fff;
+  transform:skewX(-13deg);
+}
+.pickSplash[data-key="tsubasa"] .sigSweep{
+  top:42%;height:8px;background:linear-gradient(90deg,transparent,#fff,#1c9fff,#fff,transparent);
+  box-shadow:0 0 18px #1c9fff;
+}
+
+/* ---------- Suzune: cold analytic prism / glass shard field ---------- */
+.pickSplash[data-key="suzune"] .sigDirector{--sigA:#8262ff;--sigB:#e8e0ff;--sigC:#8ee8ff}
+.pickSplash[data-key="suzune"] .sigAtmosphere{
+  background:linear-gradient(135deg,rgba(130,98,255,.18),transparent 44%,rgba(142,232,255,.14));
+}
+.pickSplash[data-key="suzune"] .sigArena{
+  inset:13% 12% 15%;border:2px solid rgba(232,224,255,.5);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+  background:
+    linear-gradient(45deg,transparent 49%,rgba(142,232,255,.42) 49% 51%,transparent 51%),
+    linear-gradient(-45deg,transparent 49%,rgba(130,98,255,.48) 49% 51%,transparent 51%);
+  box-shadow:inset 0 0 22px rgba(130,98,255,.32);
+}
+.pickSplash[data-key="suzune"] .sigEmblem{
+  color:#e8e0ff;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:2px solid rgba(130,98,255,.6);
+}
+.pickSplash[data-key="suzune"] .sigCore i{
+  border:1px solid rgba(232,224,255,.58);border-radius:8%;transform:rotate(45deg);
+}
+.pickSplash[data-key="suzune"] .sigShards i{
+  width:8px;height:22px;clip-path:polygon(50% 0,100% 100%,0 75%);
+  background:linear-gradient(#e8e0ff,#8262ff);
+}
+.pickSplash[data-key="suzune"] .sigSweep{background:linear-gradient(90deg,transparent,#8262ff,#e8e0ff,#8ee8ff,transparent)}
+
+/* ---------- Superman: giant sun / red-gold sonic boom ---------- */
+.pickSplash[data-key="superman"] .sigDirector{--sigA:#ff283d;--sigB:#ffd53f;--sigC:#fff}
+.pickSplash[data-key="superman"] .sigAtmosphere{
+  background:radial-gradient(circle at 50% 40%,rgba(255,213,63,.56),rgba(255,40,61,.16) 35%,transparent 58%);
+}
+.pickSplash[data-key="superman"] .sigArena{
+  width:88%;aspect-ratio:1;left:6%;top:1%;inset:auto;border-radius:50%;
+  background:radial-gradient(circle,#fff 0 3%,#fff4ac 6%,#ffd53f 13%,rgba(255,213,63,.46) 30%,rgba(255,40,61,.2) 50%,transparent 68%);
+  filter:drop-shadow(0 0 24px rgba(255,213,63,.75));
+  animation:sigPulseHard 5.25s ease-in-out infinite!important;
+}
+.pickSplash[data-key="superman"] .sigEmblem{color:#ff283d;text-shadow:0 0 12px #ffd53f,0 0 35px #ff283d}
+.pickSplash[data-key="superman"] .sigCore i{
+  border:3px solid rgba(255,213,63,.66);box-shadow:0 0 20px rgba(255,40,61,.58);
+}
+.pickSplash[data-key="superman"] .sigImpact{
+  border:5px solid #ffd53f;box-shadow:0 0 25px #ff283d,inset 0 0 20px #ffd53f;
+}
+.pickSplash[data-key="superman"] .sigSweep{
+  height:11px;background:linear-gradient(90deg,transparent,#ff283d,#ffd53f,#fff,#ffd53f,#ff283d,transparent);
+  box-shadow:0 0 28px #ffd53f;
+}
+
+/* ---------- Ginyu: loud scouter HUD / alien force rings ---------- */
+.pickSplash[data-key="ginyu"] .sigDirector{--sigA:#a950ff;--sigB:#50ffd2;--sigC:#ff4a7d}
+.pickSplash[data-key="ginyu"] .sigAtmosphere{
+  background:repeating-linear-gradient(0deg,transparent 0 18px,rgba(80,255,210,.08) 19px 20px),radial-gradient(circle at 50% 48%,rgba(169,80,255,.34),transparent 42%);
+}
+.pickSplash[data-key="ginyu"] .sigArena{
+  inset:8% 5% 10%;border:3px dashed rgba(80,255,210,.68);border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,rgba(169,80,255,.36) 0 2deg,transparent 2deg 18deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 46%,#000 47% 50%,transparent 51% 63%,#000 64% 66%,transparent 67%);
+  mask:radial-gradient(circle,transparent 0 46%,#000 47% 50%,transparent 51% 63%,#000 64% 66%,transparent 67%);
+}
+.pickSplash[data-key="ginyu"] .sigEmblem{color:#50ffd2}
+.pickSplash[data-key="ginyu"] .sigCore i{border:2px dashed rgba(255,74,125,.72)}
+.pickSplash[data-key="ginyu"] .sigSweep{
+  height:4px;background:linear-gradient(90deg,transparent,#50ffd2,#fff,#ff4a7d,transparent);
+  box-shadow:0 0 16px #50ffd2;animation:sigScanDown 2.15s ease-in-out infinite!important;
+}
+
+/* ---------- Beatrice: forbidden-library spell / layered runic machinery ---------- */
+.pickSplash[data-key="beatrice"] .sigDirector{--sigA:#e9ae32;--sigB:#fff1aa;--sigC:#8e5bff}
+.pickSplash[data-key="beatrice"] .sigAtmosphere{
+  background:radial-gradient(circle at 50% 48%,rgba(233,174,50,.34),transparent 46%);
+}
+.pickSplash[data-key="beatrice"] .sigArena{
+  inset:6% 4% 8%;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,rgba(255,241,170,.78) 0 1deg,transparent 1deg 11deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 42%,#000 43% 46%,transparent 47% 58%,#000 59% 62%,transparent 63%);
+  mask:radial-gradient(circle,transparent 0 42%,#000 43% 46%,transparent 47% 58%,#000 59% 62%,transparent 63%);
+  filter:drop-shadow(0 0 12px rgba(233,174,50,.7));
+}
+.pickSplash[data-key="beatrice"] .sigEmblem{color:#fff1aa}
+.pickSplash[data-key="beatrice"] .sigCore i{border:2px solid rgba(233,174,50,.62)}
+.pickSplash[data-key="beatrice"] .sigShards i{
+  width:11px;height:16px;background:linear-gradient(90deg,#fff1aa,#e9ae32);border-radius:1px 4px 4px 1px;
+}
+.pickSplash[data-key="beatrice"] .sigSweep{background:linear-gradient(90deg,transparent,#8e5bff,#fff1aa,#e9ae32,transparent);box-shadow:0 0 20px #e9ae32}
+
+/* ---------- Tanjiro: unmistakable blue water wheel × orange Hinokami ---------- */
+.pickSplash[data-key="tanjiro"] .sigDirector{--sigA:#2dd6e8;--sigB:#ff613e;--sigC:#fff}
+.pickSplash[data-key="tanjiro"] .sigAtmosphere{
+  background:linear-gradient(115deg,rgba(45,214,232,.2),transparent 44%,rgba(255,97,62,.18));
+}
+.pickSplash[data-key="tanjiro"] .sigArena{
+  inset:2% -3% 5%;border-radius:50%;
+  background:conic-gradient(from 205deg,transparent 0 10%,#b9fbff 15%,#2dd6e8 22%,rgba(45,214,232,.22) 29%,transparent 36% 54%,#ffd49b 60%,#ff613e 67%,rgba(255,97,62,.22) 75%,transparent 82%);
+  filter:drop-shadow(0 0 15px rgba(45,214,232,.62));
+}
+.pickSplash[data-key="tanjiro"] .sigEmblem{color:#fff;text-shadow:0 0 14px #2dd6e8,0 0 30px #ff613e}
+.pickSplash[data-key="tanjiro"] .sigCore i{
+  border:3px solid transparent;border-left-color:#2dd6e8;border-right-color:#ff613e;
+}
+.pickSplash[data-key="tanjiro"] .sigShards i{
+  width:7px;height:20px;border-radius:70% 10% 70% 10%;
+  background:linear-gradient(#b9fbff,#2dd6e8 48%,#ff613e 52%,#ffd49b);
+}
+.pickSplash[data-key="tanjiro"] .sigSweep{
+  height:9px;background:linear-gradient(90deg,transparent,#2dd6e8,#fff,#ff613e,transparent);
+  box-shadow:0 0 24px #2dd6e8;
+}
+
+/* ---------- Gojo: Blue and Red are permanently visible, Purple detonates ---------- */
+.pickSplash[data-key="gojo"] .sigDirector{--sigA:#29c8ff;--sigB:#ff3f6c;--sigC:#985bff}
+.pickSplash[data-key="gojo"] .sigAtmosphere{
+  background:
+    radial-gradient(circle at 29% 40%,rgba(41,200,255,.52),transparent 17%),
+    radial-gradient(circle at 71% 40%,rgba(255,63,108,.48),transparent 17%),
+    radial-gradient(circle at 50% 48%,rgba(152,91,255,.32),transparent 33%);
+}
+.pickSplash[data-key="gojo"] .sigArena{
+  inset:3% 1% 5%;border-radius:50%;
+  background:
+    radial-gradient(circle,transparent 0 25%,rgba(41,200,255,.52) 26% 27%,transparent 28% 42%,rgba(255,63,108,.44) 43% 44%,transparent 45% 59%,rgba(152,91,255,.48) 60% 61%,transparent 62%),
+    conic-gradient(from 20deg,rgba(41,200,255,.3),transparent 28%,rgba(255,63,108,.28),transparent 58%,rgba(152,91,255,.35),transparent);
+  animation:sigBlueRed 6.15s ease-in-out infinite!important;
+}
+.pickSplash[data-key="gojo"] .sigEmblem{
+  color:#fff;text-shadow:0 0 12px #29c8ff,0 0 26px #ff3f6c,0 0 48px #985bff;
+}
+.pickSplash[data-key="gojo"] .sigCore i:nth-child(1){
+  left:17%;top:34%;width:22%;background:radial-gradient(circle,#fff,#29c8ff 16%,rgba(41,200,255,.18) 55%,transparent 68%);
+  box-shadow:0 0 24px #29c8ff;
+}
+.pickSplash[data-key="gojo"] .sigCore i:nth-child(2){
+  left:61%;top:34%;width:22%;background:radial-gradient(circle,#fff,#ff3f6c 16%,rgba(255,63,108,.18) 55%,transparent 68%);
+  box-shadow:0 0 24px #ff3f6c;
+}
+.pickSplash[data-key="gojo"] .sigCore i:nth-child(3){
+  left:35%;top:29%;width:30%;background:radial-gradient(circle,#fff,#985bff 15%,rgba(152,91,255,.28) 46%,transparent 70%);
+  box-shadow:0 0 30px #985bff;animation:sigPulseHard 6.15s ease-in-out infinite;
+}
+.pickSplash[data-key="gojo"] .sigImpact{
+  border:5px solid #985bff;box-shadow:0 0 26px #29c8ff,inset 0 0 20px #ff3f6c;
+}
+.pickSplash[data-key="gojo"] .sigSweep{background:linear-gradient(90deg,transparent,#29c8ff,#fff,#985bff,#ff3f6c,transparent);box-shadow:0 0 26px #985bff}
+
+/* ---------- Conan: evidence grid / magnifier reticle / decisive red scan ---------- */
+.pickSplash[data-key="conan"] .sigDirector{--sigA:#2d9dff;--sigB:#ff394f;--sigC:#fff}
+.pickSplash[data-key="conan"] .sigAtmosphere{
+  background:repeating-linear-gradient(0deg,transparent 0 21px,rgba(45,157,255,.08) 22px 23px),radial-gradient(circle at 50% 42%,rgba(45,157,255,.26),transparent 38%);
+}
+.pickSplash[data-key="conan"] .sigArena{
+  width:64%;aspect-ratio:1;left:18%;top:13%;inset:auto;border:3px solid rgba(45,157,255,.68);border-radius:50%;
+  background:
+    linear-gradient(90deg,transparent 49.4%,rgba(255,57,79,.82) 49.4% 50.6%,transparent 50.6%),
+    linear-gradient(0deg,transparent 49.4%,rgba(255,57,79,.82) 49.4% 50.6%,transparent 50.6%);
+  box-shadow:0 0 18px rgba(45,157,255,.65),inset 0 0 18px rgba(255,57,79,.25);
+}
+.pickSplash[data-key="conan"] .sigArena::after{
+  content:"";position:absolute;right:-22%;bottom:-18%;width:38%;height:7%;border-radius:999px;
+  background:#2d9dff;transform:rotate(46deg);box-shadow:0 0 12px #2d9dff;
+}
+.pickSplash[data-key="conan"] .sigEmblem{color:#ff394f}
+.pickSplash[data-key="conan"] .sigCore i{border:2px dashed rgba(45,157,255,.52)}
+.pickSplash[data-key="conan"] .sigShards i{
+  width:13px;height:9px;border:1px solid #2d9dff;background:rgba(4,12,24,.7);
+}
+.pickSplash[data-key="conan"] .sigSweep{
+  top:25%;height:3px;background:linear-gradient(90deg,transparent,#2d9dff,#fff,#ff394f,transparent);
+  box-shadow:0 0 14px #ff394f;animation:sigScanDown 2.8s ease-in-out infinite!important;
+}
+
+/* ---------- mobile tuning: bold stays bold, blur gets cheaper ---------- */
+@media(max-width:760px){
+  .sigHud{top:54px;right:10px;min-width:128px;padding:6px 8px}
+  .sigHud b{font-size:8px}.sigHud small{font-size:6px}
+  .sigEmblem{font-size:clamp(64px,17vw,112px)}
+  .sigOrbit i{transform:rotate(var(--a)) translateX(clamp(74px,19vw,112px))}
+}
+@media(max-width:560px){
+  .sigAtmosphere{opacity:.62}
+  .sigShards i:nth-child(n+9){display:none}
+  .sigHud{top:48px}
+  .pickSplash[data-key="superman"] .sigArena,
+  .pickSplash[data-key="tanjiro"] .sigArena,
+  .pickSplash[data-key="gojo"] .sigArena{filter:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .sigDirector,.sigDirector *{animation:none!important}
+  .sigDirector{opacity:1!important}
+  .sigArena,.sigEmblem{opacity:.5!important}
+}
