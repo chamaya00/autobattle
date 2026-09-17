@@ -33,22 +33,25 @@ name: ci
 # be broken didn't fix that either, because total runtime, not any one
 # broken file, was the actual constraint.
 #
-# So this picks a handful of fast files instead: t_conan.js and t_isagi.js
-# need no browser at all (plain string/data-consistency checks against
-# index.html), and t_dodge.js, t_kono.js and t_wake.js are real but cheap
-# single-character contracts (each a few seconds). Together with the install
-# above this finishes in well under a minute. It is a sanity gate, not full
-# regression coverage, and deliberately so: the upstream project this was
-# forked from runs no automated tests at all, so this is already stricter
-# than the source, without taxing every future agent-run pull request with
-# a 10-15 minute wait. The full suite still exists and still works - run it
-# locally, or by hand in a session, with:
+# So this picks a handful of fast files instead: t_conan.js, t_isagi.js and
+# t_check_internal.js need no browser at all (plain string/data-consistency
+# checks against index.html and the two build scripts - t_check_internal.js
+# guards against internal-only pages and test buttons leaking onto the
+# public site, see docs/deploy-vercel.md), and t_dodge.js, t_kono.js and
+# t_wake.js are real but cheap single-character contracts (each a few
+# seconds). Together with the install above this finishes in well under a
+# minute. It is a sanity gate, not full regression coverage, and
+# deliberately so: the upstream project this was forked from runs no
+# automated tests at all, so this is already stricter than the source,
+# without taxing every future agent-run pull request with a 10-15 minute
+# wait. The full suite still exists and still works - run it locally, or by
+# hand in a session, with:
 #
 #     for f in tools/t_*.js; do node "$f"; done
 #
 # (after `npm install --no-save playwright && npx playwright install
 # --with-deps chromium` if Playwright isn't already available) - worth doing
-# before a release or when touching a system one of these five files does
+# before a release or when touching a system one of these six files does
 # not cover, just not on every commit.
 
 on:
@@ -64,4 +67,4 @@ jobs:
       commands: |
         npm install --no-save playwright
         npx playwright install --with-deps chromium
-        for f in tools/t_conan.js tools/t_isagi.js tools/t_dodge.js tools/t_kono.js tools/t_wake.js; do node "$f" || { echo "::error::$f failed"; exit 1; }; done
+        for f in tools/t_conan.js tools/t_isagi.js tools/t_check_internal.js tools/t_dodge.js tools/t_kono.js tools/t_wake.js; do node "$f" || { echo "::error::$f failed"; exit 1; }; done
