@@ -1,6 +1,6 @@
-// Kiểm middleware.js — cổng Basic Auth cho project Vercel "dev" (nội bộ).
-// Chạy bằng Node thẳng (Request/Response/Headers/atob là global từ Node 18+),
-// không cần Vercel CLI hay deploy thật.
+// Kiểm middleware.js — hai cổng Basic Auth: cả trang (project "dev") và chỉ /studio/
+// (project "prod"). Chạy bằng Node thẳng (Request/Response/Headers/atob là global từ
+// Node 18+), không cần Vercel CLI hay deploy thật.
 'use strict';
 const assert = require('assert');
 const { pathToFileURL } = require('url');
@@ -13,6 +13,11 @@ function check(name, cond) {
 
 function b64(s) { return Buffer.from(s, 'utf8').toString('base64'); }
 
+const SITE_VARS = ['DEV_BASIC_AUTH_USER', 'DEV_BASIC_AUTH_PASS'];
+const STUDIO_VARS = ['STUDIO_BASIC_AUTH_USER', 'STUDIO_BASIC_AUTH_PASS'];
+
+function clearEnv(names) { for (const n of names) delete process.env[n]; }
+
 async function run() {
   const mod = await import(pathToFileURL(require('path').join(__dirname, '..', 'middleware.js')).href);
   const middleware = mod.default;
@@ -20,57 +25,102 @@ async function run() {
 
   check('config.matcher chặn mọi đường dẫn', config && config.matcher === '/:path*');
 
-  const OLD_USER = process.env.DEV_BASIC_AUTH_USER;
-  const OLD_PASS = process.env.DEV_BASIC_AUTH_PASS;
-  try {
-    // ---- Prod: không khai biến môi trường ⇒ đi qua thẳng ----
-    delete process.env.DEV_BASIC_AUTH_USER;
-    delete process.env.DEV_BASIC_AUTH_PASS;
-    const req1 = new Request('https://prod.example/index.html');
-    const res1 = middleware(req1);
-    check('không khai user/pass (prod) => đi qua thẳng (return undefined)', res1 === undefined);
+  const saved = {};
+  for (const n of [...SITE_VARS, ...STUDIO_VARS]) saved[n] = process.env[n];
 
-    // ---- Dev: có khai biến môi trường ----
+  try {
+    // ---- Prod trần: không khai biến nào ⇒ mọi đường dẫn đi qua thẳng, kể cả /studio/ ----
+    clearEnv(SITE_VARS);
+    clearEnv(STUDIO_VARS);
+    check('không khai gì (prod trần) => "/" đi qua thẳng',
+      middleware(new Request('https://prod.example/index.html')) === undefined);
+    check('không khai gì (prod trần) => "/studio/" cũng đi qua thẳng',
+      middleware(new Request('https://prod.example/studio/')) === undefined);
+
+    // ---- Cổng 1: DEV_BASIC_AUTH_* — chặn CẢ TRANG (project "dev") ----
     process.env.DEV_BASIC_AUTH_USER = 'team';
     process.env.DEV_BASIC_AUTH_PASS = 'hunter2';
 
-    const reqNoAuth = new Request('https://dev.example/studio/');
-    const resNoAuth = middleware(reqNoAuth);
+    const resNoAuth = middleware(new Request('https://dev.example/studio/'));
     check('dev, không có header Authorization => 401', resNoAuth instanceof Response && resNoAuth.status === 401);
     check('dev, 401 kèm WWW-Authenticate: Basic', /Basic realm=/.test(resNoAuth.headers.get('www-authenticate') || ''));
 
-    const reqWrong = new Request('https://dev.example/', {
+    const resRootNoAuth = middleware(new Request('https://dev.example/'));
+    check('dev, cổng cả trang cũng chặn luôn "/" (không riêng /studio/)',
+      resRootNoAuth instanceof Response && resRootNoAuth.status === 401);
+
+    const resWrong = middleware(new Request('https://dev.example/', {
       headers: { authorization: 'Basic ' + b64('team:wrongpass') },
-    });
-    const resWrong = middleware(reqWrong);
+    }));
     check('dev, sai mật khẩu => 401', resWrong instanceof Response && resWrong.status === 401);
 
-    const reqWrongUser = new Request('https://dev.example/', {
+    const resWrongUser = middleware(new Request('https://dev.example/', {
       headers: { authorization: 'Basic ' + b64('nobody:hunter2') },
-    });
-    const resWrongUser = middleware(reqWrongUser);
+    }));
     check('dev, sai tên đăng nhập => 401', resWrongUser instanceof Response && resWrongUser.status === 401);
 
-    const reqRight = new Request('https://dev.example/', {
+    const resRight = middleware(new Request('https://dev.example/', {
       headers: { authorization: 'Basic ' + b64('team:hunter2') },
-    });
-    const resRight = middleware(reqRight);
+    }));
     check('dev, đúng user:pass => đi qua thẳng', resRight === undefined);
 
-    const reqMalformed = new Request('https://dev.example/', {
+    const resRightStudio = middleware(new Request('https://dev.example/studio/', {
+      headers: { authorization: 'Basic ' + b64('team:hunter2') },
+    }));
+    check('dev, đúng user:pass thì /studio/ cũng qua', resRightStudio === undefined);
+
+    const resMalformed = middleware(new Request('https://dev.example/', {
       headers: { authorization: 'Basic %%%not-base64%%%' },
-    });
-    const resMalformed = middleware(reqMalformed);
+    }));
     check('dev, header Authorization hỏng cú pháp => 401 (không ném lỗi)', resMalformed instanceof Response && resMalformed.status === 401);
 
-    const reqBearer = new Request('https://dev.example/', {
+    const resBearer = middleware(new Request('https://dev.example/', {
       headers: { authorization: 'Bearer sometoken' },
-    });
-    const resBearer = middleware(reqBearer);
+    }));
     check('dev, scheme khác Basic => 401', resBearer instanceof Response && resBearer.status === 401);
+
+    // ---- Cổng 2: STUDIO_BASIC_AUTH_* — chỉ chặn /studio/, project "prod" ----
+    clearEnv(SITE_VARS);
+    process.env.STUDIO_BASIC_AUTH_USER = 'crew';
+    process.env.STUDIO_BASIC_AUTH_PASS = 'workshop9';
+
+    check('prod + cổng studio, "/" vẫn công khai',
+      middleware(new Request('https://prod.example/')) === undefined);
+    check('prod + cổng studio, "/index.html" vẫn công khai',
+      middleware(new Request('https://prod.example/index.html')) === undefined);
+
+    const resStudioNoAuth = middleware(new Request('https://prod.example/studio/'));
+    check('prod + cổng studio, "/studio/" không auth => 401', resStudioNoAuth instanceof Response && resStudioNoAuth.status === 401);
+    check('prod + cổng studio, 401 kèm WWW-Authenticate: Basic', /Basic realm=/.test(resStudioNoAuth.headers.get('www-authenticate') || ''));
+
+    const resStudioNoSlash = middleware(new Request('https://prod.example/studio'));
+    check('prod + cổng studio, "/studio" (không có dấu / cuối) cũng bị chặn',
+      resStudioNoSlash instanceof Response && resStudioNoSlash.status === 401);
+
+    const resStudioSub = middleware(new Request('https://prod.example/studio/deep/path.js'));
+    check('prod + cổng studio, đường dẫn con của /studio/ cũng bị chặn',
+      resStudioSub instanceof Response && resStudioSub.status === 401);
+
+    const resStudioWrong = middleware(new Request('https://prod.example/studio/', {
+      headers: { authorization: 'Basic ' + b64('crew:wrongpass') },
+    }));
+    check('prod + cổng studio, sai mật khẩu => 401', resStudioWrong instanceof Response && resStudioWrong.status === 401);
+
+    const resStudioRight = middleware(new Request('https://prod.example/studio/', {
+      headers: { authorization: 'Basic ' + b64('crew:workshop9') },
+    }));
+    check('prod + cổng studio, đúng user:pass => đi qua thẳng', resStudioRight === undefined);
+
+    // Cổng studio dùng RIÊNG cặp user/pass — mật khẩu của dev không mở được studio ở đây.
+    const resStudioDevCreds = middleware(new Request('https://prod.example/studio/', {
+      headers: { authorization: 'Basic ' + b64('team:hunter2') },
+    }));
+    check('prod + cổng studio, mật khẩu của cổng dev KHÔNG mở được /studio/',
+      resStudioDevCreds instanceof Response && resStudioDevCreds.status === 401);
   } finally {
-    if (OLD_USER === undefined) delete process.env.DEV_BASIC_AUTH_USER; else process.env.DEV_BASIC_AUTH_USER = OLD_USER;
-    if (OLD_PASS === undefined) delete process.env.DEV_BASIC_AUTH_PASS; else process.env.DEV_BASIC_AUTH_PASS = OLD_PASS;
+    for (const n of [...SITE_VARS, ...STUDIO_VARS]) {
+      if (saved[n] === undefined) delete process.env[n]; else process.env[n] = saved[n];
+    }
   }
 
   console.log(fail === 0 ? 'DAT t_vercel_auth' : ('LOI ' + fail + ' muc t_vercel_auth'));

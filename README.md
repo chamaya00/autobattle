@@ -115,11 +115,14 @@ Muốn khoá trang xưởng bằng mật khẩu thật thì Netlify (bản trả
 ### Cách 3 — Vercel: một bản NỘI BỘ + một bản CÔNG KHAI
 
 Repo đã có sẵn `vercel.json` + `tools/vercel_build.sh` (build y hệt Cách 1) và
-`middleware.js` (khoá bằng mật khẩu HTTP Basic Auth, chỉ bật khi project có khai hai biến
-môi trường `DEV_BASIC_AUTH_USER` / `DEV_BASIC_AUTH_PASS`). Dựng **hai project Vercel** từ
-cùng repo này — một theo dõi nhánh `main` không khoá gì (bản công khai cho người chơi), một
-theo dõi nhánh `dev` có khoá hai biến môi trường trên (bản nội bộ cho team, hỏi mật khẩu
-trước khi vào được kể cả trang chơi lẫn `/studio/`).
+`middleware.js` với **hai cổng mật khẩu HTTP Basic Auth độc lập**: `DEV_BASIC_AUTH_USER` /
+`DEV_BASIC_AUTH_PASS` khoá **cả trang**, `STUDIO_BASIC_AUTH_USER` / `STUDIO_BASIC_AUTH_PASS`
+chỉ khoá riêng `/studio/`. Dựng **hai project Vercel** từ cùng repo này:
+- một theo dõi nhánh `main`, khoá cổng thứ hai (`STUDIO_BASIC_AUTH_*`) — trang chơi ở `/` vẫn
+  công khai cho người chơi, nhưng `/studio/` giờ đòi mật khẩu thật chứ không chỉ "giấu
+  đường dẫn" như Cách 1 và Cách 2;
+- một theo dõi nhánh `dev`, khoá cổng thứ nhất (`DEV_BASIC_AUTH_*`) — hỏi mật khẩu trước khi
+  vào được kể cả trang chơi lẫn `/studio/`, dùng làm sân thử tính năng đang làm dở.
 
 Các bước dựng cụ thể (tạo nhánh `dev`, import repo hai lần, đặt biến môi trường…) nằm trong
 [`docs/deploy-vercel.md`](docs/deploy-vercel.md). Muốn kiểm phần khoá mật khẩu mà không cần
