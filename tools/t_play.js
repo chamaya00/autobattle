@@ -401,12 +401,18 @@ function wavUrl() {
   fs.copyFileSync(buildPlay(), path.join(site2, 'index.html'));
   const goi = JSON.stringify({ v: 1, at: '2026-09-09', spr: { kono: { idle: [PNG] } }, sfx: {} });
   fs.writeFileSync(path.join(site2, 'assets', 'pack', 'pack.json'), goi);
-  let dut = 0, coGoi = true;              // dut>0: cú tải đầu bị cắt ngang giữa thân file
+  let dut = 0, coGoi = true, hangKieu = null;
+  // dut>0: cú tải đầu bị cắt ngang giữa thân file (mất kết nối hẳn).
+  // hangKieu='treo': KHÔNG có Content-Length (CDN nén rồi chuyển sang chunked, đúng cảnh
+  //   đo được trên Vercel prod), viết một đoạn rồi TREO MÃI — không đóng, không lỗi.
+  // hangKieu='khongdo': KHÔNG có Content-Length nhưng vẫn tải xong bình thường.
   const sv3 = http.createServer((rq, rs) => {
     const rel = decodeURIComponent(rq.url.split('?')[0]).replace(/\/$/, '/index.html');
     if (rel.endsWith('pack.json')) {
       if (!coGoi) { rs.statusCode = 404; rs.end(); return; }
       rs.setHeader('content-type', 'application/json');
+      if (hangKieu === 'treo') { rs.write(goi.slice(0, 40)); return; }        // không rs.end() -> treo
+      if (hangKieu === 'khongdo') { rs.end(goi); return; }
       rs.setHeader('content-length', String(Buffer.byteLength(goi)));
       if (dut > 0) { dut--; rs.write(goi.slice(0, 40)); setTimeout(() => rs.socket.destroy(), 40); return; }
       rs.end(goi); return;
@@ -418,9 +424,14 @@ function wavUrl() {
   await new Promise(r => sv3.listen(0, '127.0.0.1', r));
   const goc3 = `http://127.0.0.1:${sv3.address().port}/`;
   const b4 = await chromium.launch();
-  const moBoot = async () => {
+  // stallMs, khi có: rút PACK_STALL xuống trước khi trang tự chạy packLoad() (qua
+  // page.addInitScript, chạy TRƯỚC mọi script của trang — đặt sau `goto` là trễ mất một
+  // nhịp, vì packLoad() tự bắn ngay lúc script của game thực thi), để test không phải chờ
+  // đủ 25 giây thật mới thấy đồng hồ chết máy nổ.
+  const moBoot = async (stallMs) => {
     const q = await b4.newPage({ viewport: { width: 820, height: 980 } });
     await q.route('**://fonts.*/**', r => r.abort());
+    if (stallMs) await q.addInitScript(ms => { window.__PACK_STALL_OVERRIDE = ms; }, stallMs);
     await q.goto(goc3, { waitUntil: 'domcontentloaded' });
     return q;
   };
@@ -463,6 +474,35 @@ function wavUrl() {
   for (let i = 0; i < 40 && !tat; i++) { tat = !(await hienRa(q3, 'arcBoot')); if (!tat) await q3.waitForTimeout(200); }
   ok(tat, 'site khong he co pack.json thi van vao duoc, khong nhot nguoi choi');
   await q3.close();
+  coGoi = true;
+
+  /* ---------- 6b. THIẾU Content-Length ----------
+     Một CDN nén-rồi-chuyển-sang-chunked (đo được đúng cảnh này trên Vercel prod) bỏ luôn
+     header đó. Trước khi sửa, packRead() lùi thẳng về `r.json()` KHÔNG đồng hồ chết máy —
+     một cú treo đúng ở đây (gói phát hành, ai cũng đi qua) là đứng MÃI trên thanh tải,
+     không bao giờ rơi xuống nút "tải lại". Đây chính là "kẹt màn tải" trên bản Vercel
+     prod đã báo. */
+  hangKieu = 'khongdo';
+  const q4 = await moBoot();
+  na = 0;
+  for (let i = 0; i < 40 && !na; i++) { na = await demAnh(q4); if (!na) await q4.waitForTimeout(200); }
+  ok(na === 1, `khong Content-Length nhung van tai xong binh thuong: goi ve du (${na} anh)`);
+  await q4.close();
+
+  hangKieu = 'treo';
+  const q5 = await moBoot(300);
+  let bao5 = false;
+  for (let i = 0; i < 40 && !bao5; i++) { bao5 = await hienRa(q5, 'bootFail'); if (!bao5) await q5.waitForTimeout(150); }
+  ok(bao5, 'khong Content-Length + treo giua chung: hien nut tai lai (KHONG dung mai tren thanh tai)');
+  ok(await hienRa(q5, 'arcBoot'), 'khong Content-Length + treo: van dung trong man cho, KHONG tha vao game');
+  ok((await demAnh(q5)) === 0, 'khong Content-Length + treo: chua nap duoc anh nao');
+  hangKieu = null;                         // bam tai lai thi lan sau tai binh thuong, du du
+  await q5.click('#bootRetry');
+  na = 0;
+  for (let i = 0; i < 40 && !na; i++) { na = await demAnh(q5); if (!na) await q5.waitForTimeout(200); }
+  ok(na === 1, `khong Content-Length + treo, bam tai lai: goi ve du (${na} anh)`);
+  await q5.close();
+
   await b4.close(); sv3.close();
 
   console.log(loi.length ? `\nHONG ${loi.length} muc` : '\nDAT het');

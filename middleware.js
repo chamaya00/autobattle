@@ -11,8 +11,19 @@
 // nên phụ thuộc vào việc có nâng cấp Pro hay không. Ai có gói Pro/Team và muốn khoá chắc
 // hơn (SSO, IP allowlist…) thì bật thêm Deployment Protection song song, không cần đụng
 // vào file này.
+// Bỏ /assets/** ra khỏi middleware — CHỈ chặn TRANG (index.html, /studio/), không chặn
+// từng file trong gói phát hành. Hai lý do:
+//   1. Basic Auth chỉ cần giấu cái SITE, không cần giấu từng byte ảnh/tiếng bên trong;
+//      ai không biết trang tồn tại thì cũng không đoán ra URL của assets/pack/pack.json.
+//   2. Route một file tĩnh vài chục MB (gói phát hành, xem CLAUDE.md mục 2e "Gói nặng")
+//      qua Edge Middleware — dù chỉ để rồi cho qua thẳng — là đường vòng không cần thiết
+//      và có thể đổi cách CDN trả header (Content-Length / chunked) so với việc để CDN
+//      phục vụ thẳng file tĩnh. Client (`packRead()` trong index.html) dùng Content-Length
+//      để vừa đếm % tải vừa đặt đồng hồ chết máy cho thanh tải trên trang chơi (mục 9,
+//      "kẹt ở màn tải trên bản Vercel prod") — bớt một tầng trung gian không cần thiết
+//      trên đúng cái file đó là bớt một chỗ có thể sinh ra sự cố.
 export const config = {
-  matcher: '/:path*',
+  matcher: ['/((?!assets/).*)'],
 };
 
 const REALM = 'Multiverse Battler internal dev'; // ASCII thuần: header HTTP không nhận Unicode

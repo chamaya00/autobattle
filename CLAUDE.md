@@ -4564,7 +4564,13 @@ node tools/t_play.js    # hai trang: play.html đúng bằng bản dựng từ i
                         # gói phát hành được nạp, và xưởng vẫn vào
                         # trận bằng MỘT cú bấm #cselGo; MÀN CHỜ không còn nút "vào luôn khỏi
                         # chờ" — tải đứt thì hiện nút tải lại và vẫn đứng trong màn chờ, bấm
-                        # tải lại thì về đủ ảnh mới cho vào, site không có pack thì vào thẳng
+                        # tải lại thì về đủ ảnh mới cho vào, site không có pack thì vào thẳng;
+                        # THIẾU Content-Length (CDN nén rồi chuyển sang chunked, đúng cảnh
+                        # trên Vercel prod) mà vẫn tải xong bình thường thì vẫn nạp đủ, còn
+                        # nếu server TREO giữa chừng (không đóng, không lỗi) thì vẫn phải rơi
+                        # ra nút "tải lại" trong một khoảng thời gian bị chặn trên
+                        # (window.__PACK_STALL_OVERRIDE rút ngắn PACK_STALL cho test), KHÔNG
+                        # được đứng mãi trên thanh tải — đây chính là lỗi đã sửa ở mục 9
 node tools/t_bulk.js    # nạp hàng loạt: bảng đoán tên file (thư mục thắng tên file, alias dài
                         # thắng alias ngắn, số đuôi là số khung), nạp thật qua ô chọn file,
                         # file đoán không ra được báo tên, danh sách tên file đủ mọi ô
@@ -4642,9 +4648,11 @@ node tools/t_tanjiro.js # Tanjiro: HP đọc từ HP_STD, màn vào sân 1.5s, O
                         # AI dùng vector melee chung như ChiChi, Water Wheel chờ nhịp riêng
                         # và chỉ tiếp cận khi ở xa; power chart khớp nhịp chiến đấu mới
 node tools/t_vercel_auth.js # middleware.js của bản Vercel "dev" nội bộ (mục 2e-bis / docs/deploy-vercel.md):
-                        # không khai DEV_BASIC_AUTH_USER/PASS (project "prod") thì đi qua
-                        # thẳng, khai rồi thì thiếu/sai/hỏng cú pháp Authorization đều ra
-                        # 401 kèm WWW-Authenticate: Basic, đúng user:pass mới qua được
+                        # matcher loại /assets/** ra khỏi Edge Middleware (đúng cú pháp
+                        # negative-lookahead) mà vẫn chặn / và /studio/; không khai
+                        # DEV_BASIC_AUTH_USER/PASS (project "prod") thì đi qua thẳng, khai
+                        # rồi thì thiếu/sai/hỏng cú pháp Authorization đều ra 401 kèm
+                        # WWW-Authenticate: Basic, đúng user:pass mới qua được
 ```
 
 > **`t_beatrice.js` mục 10 (bước chân của Beatrice) từng SỐNG NHỜ MAY.** Mấy mục trên nó
@@ -4762,6 +4770,7 @@ lớp để anh vào sân), `#testSuz3` (ép anh rời sàn → form 3), `#testS
 | Chế độ league / tournament bắt chọn background HAI LẦN liền | `cselSteps()` vẫn cho hai chế độ này bước `stage`, mà từ khi có màn hỏi sàn TỪNG TRẬN thì trận đầu lại hỏi thêm lần nữa — lần chọn ở màn chọn nhân vật bị ghi đè ngay, chọn xong chẳng để làm gì | bỏ bước `stage` khỏi `league`/`cup`: khai mạc giải xong vào thẳng bảng xếp hạng, sàn hỏi riêng cho mỗi trận |
 | iPhone: thoát app một lúc rồi vào lại là MẤT TIẾNG | ba thứ cùng lúc — `ac()` chỉ resume khi `state==='suspended'` nên bỏ sót `'interrupted'` của WebKit; context có khi chết hẳn mà `state` vẫn báo `'running'`; và `startMusic()` gác ở `if(MUSIC.gain) return` với node của context đã chết nên nhạc không bao giờ dựng lại | `audioWake()` gọi từ `visibilitychange` / `pageshow` / `focus` / **mọi cú chạm**, resume cả `'interrupted'`, dò `currentTime` đứng yên thì `audioRebuild()`, và `audioRebuild()` dọn sạch `MUSIC.gain/oscs/lfo/filter` trước khi dựng lại |
 | Chữ trong thanh phụ thò ra ngoài thanh | `bar()` vẽ nhãn ở cỡ 15px cố định, không ai đo | `bar()` tự thu cỡ chữ cho vừa lòng thanh (sàn 9px) và truyền thêm `maxWidth` làm chặn cuối. Đây là lỗi chung của mọi nhân vật chứ không riêng Horikita: `Chakra: 1025` cũng tràn |
+| Bản Vercel prod: kẹt mãi ở màn tải, không bao giờ vào được trận | `packRead()` lấy `!all` (thiếu header `Content-Length`) làm điều kiện lùi về `r.json()` trần — nhánh đó KHÔNG có đồng hồ chết máy. Một CDN nén file tĩnh vài chục MB (`assets/pack/pack.json`) rồi chuyển sang chunked bỏ luôn header đó, và cú fetch treo ở đúng chỗ MỌI người chơi đều đi qua thì đứng MÃI trên thanh tải — không lỗi, không nút "tải lại", đúng triệu chứng đã báo. `middleware.js` cũ (`matcher:'/:path*'`) còn route cả file này qua Edge Middleware dù chỉ để cho qua thẳng, một đường vòng không cần thiết trên đúng cái file lớn đó | chỉ lùi về `r.json()` khi trình duyệt không đọc được stream (`!r.body.getReader`), **không** phải vì thiếu `Content-Length`; nhánh `r.json()` đó giờ đua với `PACK_STALL` qua `Promise.race`. Thiếu `Content-Length` mà vẫn đọc được stream thì đi tiếp đường streaming cũ (vẫn có đồng hồ chết máy mỗi lượt đọc), chỉ là không tính được % thật nên in số byte đã tải thay vì phân số (`packBytesNoTotal`). Đồng thời thu hẹp `middleware.js`: `matcher:['/((?!assets/).*)']` — bỏ hẳn `/assets/**` ra khỏi Edge Middleware, để CDN phục vụ thẳng file tĩnh không qua một tầng trung gian nào. Kiểm bằng `node tools/t_play.js` (mục 6b: giả một server bỏ `Content-Length` rồi TREO giữa chừng — không đóng, không lỗi — đòi vẫn phải rơi ra nút "tải lại" chứ không đứng mãi) và `node tools/t_vercel_auth.js` (matcher loại đúng `/assets/**`, vẫn chặn `/` và `/studio/`) |
 
 ---
 
