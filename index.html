@@ -2483,7 +2483,7 @@ const L={
     hpTip:'Máu khởi đầu của nhân vật này — chỉnh thoải mái',
     hpAll:'Máu mọi nhân vật', hpStd:'Chuẩn '+HP_STD,
     packLoading:'Đang tải ảnh và tiếng…', packDone:'Đã nạp {n} ảnh · {s} tiếng',
-    packBytes:'Đang tải ảnh và tiếng… {a} / {b} MB', packDecode:'Đang mở gói…',
+    packBytes:'Đang tải ảnh và tiếng… {a} / {b} MB', packBytesNoTotal:'Đang tải ảnh và tiếng… {a} MB', packDecode:'Đang mở gói…',
     packOpen:'Đang mở gói… {n} / {t}', bootHint:'Tải xong là vào chơi được ngay',
     bootRetry:'↻ Thử tải lại', bootErr:'Mạng trục trặc, chưa tải xong gói ảnh và tiếng.', bootWait:'Đang chuẩn bị…',
     musicNone:'Chưa có file nhạc nền nào nên đang dùng nhạc tự tạo. Muốn nhạc của bạn thì nạp file vào ô nhạc ở trang xưởng rồi xuất gói.'
@@ -2592,7 +2592,7 @@ const L={
     hpTip:'Starting HP for this fighter — set it to whatever you like',
     hpAll:'HP for everyone', hpStd:'Standard '+HP_STD,
     packLoading:'Loading art and sound…', packDone:'Loaded {n} images · {s} sounds',
-    packBytes:'Loading art and sound… {a} / {b} MB', packDecode:'Unpacking…',
+    packBytes:'Loading art and sound… {a} / {b} MB', packBytesNoTotal:'Loading art and sound… {a} MB', packDecode:'Unpacking…',
     packOpen:'Unpacking… {n} / {t}', bootHint:'The fight starts as soon as this finishes',
     bootRetry:'↻ Try again', bootErr:'Network hiccup — the image and sound pack did not finish loading.', bootWait:'Getting ready…',
     musicNone:'No music file loaded yet, so the built-in track is playing. Drop your own music into the studio slots and export the pack.'
@@ -5447,15 +5447,29 @@ function packNote(msg,xong){
 }
 /* Đọc gói kèm ĐẾM SỐ MB đã tải. Gói là một file mấy chục MB, trên mạng chậm nó về sau khi
    trang đã mở — không đếm ra màn hình thì người chơi ngồi nhìn model vector và tưởng game
-   hỏng. Trình duyệt nào không cho đọc dòng byte thì lùi về `r.json()` như cũ. */
+   hỏng. */
 /* Không có nút "vào luôn" nữa, nên cú fetch treo là NHỐT người chơi thật. Vì vậy mỗi
    lượt đọc có đồng hồ chết máy: quá PACK_STALL mà không về thêm một byte nào thì huỷ,
    ném lỗi ra cho `bootLoad()` hiện nút TẢI LẠI. Đo theo từng lượt đọc chứ đừng đặt trần
    cho cả cú tải — mạng chậm mà vẫn chảy thì phải để nó chảy tiếp. */
-const PACK_STALL=25000;
+/* `window.__PACK_STALL_OVERRIDE`, khi có, chỉ tồn tại vì test (`tools/t_play.js`) đặt nó
+   qua `page.addInitScript()` TRƯỚC khi trang tự chạy `packLoad()` — không phải một cấu
+   hình thật của game, đừng đọc lại giá trị này ở đâu khác. */
+let PACK_STALL=(typeof window!=='undefined'&&window.__PACK_STALL_OVERRIDE)||25000;
 async function packRead(r){
   const all=+(r.headers.get('content-length')||0);
-  if(!r.body||!r.body.getReader||!all) return r.json();
+  /* KHÔNG được rơi vào `r.json()` trần chỉ vì thiếu Content-Length — một CDN nén file tĩnh
+     rồi chuyển sang chunked (đo được đúng cảnh này trên Vercel prod) là bỏ luôn header đó,
+     mà bản trước lại lấy `!all` làm điều kiện lùi về `r.json()`: nhánh đó KHÔNG có đồng hồ
+     chết máy, nên một cú fetch treo ở đúng chỗ ai cũng đi qua (gói phát hành) là đứng MÃI
+     trên thanh tải, không bao giờ rơi xuống nút "tải lại" — đúng triệu chứng "kẹt màn tải"
+     trên bản Vercel prod. Chỉ lùi về `r.json()` khi trình duyệt không cho đọc stream. */
+  if(!r.body||!r.body.getReader){
+    return Promise.race([
+      r.json(),
+      new Promise((_,xau)=>setTimeout(()=>xau(new Error('pack stalled')),PACK_STALL)),
+    ]);
+  }
   const rd=r.body.getReader(); let got=0; const parts=[];
   for(;;){
     let tm=0;
@@ -5467,8 +5481,13 @@ async function packRead(r){
     const {done,value}=b;
     if(done) break;
     parts.push(value); got+=value.length;
-    packNote(tf('packBytes',{a:(got/1048576).toFixed(1),b:(all/1048576).toFixed(1)}));
-    packProg('tai',got,all);
+    /* Không biết tổng byte (thiếu Content-Length) thì không tính được % thật — vẫn in số
+       ĐÃ tải để người chơi thấy còn sống, còn hơn đứng yên không nhúc nhích. Thanh phần
+       trăm của màn chờ (`packProg`) chỉ cập nhật khi có `all` thật, đừng bịa một tổng giả. */
+    packNote(all
+      ? tf('packBytes',{a:(got/1048576).toFixed(1),b:(all/1048576).toFixed(1)})
+      : tf('packBytesNoTotal',{a:(got/1048576).toFixed(1)}));
+    if(all) packProg('tai',got,all);
   }
   const buf=new Uint8Array(got); let at=0;
   for(const p of parts){ buf.set(p,at); at+=p.length; }

@@ -18,7 +18,19 @@ async function run() {
   const middleware = mod.default;
   const config = mod.config;
 
-  check('config.matcher chặn mọi đường dẫn', config && config.matcher === '/:path*');
+  // Matcher phải chặn mọi TRANG nhưng bỏ qua /assets/** (xem middleware.js) — dò bằng
+  // đúng cú pháp negative-lookahead của path-to-regexp mà Next.js/Vercel tài liệu hoá cho
+  // kiểu loại trừ này, không phải chuỗi '/:path*' cũ (chuỗi đó chặn CẢ assets, chính là
+  // đường vòng qua Edge Middleware gây kẹt màn tải trên bản prod — xem CLAUDE.md mục 9).
+  const matcherOk = Array.isArray(config && config.matcher) && config.matcher.length === 1
+    && typeof config.matcher[0] === 'string' && /\(\?!assets\//.test(config.matcher[0]);
+  check('config.matcher loại trừ /assets/** khỏi cú pháp negative-lookahead', matcherOk);
+  if (matcherOk) {
+    const re = new RegExp('^' + config.matcher[0] + '$');
+    check('matcher: /assets/pack/pack.json bị LOẠI (CDN phục vụ thẳng, không qua middleware)', !re.test('/assets/pack/pack.json'));
+    check('matcher: / (trang chơi) vẫn bị chặn', re.test('/'));
+    check('matcher: /studio/ (trang xưởng) vẫn bị chặn', re.test('/studio/'));
+  }
 
   const OLD_USER = process.env.DEV_BASIC_AUTH_USER;
   const OLD_PASS = process.env.DEV_BASIC_AUTH_PASS;
