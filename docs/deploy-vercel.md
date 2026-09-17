@@ -14,17 +14,36 @@ publishes the `site/` directory it produces (public play page at `/`, workshop a
 — the same layout GitHub Pages already serves). Nothing in the repo differs between the two
 environments; everything below happens in the Vercel dashboard.
 
-## 0. Create the `dev` branch (once)
+## 0. The `dev` branch already exists
+
+Created once from `main`; nothing further needed here.
+
+**Convention going forward: new work targets `dev`, not `main`.** Every regular pull
+request should be opened with `dev` as its base branch. `main` only ever moves via a
+separate, explicit **promotion** step — someone (or an instruction to Claude Code) saying
+"promote `dev` to `main`" / "graduate this to prod." It is never a side effect of merging a
+feature PR into `dev`.
+
+A promotion is **whole-branch, not per-feature**: it brings across everything currently on
+`dev` that `main` doesn't have yet (`git log main..dev` is the exact list), as one unit.
+There is no built-in way to promote "PR #12 but not PR #13" other than cherry-picking by
+hand, which leaves `dev` and `main` diverged until the held-back commit either lands later
+or gets reverted from `dev`. Practical consequence: keep `dev` short-lived — land one
+thing, promote, repeat — rather than letting several unrelated changes queue up on it
+waiting on different readiness timelines.
+
+Mechanically, a promotion is either:
 
 ```bash
+# fast-forward (dev has not diverged from main in any way main itself changed)
+git fetch origin dev main
 git checkout main
-git pull
-git checkout -b dev
-git push -u origin dev
+git merge --ff-only origin/dev
+git push origin main
 ```
 
-From then on: merge to `dev` first to preview on the internal URL, then merge/fast-forward
-`dev` into `main` (or open a PR from `dev` → `main`) to promote to the public URL.
+or open a pull request `dev → main` and merge it — the safer default, since it gives CI a
+run against the exact commit about to go live and leaves a record of when something shipped.
 
 ## 1. Import the repo twice
 
@@ -70,9 +89,10 @@ top of it — enabling them does not require touching any file in this repo.
 
 ## 3. Day to day
 
-- Push/merge to `dev` → auto-deploys to the internal URL behind the password.
-- Push/merge (or fast-forward) `dev` into `main` → auto-deploys to the public URL, no
-  password.
+- Regular PRs target `dev`. Merging one auto-deploys to the internal URL behind the
+  password — nothing further needed, no promotion implied.
+- Promoting `dev` into `main` (see §0) auto-deploys to the public URL, no password. This is
+  always a deliberate, explicit action, never automatic.
 - Every branch/PR also gets a normal Vercel **preview** deployment on both projects; those
   follow whatever protection each project already has configured (Vercel's own preview
   protection settings), independent of this doc.

@@ -4774,6 +4774,22 @@ lớp để anh vào sân), `#testSuz3` (ép anh rời sàn → form 3), `#testS
 - Commit message và mô tả PR viết **tiếng Việt**, nói rõ đo được gì.
 - **Không ghi tên model** vào commit, PR, hay comment trong code.
 
+**Nhánh `dev` / `main` (mục 2e-bis) — PR mặc định nhắm vào `dev`, không nhắm `main`.**
+`dev` là nơi đổ mọi PR bình thường; `main` chỉ nhận thay đổi qua một bước **"graduate" /
+"promote" riêng**, khi người dùng nói rõ (`"promote to main"`, `"graduate to prod"`…) —
+không tự động chảy tiếp sau khi một PR vào `dev`.
+
+- **Graduate = đưa NGUYÊN branch, không chọn lọc từng PR.** `dev` đang có gì thì `main`
+  nhận đúng bấy nhiêu (`git log main..dev` là danh sách sẽ lên); không có cơ chế "chỉ lấy
+  PR X, để lại PR Y" — muốn vậy thì phải cherry-pick tay và chấp nhận `dev`/`main` lệch
+  nhau tạm thời. **Liệt kê danh sách commit/PR sắp lên `main` trước khi graduate thật**,
+  đừng graduate âm thầm.
+- Vì vậy giữ `dev` sống NGẮN: đẩy một tính năng lên `dev` rồi graduate luôn, đừng để nhiều
+  việc không liên quan xếp hàng chờ trên `dev` cùng lúc — không thì graduate sẽ đẩy đi cả
+  những thứ chưa sẵn sàng.
+- Graduate xong thì kiểm lại đúng theo mục 8/9 của tài liệu này: chạy thử `dev`, chạy
+  `node tools/t_reg.js` nếu đụng tới cân bằng, rồi mới đẩy `dev → main`.
+
 ---
 
 ## 11. Còn treo
